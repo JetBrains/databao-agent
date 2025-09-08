@@ -138,5 +138,5 @@ class SimpleDuckDBAgenticExecutor(DataExecutor):
         agent, ask = self.__make_react_duckdb_agent(con, llm)
         answer: AgentResponse = ask(query)
         logger.info("Generated query: %s", answer["sql"])
-        df = con.execute(f"SELECT * FROM ({sql_strip(answer["sql"])}) t LIMIT {rows_limit}").df()
+        df = con.execute(f'SELECT * FROM ({sql_strip(answer["sql"])}) t LIMIT {rows_limit}').df()
         return DataResult(answer["explanation"], df, {})

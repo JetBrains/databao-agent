@@ -32,6 +32,11 @@ class Pipe(ABC):
     def meta(self) -> dict[str, Any]:
         pass
 
+    @property
+    @abc.abstractmethod
+    def code(self) -> Optional[str]:
+        pass
+
 
 class LazyPipe(Pipe):
     def __init__(
@@ -75,6 +80,7 @@ class LazyPipe(Pipe):
             self.__visualization_result = self.__visualizer.visualize(request, self.__llm, self.__data_result)
             self.__visualization_materialized = True
             self.__meta.update(self.__visualization_result.meta)
+            self.__meta["plot_code"] = self.__visualization_result.code  # maybe worth to expand as a property later
         return self.__visualization_result
 
     def df(self, *, rows_limit: Optional[int] = None) -> Optional[DataFrame]:
@@ -83,10 +89,6 @@ class LazyPipe(Pipe):
     def plot(self, request: str = "visualize data", *, rows_limit: Optional[int] = None) -> Optional[Any]:
         return self.__materialize_visualization(request,
                                                 rows_limit if rows_limit else self.__data_materialized_rows).plot
-
-    @property
-    def meta(self) -> dict[str, Any]:
-        return self.__meta
 
     def text(self) -> str:
         return self.__materialize_data(self.__data_materialized_rows).text
@@ -97,3 +99,11 @@ class LazyPipe(Pipe):
     def ask(self, query: str) -> Pipe:
         self.__opas.append(Opa(query=query))
         return self
+
+    @property
+    def meta(self) -> dict[str, Any]:
+        return self.__meta
+
+    @property
+    def code(self) -> Optional[str]:
+        return self.__materialize_data(self.__data_materialized_rows).code

@@ -140,4 +140,4 @@ class SimpleDuckDBAgenticExecutor(Executor):
         answer: AgentResponse = ask(opas[-1].query)
         logger.info("Generated query: %s", answer["sql"])
         df = con.execute(f'SELECT * FROM ({sql_strip(answer["sql"])}) t LIMIT {rows_limit}').df()
-        return ExecutionResult(answer["explanation"], {"code": answer["sql"]}, df)
+        return ExecutionResult(answer["explanation"], {}, answer["sql"], df)

@@ -7,18 +7,11 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from portus.opa import Opa
 
 
-class MetaBase(TypedDict):
-    code: str
-
-
-class Meta(MetaBase, total=False):
-    __extra__: dict[str, Any]  # marker for type checkers
-
-
 @dataclass(frozen=True)
 class ExecutionResult:
     text: str
-    meta: Meta
+    meta: dict[str, Any]
+    code: Optional[str] = None
     df: Optional[DataFrame] = None
 
 

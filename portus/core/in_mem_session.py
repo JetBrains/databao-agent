@@ -1,4 +1,4 @@
-from typing import Optional, Any
+from typing import Optional, Any, TYPE_CHECKING
 
 from langchain_core.language_models.chat_models import BaseChatModel
 from pandas import DataFrame
@@ -8,6 +8,10 @@ from portus.session import Session
 from portus.pipe import Pipe
 from portus.core.lazy_pipe import LazyPipe
 from portus.vizualizer import DumbVisualizer
+
+if TYPE_CHECKING:
+    from portus.executor import Executor
+    from portus.vizualizer import Visualizer
 
 
 class InMemSession(Session):
@@ -26,7 +30,7 @@ class InMemSession(Session):
         self.__dbs: dict[str, Any] = {}
         self.__dfs: dict[str, DataFrame] = {}
 
-        self.__data_executor = data_executor
+        self.__executor = data_executor
         self.__visualizer = visualizer
         self.__default_rows_limit = default_rows_limit
 
@@ -39,8 +43,7 @@ class InMemSession(Session):
         self.__dfs[df_name] = df
 
     def ask(self, query: str) -> Pipe:
-        return LazyPipe(self, self.__llm, self.__data_executor, self.__visualizer,
-                        default_rows_limit=self.__default_rows_limit).ask(query)
+        return LazyPipe(self, default_rows_limit=self.__default_rows_limit).ask(query)
 
     @property
     def dbs(self) -> dict[str, Any]:
@@ -53,3 +56,15 @@ class InMemSession(Session):
     @property
     def name(self) -> str:
         return self.__name
+
+    @property
+    def llm(self) -> BaseChatModel:
+        return self.__llm
+
+    @property
+    def executor(self) -> "Executor":
+        return self.__executor
+
+    @property
+    def visualizer(self) -> "Visualizer":
+        return self.__visualizer

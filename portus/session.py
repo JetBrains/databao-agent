@@ -1,10 +1,14 @@
 import abc
 from abc import ABC
-from typing import Optional, Any
+from typing import Optional, Any, TYPE_CHECKING
+from langchain_core.language_models.chat_models import BaseChatModel
 
 from pandas import DataFrame
-
 from portus.pipe import Pipe
+
+if TYPE_CHECKING:
+    from portus.executor import Executor
+    from portus.vizualizer import Visualizer
 
 
 class Session(ABC):
@@ -35,3 +39,17 @@ class Session(ABC):
     def name(self) -> str:
         pass
 
+    @property
+    @abc.abstractmethod
+    def llm(self) -> BaseChatModel:
+        pass
+
+    @property
+    @abc.abstractmethod
+    def executor(self) -> "Executor":
+        pass
+
+    @property
+    @abc.abstractmethod
+    def visualizer(self) -> "Visualizer":
+        pass

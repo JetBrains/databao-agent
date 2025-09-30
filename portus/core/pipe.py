@@ -32,9 +32,11 @@ class Pipe(BasePipe):
             if self._plot is None:
                 if self.df is None:
                     return None
-
                 request = request or self.last_result.visualization_prompt
-                self._plot = self.visualizer.visualize(request, self.df)
+                if request:
+                    self._plot = self.visualizer.visualize(request, self.df)
+                else:
+                    return None
 
             return self._plot.plot
         return None

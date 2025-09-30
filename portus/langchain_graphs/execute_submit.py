@@ -26,6 +26,8 @@ class AgentState(TypedDict):
 
 
 class ExecuteSubmit(Graph):
+    """Simple graph with two tools: run_sql_query and submit_query_id.
+    All context must be in the SystemMessage."""
     def __init__(self, connection: DuckDBPyConnection):
         self._connection = connection
 

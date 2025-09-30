@@ -35,7 +35,12 @@ class LighthouseAgent(Agent):
         return prompt
 
     def execute(self, messages: list[BaseMessage]) -> ExecutionResult:
-        init_state = self._graph.init_state([SystemMessage(self.render_system_prompt()), *messages])
+        if messages[0].type != "system":
+            messages = [
+                SystemMessage(self.render_system_prompt()),
+                *messages
+            ]
+        init_state = self._graph.init_state(messages)
         last_state: dict[str, Any] | None = None
         try:
             for chunk in self._compiled_graph.stream(

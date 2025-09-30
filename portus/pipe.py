@@ -2,6 +2,7 @@ import abc
 from abc import ABC
 from typing import Optional, Any
 
+from langchain_core.messages import BaseMessage
 from pandas import DataFrame
 
 
@@ -41,4 +42,9 @@ class BasePipe(ABC):
     @property
     @abc.abstractmethod
     def sql(self) -> str | None:
+        pass
+
+    @property
+    @abc.abstractmethod
+    def messages(self) -> list[BaseMessage]:
         pass

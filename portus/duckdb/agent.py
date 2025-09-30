@@ -8,10 +8,10 @@ from langchain_core.messages import HumanMessage
 from langchain_core.tools import tool
 from langgraph.prebuilt import create_react_agent
 
+from portus.session import BaseSession
 from portus.duckdb.utils import init_duckdb_con, sql_strip
-from portus.executor import Executor, ExecutionResult
+from portus.agent import Agent, ExecutionResult
 from portus.opa import Opa
-from portus.session import Session
 
 logger = logging.getLogger(__name__)
 
@@ -21,9 +21,9 @@ class AgentResponse(TypedDict):
     explanation: str
 
 
-class SimpleDuckDBAgenticExecutor(Executor):
+class SimpleDuckDBAgenticExecutor(Agent):
     @staticmethod
-    def __describe_duckdb_schema(con: DuckDBPyConnection, max_cols_per_table: int = 40) -> str:
+    def describe_duckdb_schema(con: DuckDBPyConnection, max_cols_per_table: int = 40) -> str:
         rows = con.execute("""
                            SELECT table_catalog, table_schema, table_name
                            FROM information_schema.tables
@@ -51,7 +51,7 @@ class SimpleDuckDBAgenticExecutor(Executor):
         return "\n".join(lines) if lines else "(no base tables found)"
 
     @staticmethod
-    def __make_duckdb_tool(con: DuckDBPyConnection):
+    def _make_duckdb_tool(con: DuckDBPyConnection):
         @tool("execute_sql")
         def execute_sql(sql: str, limit: int = 10) -> str:
             """
@@ -85,13 +85,13 @@ class SimpleDuckDBAgenticExecutor(Executor):
         return execute_sql
 
     @staticmethod
-    def __make_react_duckdb_agent(
+    def _make_react_duckdb_agent(
             con: DuckDBPyConnection,
             llm: BaseChatModel
     ):
-        execute_sql_tool = SimpleDuckDBAgenticExecutor.__make_duckdb_tool(con)
+        execute_sql_tool = SimpleDuckDBAgenticExecutor._make_duckdb_tool(con)
         tools = [execute_sql_tool]
-        schema_text = SimpleDuckDBAgenticExecutor.__describe_duckdb_schema(con)
+        schema_text = SimpleDuckDBAgenticExecutor.describe_duckdb_schema(con)
 
         SYSTEM_PROMPT = f"""You are a careful data analyst using the ReAct pattern with tools.
     Use the `execute_sql` tool to run exactly one DuckDB SQL statement when needed.
@@ -128,7 +128,7 @@ class SimpleDuckDBAgenticExecutor(Executor):
 
     def execute(
             self,
-            session: Session,
+            session: BaseSession,
             opas: list[Opa],
             llm: BaseChatModel,
             *,

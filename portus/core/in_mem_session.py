@@ -1,70 +1,59 @@
-from typing import Optional, Any, TYPE_CHECKING
+from pathlib import Path
+from typing import Optional, Any
 
-from langchain_core.language_models.chat_models import BaseChatModel
 from pandas import DataFrame
 
-from portus.duckdb.agent import SimpleDuckDBAgenticExecutor
-from portus.session import Session
-from portus.pipe import Pipe
-from portus.core.lazy_pipe import LazyPipe
-from portus.vizualizer import DumbVisualizer
+from portus.agents.lighthouse_agent import LighthouseAgent
+from portus.core.llms import LLMConfig
+from portus.core.pipe import Pipe
+from portus.data_source.data_collection import DataCollection
+from portus.data_source.data_source import DataSource
 
-if TYPE_CHECKING:
-    from portus.executor import Executor
-    from portus.vizualizer import Visualizer
+from portus.langchain_graphs.execute_submit import ExecuteSubmit
+from portus.session import BaseSession
+from portus.pipe import BasePipe
+from portus.vizualizer import DumbVisualizer, Visualizer
+
+DEFAULT_TEMPLATE_PATH = Path("agent_system.jinja")
 
 
-class InMemSession(Session):
+class Session(BaseSession):
     def __init__(
             self,
             name: str,
-            llm: BaseChatModel,
+            llm_config: LLMConfig,
             *,
-            data_executor=SimpleDuckDBAgenticExecutor(),
             visualizer=DumbVisualizer(),
             default_rows_limit: int = 1000
     ):
-        self.__name = name
-        self.__llm = llm
+        self._name = name
+        self._llm_config = llm_config
 
-        self.__dbs: dict[str, Any] = {}
-        self.__dfs: dict[str, DataFrame] = {}
+        self._visualizer = visualizer
+        self._default_rows_limit = default_rows_limit
 
-        self.__executor = data_executor
-        self.__visualizer = visualizer
-        self.__default_rows_limit = default_rows_limit
+        self._data_collection = DataCollection()
 
     def add_db(self, connection: Any, *, name: Optional[str] = None) -> None:
-        conn_name = name or f"db{len(self.__dbs) + 1}"
-        self.__dbs[conn_name] = connection
+        self._data_collection.add_db(connection, name)
 
     def add_df(self, df: DataFrame, *, name: Optional[str] = None) -> None:
-        df_name = name or f"df{len(self.__dfs) + 1}"
-        self.__dfs[df_name] = df
+        self._data_collection.add_df(df, name)
 
-    def ask(self, query: str) -> Pipe:
-        return LazyPipe(self, default_rows_limit=self.__default_rows_limit).ask(query)
-
-    @property
-    def dbs(self) -> dict[str, Any]:
-        return dict(self.__dbs)
+    def ask(self, query: str) -> BasePipe:
+        agent = LighthouseAgent(self._data_collection, ExecuteSubmit(self._data_collection.get_connection()),
+                                self._llm_config, DEFAULT_TEMPLATE_PATH)
+        return Pipe(agent, self._visualizer).ask(query)
 
     @property
-    def dfs(self) -> dict[str, DataFrame]:
-        return dict(self.__dfs)
+    def sources(self) -> list[DataSource]:
+        return self._data_collection.get_sources()
 
     @property
     def name(self) -> str:
-        return self.__name
+        return self._name
 
     @property
-    def llm(self) -> BaseChatModel:
-        return self.__llm
+    def visualizer(self) -> Visualizer:
+        return self._visualizer
 
-    @property
-    def executor(self) -> "Executor":
-        return self.__executor
-
-    @property
-    def visualizer(self) -> "Visualizer":
-        return self.__visualizer

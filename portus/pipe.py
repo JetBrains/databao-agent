@@ -5,15 +5,21 @@ from typing import Optional, Any
 from pandas import DataFrame
 
 
-class Pipe(ABC):
+class BasePipe(ABC):
+    """Pipe contains Agent and history of messages.
+    It returns results of the last execution.
+    After calling `ask` method, Pipe is changing its state."""
+    @property
     @abc.abstractmethod
-    def df(self, *, rows_limit: Optional[int] = None) -> Optional[DataFrame]:
+    def df(self, *, rows_limit: Optional[int] = None) -> DataFrame | None:
         pass
 
+    @property
     @abc.abstractmethod
-    def plot(self, request: str = "visualize data", *, rows_limit: Optional[int] = None) -> Optional[Any]:
+    def plot(self, request: str | None = None, *, rows_limit: Optional[int] = None) -> Any:
         pass
 
+    @property
     @abc.abstractmethod
     def text(self) -> str:
         pass
@@ -29,5 +35,10 @@ class Pipe(ABC):
 
     @property
     @abc.abstractmethod
-    def code(self) -> Optional[str]:
+    def code(self) -> str | None:
+        pass
+
+    @property
+    @abc.abstractmethod
+    def sql(self) -> str | None:
         pass

@@ -1,0 +1,68 @@
+from typing import Self, Optional, Any
+
+from langchain_core.messages import BaseMessage, HumanMessage
+from pandas import DataFrame
+
+from portus.vizualizer import Visualizer
+from portus.agent import ExecutionResult, Agent
+from portus.pipe import BasePipe
+
+
+class Pipe(BasePipe):
+    def __init__(self, agent: Agent, visualizer: Visualizer):
+        self.agent = agent
+        self.messages: list[BaseMessage] = []
+        self.last_result: ExecutionResult | None = None
+        self.visualizer = visualizer
+        self._plot = None
+
+    @property
+    def df(self, *, rows_limit: Optional[int] = None) -> DataFrame | None:
+        if self.last_result:
+            if rows_limit:
+                return self.last_result.df.head(rows_limit)
+            return self.last_result.df
+        return None
+
+    @property
+    def plot(self, request: str | None = None, *, rows_limit: Optional[int] = None) -> Any:
+        if self.last_result:
+            if self._plot is None:
+                if self.df is None:
+                    return None
+
+                request = request or self.last_result.visualization_prompt
+                self._plot = self.visualizer.visualize(request, self.df)
+
+            return self._plot.plot
+        return None
+
+    @property
+    def text(self) -> str:
+        if self.last_result:
+            return self.last_result.text
+        return ""
+
+    @property
+    def meta(self) -> dict[str, Any]:
+        if self.last_result:
+            return self.last_result.meta
+        return {}
+
+    @property
+    def sql(self) -> str | None:
+        if self.last_result:
+            return self.last_result.sql
+        return None
+
+    @property
+    def code(self) -> str | None:
+        if self.last_result and self._plot:
+            return self._plot.code
+        return None
+
+    def ask(self, query: str) -> Self:
+        self._plot = None
+        self.last_result = self.agent.execute(self.messages + [HumanMessage(query)])
+        self.messages = self.last_result.messages
+        return self

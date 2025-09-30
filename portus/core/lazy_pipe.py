@@ -2,17 +2,17 @@ from typing import Optional, Any
 
 from pandas import DataFrame
 
-from portus.executor import ExecutionResult
+from portus.agent import ExecutionResult
 from portus.opa import Opa
-from portus.pipe import Pipe
-from portus.session import Session
+from portus.pipe import BasePipe
+from portus.session import BaseSession
 from portus.vizualizer import VisualisationResult
 
 
-class LazyPipe(Pipe):
+class LazyPipe(BasePipe):
     def __init__(
             self,
-            session: Session,
+            session: BaseSession,
             *,
             default_rows_limit: int = 1000
     ):
@@ -60,7 +60,7 @@ class LazyPipe(Pipe):
     def __str__(self):
         return self.text()
 
-    def ask(self, query: str) -> Pipe:
+    def ask(self, query: str) -> BasePipe:
         self.__opas.append(Opa(query=query))
         return self
 

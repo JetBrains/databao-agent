@@ -18,7 +18,7 @@ if not logger.handlers:
 def open_session(
         name: str,
         *,
-        llm: Union[str, LLMConfig] = "gpt-5",
+        llm: Union[str, LLMConfig] = "claude-sonnet-4-5-20250929",
         visualizer: Visualizer = DumbVisualizer(),
         default_rows_limit: int = 1000
 ) -> BaseSession:

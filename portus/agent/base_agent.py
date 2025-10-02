@@ -17,7 +17,7 @@ class ExecutionResult:
     """Full history of messages"""
 
 
-class Agent(ABC):
+class BaseAgent(ABC):
     """Agent contains everything needed to process user's query."""
     @abstractmethod
     def execute(self, messages: list[BaseMessage]) -> ExecutionResult:

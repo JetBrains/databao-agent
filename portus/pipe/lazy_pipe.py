@@ -2,9 +2,9 @@ from typing import Optional, Any
 
 from pandas import DataFrame
 
-from portus.agent import ExecutionResult
+from portus.agent.base_agent import ExecutionResult
 from portus.opa import Opa
-from portus.pipe import BasePipe
+from portus.pipe.base_pipe import BasePipe
 from portus.session import BaseSession
 from portus.vizualizer import VisualisationResult
 

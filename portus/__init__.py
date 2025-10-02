@@ -1,11 +1,11 @@
 import logging
 from typing import Union
 
-from portus.agents.lighthouse_agent import LighthouseAgent
+from portus.agent.lighthouse_agent import LighthouseAgent
 from portus.core.llms import LLMConfig
 from portus.session import BaseSession
 from portus.core.in_mem_session import Session
-from portus.agent import Agent
+from portus.agent.base_agent import BaseAgent
 from portus.duckdb.agent import SimpleDuckDBAgenticExecutor
 from portus.vizualizer import Visualizer, DumbVisualizer
 

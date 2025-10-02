@@ -4,17 +4,17 @@ from typing import Any
 from langchain_core.messages import BaseMessage, SystemMessage
 from langchain_core.runnables import RunnableConfig
 
+from portus.agent import BaseAgent, ExecutionResult
 from portus.duckdb.agent import SimpleDuckDBAgenticExecutor
 from portus.core.llms import LLMConfig
 from portus.data_source.data_collection import DataCollection
-from portus.agent import ExecutionResult, Agent
 from portus.langchain_graphs.graph import Graph
 from portus.utils import get_today_date_str, read_prompt_template
 
 MAX_ROWS = 12
 
 
-class LighthouseAgent(Agent):
+class LighthouseAgent(BaseAgent):
     def __init__(self, data_collection: DataCollection,
                  graph: Graph, llm_config: LLMConfig, template_path: Path):
         self._data_collection = data_collection

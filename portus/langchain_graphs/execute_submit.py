@@ -8,8 +8,8 @@ from langgraph.constants import START, END
 from langgraph.graph import add_messages
 from langgraph.graph.state import CompiledStateGraph, StateGraph
 
+from portus.agent.base_agent import ExecutionResult
 from portus.core.llms import get_chat_model, model_bind_tools, chat, LLMConfig
-from portus.agent import ExecutionResult
 from portus.langchain_graphs.graph import Graph
 from portus.utils import exception_to_string
 

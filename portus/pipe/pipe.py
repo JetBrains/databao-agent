@@ -3,13 +3,14 @@ from typing import Self, Optional, Any
 from langchain_core.messages import BaseMessage, HumanMessage
 from pandas import DataFrame
 
+from portus import BaseAgent
+from portus.agent.base_agent import ExecutionResult
+from portus.pipe.base_pipe import BasePipe
 from portus.vizualizer import Visualizer
-from portus.agent import ExecutionResult, Agent
-from portus.pipe import BasePipe
 
 
 class Pipe(BasePipe):
-    def __init__(self, agent: Agent, visualizer: Visualizer):
+    def __init__(self, agent: BaseAgent, visualizer: Visualizer):
         self.agent = agent
         self._messages: list[BaseMessage] = []
         self.last_result: ExecutionResult | None = None

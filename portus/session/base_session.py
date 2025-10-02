@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any
 from pandas import DataFrame
 
 from portus.data_source.data_source import DataSource
-from portus.pipe import BasePipe
+from portus.pipe.base_pipe import BasePipe
 
 if TYPE_CHECKING:
     from portus.vizualizer import Visualizer

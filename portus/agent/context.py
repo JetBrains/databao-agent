@@ -1,8 +1,5 @@
 import dataclasses
 from pathlib import Path
-from typing import Any, Self
-
-from duckdb import DuckDBPyConnection
 
 from portus.utils import get_today_date_str, read_prompt_template
 
@@ -28,7 +25,7 @@ class Context:
     """Description of special values, which have some context behind them.
     For example, product_type can be 'cloud' or 'on-premise'.
     Sentinel values ('no_data', 'hidden') must be mentioned.
-    Each value can have context, e.g. 'cloud' means 'expiration_date' is NULL and correct price is calculated by formula ....
+    Each value can have context, e.g. 'cloud' means 'expiration_date' is NULL and correct price is calculated by formula
     Paragraphs can be used with '##' like:
     ## Product types
         'cloud': expiration_date is NULL and correct price is calculated by formula ....
@@ -66,7 +63,7 @@ class Context:
     """Most important instructions for the agent"""
 
     def render(self) -> str:
-        _, prompt_template = read_prompt_template(Path(self.template_path))
+        prompt_template = read_prompt_template(Path(self.template_path))
 
         return prompt_template.render(
             date=get_today_date_str(),
@@ -130,4 +127,3 @@ class Context:
     #         personal_info=personal_info,
     #         final_instructions=final_instructions,
     #     )
-

@@ -6,11 +6,11 @@ from langchain_core.messages import BaseMessage
 from pandas import DataFrame
 
 
-@dataclass(frozen=True)
+@dataclass(kw_only=True, frozen=True)
 class ExecutionResult:
     text: str
-    meta: dict[str, Any] = None
-    sql: str = None
+    meta: dict[str, Any] | None = None
+    sql: str | None = None
     visualization_prompt: str | None = None
     df: DataFrame | None = None
     messages: list[BaseMessage] | None = None
@@ -19,6 +19,7 @@ class ExecutionResult:
 
 class BaseAgent(ABC):
     """Agent contains everything needed to process user's query."""
+
     @abstractmethod
     def execute(self, messages: list[BaseMessage]) -> ExecutionResult:
         raise NotImplementedError

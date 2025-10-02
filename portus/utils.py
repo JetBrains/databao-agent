@@ -13,7 +13,6 @@ def get_today_date_str() -> str:
 
 
 def read_prompt_template(relative_path: Path) -> jinja2.Template:
-
     env = jinja2.Environment(
         loader=jinja2.FileSystemLoader([PROJECT_ROOT / "prompts", PROJECT_ROOT / "resources"]),
         trim_blocks=True,  # better whitespace handling

@@ -2,7 +2,7 @@ import logging
 
 from portus.agent.base_agent import BaseAgent as BaseAgent
 from portus.agent.lighthouse_agent import LighthouseAgent as LighthouseAgent
-from portus.duckdb.agent import ReactDuckDBAgent as ReactDuckDBAgent
+from portus.agent.react_duckdb_agent import ReactDuckDBAgent as ReactDuckDBAgent
 from portus.llms import LLMConfig
 from portus.session.base_session import BaseSession
 from portus.session.in_mem_session import Session

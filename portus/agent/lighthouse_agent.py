@@ -5,8 +5,8 @@ from langchain_core.messages import BaseMessage, SystemMessage
 from langchain_core.runnables import RunnableConfig
 
 from portus.agent import BaseAgent, ExecutionResult
+from portus.agent.react_duckdb_agent import ReactDuckDBAgent
 from portus.data_source.data_collection import DataCollection
-from portus.duckdb.agent import ReactDuckDBAgent
 from portus.langchain_graphs.graph import Graph
 from portus.llms import LLMConfig
 from portus.utils import get_today_date_str, read_prompt_template

@@ -1,7 +1,7 @@
 import abc
 from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Generic, Literal, TypeVar, overload
+from typing import TYPE_CHECKING, Any, Literal, overload
 
 import pandas as pd
 
@@ -14,18 +14,17 @@ if TYPE_CHECKING:
     from portus.data_source.config_classes.sql_alchemy_data_source_config import SqlAlchemyDataSourceConfig
     from portus.data_source.sqlalchemy_source import SqlAlchemyDataSource
 
-DataSourceConfigT = TypeVar("DataSourceConfigT", bound=DataSourceConfig)
 
 type SemanticDict = dict[str, Any] | Literal["full"]  # TODO rename and make a pydantic model
 
 
-class DataSource(Generic[DataSourceConfigT], abc.ABC):
-    def __init__(self, config: DataSourceConfigT):
+class DataSource[T: DataSourceConfig](abc.ABC):
+    def __init__(self, config: T):
         self._config = config
 
     @property
     @abc.abstractmethod
-    def config(self) -> DataSourceConfigT:
+    def config(self) -> T:
         pass
 
     @property
@@ -104,12 +103,12 @@ async def get_data_source(config: "SqlAlchemyDataSourceConfig") -> "SqlAlchemyDa
 @overload
 async def get_data_source(
     config: DataSourceConfig,
-) -> DataSource | Sequence[DataSource]: ...
+) -> DataSource[DataSourceConfig] | Sequence[DataSource[DataSourceConfig]]: ...
 @overload
-async def get_data_source(config: Path) -> DataSource | Sequence[DataSource]: ...
+async def get_data_source(config: Path) -> DataSource[DataSourceConfig] | Sequence[DataSource[DataSourceConfig]]: ...
 async def get_data_source(
     config: DataSourceConfig | Path,
-) -> DataSource | Sequence[DataSource]:
+) -> DataSource[DataSourceConfig] | Sequence[DataSource[DataSourceConfig]]:
     """Create a data source or multiple data sources based on the config.
 
     Some configs are data source providers (e.g., metabase), while others represent single connections.
@@ -118,7 +117,7 @@ async def get_data_source(
         config = read_data_source_config(config)
     if config.source_class_import_path is not None:
         # ignore source_type if source_class_import_path is provided
-        class_ = import_plugin(config.source_class_import_path, DataSource)
+        class_ = import_plugin(config.source_class_import_path, DataSource[Any])  # type: ignore[type-abstract]
         return class_(config)
     match config.source_type:
         case "sqlalchemy":

@@ -40,7 +40,9 @@ class InMemSession(BaseSession):
         self._data_collection.add_df(df, name)
 
     def ask(self, query: str) -> BasePipe:
+        # Finalize the data sources for this session
         self._data_collection.commit()
+
         agent = LighthouseAgent(
             self._data_collection,
             ExecuteSubmit(self._data_collection),

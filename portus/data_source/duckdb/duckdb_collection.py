@@ -1,11 +1,14 @@
 from pathlib import Path
 
+import duckdb
 import pandas as pd
+from duckdb import DuckDBPyConnection
 from sqlalchemy import Engine, create_engine
 
+from portus.data_source.config_classes.data_source_config import DataSourceConfig
 from portus.data_source.config_classes.schema_inspection_config import InspectionOptions
 from portus.data_source.config_classes.sql_alchemy_data_source_config import SqlAlchemyDataSourceConfig
-from portus.data_source.data_source import DataSource, DataSourceConfig, SemanticDict
+from portus.data_source.data_source import DataSource, SemanticDict
 from portus.data_source.database_schema_types import DatabaseSchema
 from portus.data_source.duckdb.database_source import DatabaseSource
 from portus.data_source.duckdb.dataframe_source import DataFrameSource
@@ -56,6 +59,10 @@ class DuckDBCollection(DataSource[DuckDBCollectionConfig]):
     def config(self) -> DuckDBCollectionConfig:
         return self._config
 
+    @property
+    def sources(self) -> list[DuckDBSource]:
+        return self._sources
+
     def execute(self, query: str) -> pd.DataFrame | Exception:
         return self._sa_source.execute(query)
 
@@ -96,6 +103,9 @@ class DuckDBCollection(DataSource[DuckDBCollectionConfig]):
         self._config.database_or_schema = schemas_to_inspect
         self._sa_source.config.database_or_schema = schemas_to_inspect
 
-    @property
-    def sources(self) -> list[DuckDBSource]:
-        return self._sources
+    def get_duckdb_connection(self) -> DuckDBPyConnection:
+        # This function is for temporary backwards compatibility only.
+        con = duckdb.connect(database=":memory:", read_only=False)
+        for source in self._sources:
+            source.register(con)
+        return con

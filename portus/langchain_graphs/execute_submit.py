@@ -30,7 +30,7 @@ class ExecuteSubmit(Graph):
     """Simple graph with two tools: run_sql_query and submit_query_id.
     All context must be in the SystemMessage."""
 
-    def __init__(self, data_source: DataSource):
+    def __init__(self, data_source: DataSource[Any]):
         self._data_source = data_source
 
     def init_state(self, messages: list[BaseMessage]) -> dict[str, Any]:

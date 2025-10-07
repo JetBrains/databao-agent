@@ -85,7 +85,7 @@ def import_plugin[T](class_import_path: str, return_type_parent_class: type[T]) 
     Dynamically import a plugin class and check that it is a subclass of the return_type_parent_class.
     Args:
         class_import_path (str): The full path to the plugin class, e.g. "otherlib.plugins.my_plugin.MyPlugin"
-        return_type_parent_class (str): The parent class of the plugin class, e.g. "benchmark.plugins.Plugin"
+        return_type_parent_class: The parent class of the plugin class, e.g. "benchmark.plugins.Plugin"
 
     Returns:
         The imported class.
@@ -94,6 +94,6 @@ def import_plugin[T](class_import_path: str, return_type_parent_class: type[T]) 
     class_name = module_path_parts[-1]
     module_path = ".".join(module_path_parts[:-1])
     module = importlib.import_module(module_path)
-    class_ = getattr(module, class_name)
+    class_: type[T] = getattr(module, class_name)
     assert issubclass(class_, return_type_parent_class)
     return class_

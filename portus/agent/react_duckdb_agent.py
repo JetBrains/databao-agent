@@ -29,7 +29,7 @@ class ReactDuckDBAgent(BaseAgent):
         llm: BaseChatModel,
     ):
         self._data_collection = data_collection
-        self._compiled_graph = self._make_react_duckdb_agent(self._connection, llm)
+        self._compiled_graph = self._make_react_duckdb_agent(self._data_collection.get_duckdb_connection(), llm)
         self._rows_limit = 100
 
     @staticmethod

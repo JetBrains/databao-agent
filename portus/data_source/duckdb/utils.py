@@ -111,7 +111,7 @@ def list_inspectable_duckdb_tables(connection: DuckDBPyConnection | sa.Connectio
           AND table_schema NOT IN ('pg_catalog', 'pg_toast', 'information_schema')
         ORDER BY table_schema, table_name""",
     ).fetchall()
-    return rows
+    return [(str(row[0]), str(row[1]), str(row[2])) for row in rows]
 
 
 def inspect_duckdb_schema(

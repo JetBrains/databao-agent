@@ -142,7 +142,7 @@ def inspect_duckdb_schema(
             col_schema = ColumnSchema(name=col_name, dtype=col_type)
             col_schemas[col_name] = col_schema
         table_schema = TableSchema(name=table, schema_name=f"{db}.{schema}", columns=col_schemas)
-        table_schemas[table] = table_schema
+        table_schemas[table_schema.qualified_name] = table_schema
 
     db_schema = DatabaseSchema(db_type="duckdb", tables=table_schemas)
     return db_schema

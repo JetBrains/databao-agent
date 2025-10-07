@@ -19,6 +19,7 @@ dependencies = [
     "psycopg2-binary>=2.9.10",
     "matplotlib>=3.10.6",
     "edaplot",
+    "nest-asyncio>=1.6.0",
 ]
 
 [project.optional-dependencies]

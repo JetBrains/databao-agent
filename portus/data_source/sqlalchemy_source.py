@@ -147,6 +147,7 @@ class SqlAlchemyDataSource(DataSource[SqlAlchemyDataSourceConfig]):
                 "type": "inspect_schema",
                 "source_type": self.config.source_type,
                 "source": self.name,
+                "database_or_schema": database_or_schema,
                 "options": options.model_dump_for_cache(),
             }
         else:
@@ -194,7 +195,9 @@ class SqlAlchemyDataSource(DataSource[SqlAlchemyDataSourceConfig]):
 
             if cache is not None:
                 cache_tag = f"{self.name}/inspect_schema"
-                cache_key = cache.make_json_key(cache_dict | {"path": f"{cache_tag}/{table_name}/{col_name}"})
+                cache_key = cache.make_json_key(
+                    cache_dict | {"path": f"{cache_tag}/{database_or_schema}/{table_name}/{col_name}"}
+                )
                 if cache_key in cache:
                     return ColumnSchema.model_validate_json(cache.get(cache_key))
             column = await _process()

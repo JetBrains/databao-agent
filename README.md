@@ -30,7 +30,7 @@ session.ask("list all german shows").df()
 
 ```bash
 # Install dependencies
-uv sync
+uv sync --all-extras
 
 # Install pre-commit hooks for development
 uv run pre-commit install

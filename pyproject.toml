@@ -22,7 +22,6 @@ dependencies = [
 
 [project.optional-dependencies]
 examples = [
-    "matplotlib>=3.10.6",
     "notebook>=7.4.7",
     "python-dotenv>=1.1.1",
 ]

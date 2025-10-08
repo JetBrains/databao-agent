@@ -2027,7 +2027,6 @@ dependencies = [
 
 [package.optional-dependencies]
 examples = [
-    { name = "matplotlib" },
     { name = "notebook" },
     { name = "python-dotenv" },
 ]
@@ -2050,7 +2049,6 @@ requires-dist = [
     { name = "langchain-openai", specifier = ">=0.3.8,<0.4" },
     { name = "langgraph", specifier = ">=0.6.8" },
     { name = "matplotlib", specifier = ">=3.10.6" },
-    { name = "matplotlib", marker = "extra == 'examples'", specifier = ">=3.10.6" },
     { name = "notebook", marker = "extra == 'examples'", specifier = ">=7.4.7" },
     { name = "pandas", specifier = ">=2.3.0" },
     { name = "psycopg2-binary", specifier = ">=2.9.10" },

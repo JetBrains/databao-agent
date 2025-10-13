@@ -10,3 +10,7 @@ class Cache(ABC):
     @abstractmethod
     def get(self, k: str) -> BytesIO:
         raise NotImplementedError
+
+    @abstractmethod
+    def scoped(self, scope: str) -> "Cache":
+        raise NotImplementedError

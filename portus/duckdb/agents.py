@@ -135,7 +135,9 @@ class SimpleDuckDBAgenticExecutor(Executor):
         logger.info("Generated query: %s", answer.sql)
         df = con.execute(f"SELECT * FROM ({sql_strip(answer.sql)}) t LIMIT {rows_limit}").df()
 
-        # key = cache_scope + hash(opas)
-        # example of caching: session.get(key), session.put(key, value)
+        # key = hash(opas)
+        # cache = session.cache.scoped(cache_scope)
+        # cache.get(key)
+        # cache.put(key, value)
 
         return ExecutionResult(text=answer.explanation, meta={}, code=answer.sql, df=df)

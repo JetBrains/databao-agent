@@ -1,12 +1,14 @@
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from langchain_core.language_models.chat_models import BaseChatModel
 from pandas import DataFrame
 from pydantic import BaseModel, ConfigDict
 
-from .opa import Opa
 from .session import Session
+
+if TYPE_CHECKING:
+    from .pipe import PipeState
 
 
 class ExecutionResult(BaseModel):
@@ -22,6 +24,18 @@ class ExecutionResult(BaseModel):
 class Executor(ABC):
     @abstractmethod
     def execute(
-        self, session: Session, opas: list[Opa], llm: BaseChatModel, *, rows_limit: int = 100
-    ) -> ExecutionResult:
+        self, session: Session, pipe_state: "PipeState", llm: BaseChatModel, *, rows_limit: int = 100
+    ) -> tuple[ExecutionResult, "PipeState"]:
+        """
+        Execute the pipe operations in a stateless manner.
+
+        Args:
+            session: The session context
+            pipe_state: The current pipe state (input)
+            llm: The language model to use
+            rows_limit: Maximum number of rows to return
+
+        Returns:
+            A tuple of (ExecutionResult, updated PipeState)
+        """
         pass

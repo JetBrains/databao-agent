@@ -11,7 +11,8 @@ from langchain_core.tools import BaseTool, tool
 from langgraph.prebuilt import create_react_agent
 from pydantic import BaseModel
 
-from portus.core import ExecutionResult, Executor, Opa, Session
+from portus.core import ExecutionResult, Executor, Session
+from portus.core.pipe import PipeState
 
 from .utils import init_duckdb_con, sql_strip
 
@@ -127,11 +128,25 @@ class SimpleDuckDBAgenticExecutor(Executor):
         return agent, ask
 
     def execute(
-        self, session: Session, opas: list[Opa], llm: BaseChatModel, *, rows_limit: int = 100
-    ) -> ExecutionResult:
+        self, session: Session, pipe_state: PipeState, llm: BaseChatModel, *, rows_limit: int = 100
+    ) -> tuple[ExecutionResult, PipeState]:
         con = init_duckdb_con(session.dbs, session.dfs)
         agent, ask = self.__make_react_duckdb_agent(con, llm)
-        answer: AgentResponse = ask(opas[-1].query)
+        answer: AgentResponse = ask(pipe_state.opas[-1].query)
         logger.info("Generated query: %s", answer.sql)
         df = con.execute(f"SELECT * FROM ({sql_strip(answer.sql)}) t LIMIT {rows_limit}").df()
-        return ExecutionResult(text=answer.explanation, meta={}, code=answer.sql, df=df)
+
+        result = ExecutionResult(text=answer.explanation, meta={}, code=answer.sql, df=df)
+
+        # Create new state with execution results (PipeState is frozen)
+        updated_meta = {**pipe_state.meta, **result.meta}
+        updated_state = pipe_state.model_copy(
+            update={
+                "data_result": result,
+                "data_materialized": True,
+                "data_materialized_rows": rows_limit,
+                "meta": updated_meta,
+            }
+        )
+
+        return result, updated_state

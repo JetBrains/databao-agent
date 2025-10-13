@@ -1,14 +1,31 @@
+from __future__ import annotations
+
 import abc
 from abc import ABC
 from typing import TYPE_CHECKING, Any
 
 from langchain_core.language_models.chat_models import BaseChatModel
 from pandas import DataFrame
+from pydantic import BaseModel, ConfigDict, Field
 
 from .pipe import Pipe
 
 if TYPE_CHECKING:
+    from .pipe import PipeState
     from .visualizer import Visualizer
+
+
+class SessionState(BaseModel):
+    """Container for session stateful variables."""
+
+    dbs: dict[str, Any] = Field(default_factory=dict)
+    dfs: dict[str, DataFrame] = Field(default_factory=dict)
+    pipe_states: dict[str, PipeState] = Field(default_factory=dict)
+
+    model_config = ConfigDict(
+        frozen=True,  # Makes the model immutable
+        arbitrary_types_allowed=True,  # Allows DataFrame, PipeState, and other complex types
+    )
 
 
 class Session(ABC):
@@ -22,6 +39,16 @@ class Session(ABC):
 
     @abc.abstractmethod
     def ask(self, query: str) -> Pipe:
+        pass
+
+    @abc.abstractmethod
+    def _update_pipe_state(self, pipe_id: str, pipe_state: PipeState) -> None:
+        """Internal method to update a pipe's state. Used by Pipe implementations."""
+        pass
+
+    @property
+    @abc.abstractmethod
+    def state(self) -> SessionState:
         pass
 
     @property
@@ -46,5 +73,5 @@ class Session(ABC):
 
     @property
     @abc.abstractmethod
-    def visualizer(self) -> "Visualizer":
+    def visualizer(self) -> Visualizer:
         pass

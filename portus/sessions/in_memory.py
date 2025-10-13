@@ -5,10 +5,10 @@ from pandas import DataFrame
 
 from portus.configs.llm import LLMConfig
 from portus.core import Executor, Pipe, Session, Visualizer
+from portus.core.pipe import PipeState
+from portus.core.session import SessionState
 
-from ..agents.duckdb import SimpleDuckDBAgenticExecutor
 from ..pipes.lazy import LazyPipe
-from ..visualizers.dumb import DumbVisualizer
 
 
 class InMemSession(Session):
@@ -17,46 +17,48 @@ class InMemSession(Session):
         name: str,
         llm_config: LLMConfig,
         *,
-        data_executor: Executor | type[Executor] | None = None,
-        visualizer: Visualizer | None = None,
+        data_executor: Executor,
+        visualizer: Visualizer,
         default_rows_limit: int = 1000,
     ):
         self._name = name
         self._llm = llm_config.chat_model
+        self._state = SessionState()
 
-        self._dbs: dict[str, Any] = {}
-        self._dfs: dict[str, DataFrame] = {}
-
-        # Normalize to an executor type; always create per-pipe instance in ask()
-        if isinstance(data_executor, type):
-            self._executor_type = data_executor
-        elif data_executor is not None:
-            self._executor_type = type(data_executor)
-        else:
-            self._executor_type = SimpleDuckDBAgenticExecutor
-        self._visualizer = visualizer or DumbVisualizer()
+        self._executor = data_executor
+        self._visualizer = visualizer
         self._default_rows_limit = default_rows_limit
 
     def add_db(self, connection: Any, *, name: str | None = None) -> None:
-        conn_name = name or f"db{len(self._dbs) + 1}"
-        self._dbs[conn_name] = connection
+        conn_name = name or f"db{len(self._state.dbs) + 1}"
+        updated_dbs = {**self._state.dbs, conn_name: connection}
+        self._state = self._state.model_copy(update={"dbs": updated_dbs})
 
     def add_df(self, df: DataFrame, *, name: str | None = None) -> None:
-        df_name = name or f"df{len(self._dfs) + 1}"
-        self._dfs[df_name] = df
+        df_name = name or f"df{len(self._state.dfs) + 1}"
+        updated_dfs = {**self._state.dfs, df_name: df}
+        self._state = self._state.model_copy(update={"dfs": updated_dfs})
 
     def ask(self, query: str) -> Pipe:
-        # Create a fresh executor per pipe
-        executor = self._executor_type()
-        return LazyPipe(self, executor, default_rows_limit=self._default_rows_limit).ask(query)
+        new_pipe = LazyPipe(self, self._executor, default_rows_limit=self._default_rows_limit)
+        return new_pipe.ask(query)
+
+    def _update_pipe_state(self, pipe_id: str, pipe_state: PipeState) -> None:
+        """Internal method to update a pipe's state in the frozen SessionState."""
+        updated_pipe_states = {**self._state.pipe_states, pipe_id: pipe_state}
+        self._state = self._state.model_copy(update={"pipe_states": updated_pipe_states})
+
+    @property
+    def state(self) -> SessionState:
+        return self._state
 
     @property
     def dbs(self) -> dict[str, Any]:
-        return dict(self._dbs)
+        return dict(self._state.dbs)
 
     @property
     def dfs(self) -> dict[str, DataFrame]:
-        return dict(self._dfs)
+        return dict(self._state.dfs)
 
     @property
     def name(self) -> str:
@@ -69,5 +71,5 @@ class InMemSession(Session):
     # Session no longer exposes executor; visualizer is still provided
 
     @property
-    def visualizer(self) -> "Visualizer":
+    def visualizer(self) -> Visualizer:
         return self._visualizer

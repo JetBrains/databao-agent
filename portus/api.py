@@ -10,14 +10,14 @@ def open_session(
     name: str,
     *,
     llm_config: LLMConfig | None = None,
-    data_executor: Executor | None = None,
+    data_executor: Executor | type[Executor] | None = None,
     visualizer: Visualizer | None = None,
     default_rows_limit: int = 1000,
 ) -> Session:
     return InMemSession(
         name,
         llm_config if llm_config else DefaultLLMConfig(),
-        data_executor=data_executor or SimpleDuckDBAgenticExecutor(),
+        data_executor=data_executor or SimpleDuckDBAgenticExecutor,
         visualizer=visualizer or DumbVisualizer(),
         default_rows_limit=default_rows_limit,
     )

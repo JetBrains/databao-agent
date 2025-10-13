@@ -17,7 +17,7 @@ class InMemSession(Session):
         name: str,
         llm_config: LLMConfig,
         *,
-        data_executor: Executor | None = None,
+        data_executor: Executor | type[Executor] | None = None,
         visualizer: Visualizer | None = None,
         default_rows_limit: int = 1000,
     ):
@@ -27,7 +27,13 @@ class InMemSession(Session):
         self._dbs: dict[str, Any] = {}
         self._dfs: dict[str, DataFrame] = {}
 
-        self._executor = data_executor or SimpleDuckDBAgenticExecutor()
+        # Normalize to an executor type; always create per-pipe instance in ask()
+        if isinstance(data_executor, type):
+            self._executor_type = data_executor
+        elif data_executor is not None:
+            self._executor_type = type(data_executor)
+        else:
+            self._executor_type = SimpleDuckDBAgenticExecutor
         self._visualizer = visualizer or DumbVisualizer()
         self._default_rows_limit = default_rows_limit
 
@@ -40,7 +46,9 @@ class InMemSession(Session):
         self._dfs[df_name] = df
 
     def ask(self, query: str) -> Pipe:
-        return LazyPipe(self, default_rows_limit=self._default_rows_limit).ask(query)
+        # Create a fresh executor per pipe
+        executor = self._executor_type()
+        return LazyPipe(self, executor, default_rows_limit=self._default_rows_limit).ask(query)
 
     @property
     def dbs(self) -> dict[str, Any]:
@@ -58,9 +66,7 @@ class InMemSession(Session):
     def llm(self) -> BaseChatModel:
         return self._llm
 
-    @property
-    def executor(self) -> "Executor":
-        return self._executor
+    # Session no longer exposes executor; visualizer is still provided
 
     @property
     def visualizer(self) -> "Visualizer":

@@ -8,7 +8,6 @@ from pandas import DataFrame
 from .pipe import Pipe
 
 if TYPE_CHECKING:
-    from .executor import Executor
     from .visualizer import Visualizer
 
 
@@ -43,11 +42,6 @@ class Session(ABC):
     @property
     @abc.abstractmethod
     def llm(self) -> BaseChatModel:
-        pass
-
-    @property
-    @abc.abstractmethod
-    def executor(self) -> "Executor":
         pass
 
     @property

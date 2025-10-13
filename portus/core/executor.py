@@ -5,6 +5,13 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from pandas import DataFrame
 from pydantic import BaseModel, ConfigDict
 
+from portus.configs.llm import LLMConfig
+
+try:
+    from duckdb import DuckDBPyConnection
+except ImportError:
+    DuckDBPyConnection = Any  # type: ignore
+
 from .opa import Opa
 from .session import Session
 
@@ -25,3 +32,21 @@ class Executor(ABC):
         self, session: Session, opas: list[Opa], llm: BaseChatModel, *, rows_limit: int = 100
     ) -> ExecutionResult:
         pass
+
+
+class AgentExecutor(Executor):
+    """Base class for agents that execute with a DuckDB connection and LLM configuration.
+
+    Stores messages as private state that child classes can access during execution.
+    Message history is preserved across multiple execute() calls.
+    """
+
+    def __init__(
+        self,
+        data_connection: DuckDBPyConnection,
+        llm_config: LLMConfig,
+    ):
+        self._data_connection = data_connection
+        self._llm_config = llm_config
+        self._messages: list[Any] = []  # Store messages as private field for child classes
+        self._processed_opa_count: int = 0  # Track how many opas we've already converted

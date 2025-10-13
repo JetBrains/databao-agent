@@ -2,11 +2,12 @@ from typing import Any
 
 from pandas import DataFrame
 
-from portus.core import ExecutionResult, Executor, Opa, Pipe, Session, VisualisationResult
+from portus.core import ExecutionResult, Opa, Pipe, Session, VisualisationResult
+from portus.core.executor import AgentExecutor
 
 
 class LazyPipe(Pipe):
-    def __init__(self, session: Session, executor: Executor, *, default_rows_limit: int = 1000):
+    def __init__(self, session: Session, executor: AgentExecutor, *, default_rows_limit: int = 1000):
         self._session = session
         self._executor = executor
         self._default_rows_limit = default_rows_limit
@@ -72,3 +73,7 @@ class LazyPipe(Pipe):
     @property
     def code(self) -> str | None:
         return self.__materialize_data(self._data_materialized_rows).code
+
+    @property
+    def executor(self) -> AgentExecutor:
+        return self._executor

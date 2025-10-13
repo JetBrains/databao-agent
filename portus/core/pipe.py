@@ -1,8 +1,11 @@
 import abc
 from abc import ABC
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pandas import DataFrame
+
+if TYPE_CHECKING:
+    from .executor import Executor
 
 
 class Pipe(ABC):
@@ -30,4 +33,9 @@ class Pipe(ABC):
     @property
     @abc.abstractmethod
     def code(self) -> str | None:
+        pass
+
+    @property
+    @abc.abstractmethod
+    def executor(self) -> "Executor":
         pass

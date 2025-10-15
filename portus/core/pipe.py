@@ -69,6 +69,8 @@ class Pipe:
 
     def ask(self, query: str) -> "Pipe":
         self._opas.append(Opa(query=query))
+        self._data_materialized = False
+        self._visualization_materialized = False
         return self
 
     @property

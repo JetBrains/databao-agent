@@ -8,8 +8,6 @@ from sqlalchemy import Engine
 from portus.configs.llm import LLMConfig
 from portus.core.pipe import Pipe
 
-from ..pipes.lazy import LazyPipe
-
 if TYPE_CHECKING:
     from .cache import Cache
     from .executor import Executor
@@ -68,7 +66,7 @@ class Session:
             self.__dbs["duckdb"] = self.__duckdb_connection
 
     def ask(self, query: str) -> Pipe:
-        return LazyPipe(self, default_rows_limit=self.__default_rows_limit).ask(query)
+        return Pipe(self, default_rows_limit=self.__default_rows_limit).ask(query)
 
     @property
     def dbs(self) -> dict[str, Any]:

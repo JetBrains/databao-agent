@@ -10,10 +10,10 @@ from langgraph.graph.state import CompiledStateGraph
 from langgraph.prebuilt import create_react_agent
 from pydantic import BaseModel
 
-from portus.configs.llm import LLMConfig
-from portus.core import AgentExecutor, ExecutionResult, Opa, Session
+from portus.agents.base import AgentExecutor
+from portus.core import ExecutionResult, Opa, Session
 
-from ..utils import describe_duckdb_schema
+from .utils import describe_duckdb_schema
 
 logger = logging.getLogger(__name__)
 
@@ -24,14 +24,11 @@ class AgentResponse(BaseModel):
 
 
 class ReactDuckDBAgent(AgentExecutor):
-    def __init__(
-        self,
-        data_connection: DuckDBPyConnection,
-        llm_config: LLMConfig,
-    ):
-        super().__init__(data_connection, llm_config)
-        self._compiled_graph = self._make_react_duckdb_agent(self._data_connection, self._llm_config.chat_model)
-        self._rows_limit = 100
+    def __init__(self) -> None:
+        """Initialize agent with lazy graph compilation."""
+        self._cached_compiled_graph: CompiledStateGraph[Any] | None = None
+        self._cached_connection_id: int | None = None
+        self._cached_llm_config_id: int | None = None
 
     @staticmethod
     def _make_duckdb_tool(con: DuckDBPyConnection) -> Any:
@@ -101,26 +98,58 @@ class ReactDuckDBAgent(AgentExecutor):
         )
         return agent
 
+    def _get_or_create_graph(self, session: Session) -> tuple[Any, CompiledStateGraph[Any]]:
+        """Get cached graph or create new one if connection/config changed."""
+        data_connection = self._get_data_connection(session)
+        llm_config = self._get_llm_config(session)
+
+        connection_id = id(data_connection)
+        llm_config_id = id(llm_config)
+
+        # Check if we need to recompile (connection or config changed)
+        if (
+            self._cached_compiled_graph is None
+            or self._cached_connection_id != connection_id
+            or self._cached_llm_config_id != llm_config_id
+        ):
+            # Create and compile the graph
+            self._cached_compiled_graph = self._make_react_duckdb_agent(data_connection, llm_config.chat_model)
+            self._cached_connection_id = connection_id
+            self._cached_llm_config_id = llm_config_id
+
+        return data_connection, self._cached_compiled_graph
+
     def execute(
-        self, session: Session, opas: list[Opa], llm: BaseChatModel, *, rows_limit: int = 100
+        self, session: Session, opas: list[Opa], *, rows_limit: int = 100, cache_scope: str = "common_cache"
     ) -> ExecutionResult:
+        # Get or create graph (cached after first use)
+        data_connection, compiled_graph = self._get_or_create_graph(session)
+
+        # Get current state from cache
+        messages = self._get_messages(session, cache_scope)
+        processed_opa_count = self._get_processed_opa_count(session, cache_scope)
+
         # Only convert NEW opas to messages and append them (preserving history)
-        new_opas = opas[self._processed_opa_count :]
+        new_opas = opas[processed_opa_count:]
         if new_opas:
             new_messages = [HumanMessage(content=opa.query) for opa in new_opas]
-            self._messages.extend(new_messages)
-            self._processed_opa_count = len(opas)
+            messages.extend(new_messages)
+            processed_opa_count = len(opas)
+            # Update cache with new processed count
+            self._set_processed_opa_count(session, cache_scope, processed_opa_count)
 
-        state = self._compiled_graph.invoke({"messages": self._messages})
+        state = compiled_graph.invoke({"messages": messages})
         answer: AgentResponse = state["structured_response"]
         logger.info("Generated query: %s", answer.sql)
-        df = self._data_connection.execute(f"SELECT * FROM ({self._sql_strip(answer.sql)}) t LIMIT {rows_limit}").df()
+        df = data_connection.execute(f"SELECT * FROM ({self._sql_strip(answer.sql)}) t LIMIT {rows_limit}").df()
 
         # Update our message history with all messages from the graph execution
         # (includes AI responses, tool calls, tool responses, etc.)
         final_messages = state.get("messages", [])
         if final_messages:
-            self._messages = final_messages
+            messages = final_messages
+            # Store updated messages in cache
+            self._set_messages(session, cache_scope, messages)
 
         return ExecutionResult(text=answer.explanation, code=answer.sql, df=df, meta={})
 

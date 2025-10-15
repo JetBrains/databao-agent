@@ -12,7 +12,7 @@ from langgraph.constants import END, START
 from langgraph.graph import add_messages
 from langgraph.graph.state import CompiledStateGraph, StateGraph
 
-from portus.configs.llm import LLMConfig, ModelFamily
+from portus.configs.llm import LLMConfig
 from portus.core import ExecutionResult
 
 from .utils import exception_to_string
@@ -281,9 +281,14 @@ class ExecuteSubmit:
         return messages + [response]
 
     @staticmethod
+    def _is_anthropic_model(config: LLMConfig) -> bool:
+        """Check if the model is an Anthropic model based on the config name."""
+        return "claude" in config.name.lower()
+
+    @staticmethod
     def _apply_system_prompt_caching(config: LLMConfig, messages: list[BaseMessage]) -> list[BaseMessage]:
         """Apply system prompt caching for Anthropic models."""
-        if not (config.cache_system_prompt and config.family == ModelFamily.ANTHROPIC):
+        if not (config.cache_system_prompt and ExecuteSubmit._is_anthropic_model(config)):
             return messages
         # Assume only the first message can be a system prompt.
         assert all(m.type != "system" for m in messages[1:])
@@ -302,7 +307,7 @@ class ExecuteSubmit:
         > Prompt caching references the entire prompt - tools, system, and messages (in that order) up to and including
             the block designated with cache_control.
         """
-        if config.family != ModelFamily.ANTHROPIC:
+        if not ExecuteSubmit._is_anthropic_model(config):
             return message
         new_content: list[dict[str, Any] | str]
         match message.content:

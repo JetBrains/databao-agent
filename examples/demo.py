@@ -21,7 +21,9 @@ df = pd.read_sql(
 )
 print(df)
 
-session = portus.open_session("my_session")
+# llm_config = LLMConfig.from_yaml("configs/qwen3-8b-ollama.yaml")  # Use a custom config file
+llm_config = None  # Use the default config
+session = portus.open_session("my_session", llm_config=llm_config)
 session.add_db(engine)
 
 data = {"show_id": ["s706", "s1032", "s1253"], "cancelled": [True, True, False]}

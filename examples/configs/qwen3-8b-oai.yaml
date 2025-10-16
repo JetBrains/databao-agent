@@ -1,0 +1,9 @@
+# https://huggingface.co/Qwen/Qwen3-8B-GGUF#best-practices
+# Greedy decoding should not be used. Set sampling parameters in your local server configuration.
+name: qwen/qwen3-8b  # For LM Studio
+#name: qwen3:8b  # For ollama
+api_base_url: http://localhost:8080/v1
+max_tokens: 32768
+temperature: 0.6
+use_responses_api: false
+timeout: 600

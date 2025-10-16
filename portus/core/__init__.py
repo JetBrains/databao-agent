@@ -5,4 +5,4 @@ from .pipe import Pipe
 from .session import Session
 from .visualizer import VisualisationResult, Visualizer
 
-__all__ = ["Session", "Pipe", "Executor", "ExecutionResult", "Visualizer", "VisualisationResult", "Opa", "Cache"]
+__all__ = ["Cache", "ExecutionResult", "Executor", "Opa", "Pipe", "Session", "VisualisationResult", "Visualizer"]

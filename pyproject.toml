@@ -62,4 +62,6 @@ select = [
     "SIM",
     # isort
     "I",
+    # ruff-specific
+    "RUF",
 ]

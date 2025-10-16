@@ -43,9 +43,7 @@ class Pipe:
         if self._data_result is None:
             raise RuntimeError("__data_result is None after materialization")
         if not self._visualization_materialized:
-            self._visualization_result = self.__session.visualizer.visualize(
-                request, self.__session.llm, self._data_result
-            )
+            self._visualization_result = self.__session.visualizer.visualize(request, self._data_result)
             self._visualization_materialized = True
             self._meta.update(self._visualization_result.meta)
             self._meta["plot_code"] = self._visualization_result.code  # maybe worth to expand as a property later

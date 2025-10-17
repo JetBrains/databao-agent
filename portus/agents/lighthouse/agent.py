@@ -19,15 +19,16 @@ class LighthouseAgent(AgentExecutor):
         super().__init__()
         self._cached_graph: ExecuteSubmit | None = None
 
-    def render_system_prompt(self, data_connection: Any) -> str:
+    def render_system_prompt(self, data_connection: Any, session: Session) -> str:
         """Render system prompt with database schema."""
-        # TODO: Add Context support
         prompt_template = read_prompt_template(Path("system_prompt.jinja"))
         db_schema = describe_duckdb_schema(data_connection)
+        context = session.context
 
         prompt = prompt_template.render(
             date=get_today_date_str(),
             db_schema=db_schema,
+            context=context,
         )
         return prompt
 
@@ -56,7 +57,7 @@ class LighthouseAgent(AgentExecutor):
         # Prepend system message if not present
         messages_with_system = messages
         if not messages_with_system or messages_with_system[0].type != "system":
-            messages_with_system = [SystemMessage(self.render_system_prompt(data_connection)), *messages_with_system]
+            messages_with_system = [SystemMessage(self.render_system_prompt(data_connection, session)), *messages_with_system]
 
         init_state = graph.init_state(messages_with_system)
         last_state: dict[str, Any] | None = None

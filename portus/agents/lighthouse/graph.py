@@ -56,9 +56,9 @@ class ExecuteSubmit:
         if last_ai_message is None:
             raise RuntimeError("No AI message found in message log")
         if len(last_ai_message.tool_calls) == 0:
-            content = last_ai_message.content
-            text = content if isinstance(content, str) else str(content)
-            result = ExecutionResult(text=text, df=None, code="", meta={"messages": state["messages"]})
+            result = ExecutionResult(
+                text=last_ai_message.text(), df=None, code="", meta={"messages": state["messages"]}
+            )
         elif len(last_ai_message.tool_calls) > 1:
             raise RuntimeError("Expected exactly one tool call in AI message")
         elif last_ai_message.tool_calls[0]["name"] != "submit_query_id":

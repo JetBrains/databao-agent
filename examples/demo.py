@@ -31,7 +31,7 @@ data = {"show_id": ["s706", "s1032", "s1253"], "cancelled": [True, True, False]}
 df = pd.DataFrame(data)
 session.add_df(df)
 
-ask = session.ask("count cancelled shows by directors. don't clarify with me.")
+ask = session.ask("count cancelled shows by directors")
 print(ask.text())
 print(ask.df())
 plot = ask.plot()

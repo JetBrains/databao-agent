@@ -18,5 +18,5 @@ class VisualisationResult(BaseModel):
 
 class Visualizer(ABC):
     @abstractmethod
-    def visualize(self, request: str, data: ExecutionResult) -> VisualisationResult:
+    def visualize(self, request: str | None, data: ExecutionResult) -> VisualisationResult:
         pass

@@ -40,7 +40,7 @@ class Pipe:
             raise RuntimeError("__data_result is None after materialization")
         return self._data_result
 
-    def __materialize_visualization(self, request: str, rows_limit: int | None) -> "VisualisationResult":
+    def __materialize_visualization(self, request: str | None, rows_limit: int | None) -> "VisualisationResult":
         data = self.__materialize_data(rows_limit)
         if not self._visualization_materialized or request != self._visualization_request:
             # TODO Cache visualization results as in Executor.execute()?
@@ -56,10 +56,9 @@ class Pipe:
     def df(self, *, rows_limit: int | None = None) -> DataFrame | None:
         return self.__materialize_data(rows_limit if rows_limit else self._data_materialized_rows).df
 
-    def plot(self, request: str = "visualize data", *, rows_limit: int | None = None) -> "VisualisationResult":
+    def plot(self, request: str | None = None, *, rows_limit: int | None = None) -> "VisualisationResult":
         # TODO Currently, we can't chain calls or maintain a "plot history": pipe.plot("red").plot("blue").
         #  We have to do pipe.plot("red"), but then pipe.plot("blue") is independent of the first call.
-        # TODO Optional request parameter.
         return self.__materialize_visualization(request, rows_limit if rows_limit else self._data_materialized_rows)
 
     def text(self) -> str:

@@ -10,7 +10,7 @@ from portus.core import ExecutionResult, VisualisationResult, Visualizer
 
 
 def _convert_llm_config(llm_config: LLMConfig) -> VegaLLMConfig:
-    # The two config classes are identical
+    # N.B. The two config classes are nearly identical.
     return VegaLLMConfig(
         name=llm_config.name,
         temperature=llm_config.temperature,
@@ -33,9 +33,16 @@ class VegaChatVisualizer(Visualizer):
             data_normalize_column_names=True,  # To deal with column names that have special characters
         )
 
-    def visualize(self, request: str, data: ExecutionResult) -> VisualisationResult:
+    def visualize(self, request: str | None, data: ExecutionResult) -> VisualisationResult:
         if data.df is None:
             return VisualisationResult(text="Nothing to visualize", meta={}, plot=None, code=None)
+
+        if request is None:
+            # We could also call the ChartRecommender module, but since we want a
+            # single output plot, we'll just use a simple prompt.
+            request = (
+                "I don't know what the data is about. Show me an interesting plot. Don't show the same plot twice."
+            )
 
         model = VegaChat.from_config(config=self._vega_config, df=data.df)
         model_out = model.query_sync(request)

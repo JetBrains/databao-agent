@@ -9,6 +9,7 @@ class Cache(ABC):
 
     @abstractmethod
     def get(self, key: str, dest: BytesIO) -> None:
+        # TODO Raise KeyError if key not found. Need a "contains" method as well.
         raise NotImplementedError
 
     @abstractmethod

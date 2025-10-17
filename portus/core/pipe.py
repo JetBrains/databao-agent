@@ -20,6 +20,8 @@ class Pipe:
         self._data_result: ExecutionResult | None = None
         self._visualization_materialized = False
         self._visualization_result: VisualisationResult | None = None
+        self._visualization_request: str | None = None
+
         self._opas: list[Opa] = []
         self._meta: dict[str, Any] = {}
 
@@ -39,12 +41,12 @@ class Pipe:
         return self._data_result
 
     def __materialize_visualization(self, request: str, rows_limit: int | None) -> "VisualisationResult":
-        self.__materialize_data(rows_limit)
-        if self._data_result is None:
-            raise RuntimeError("__data_result is None after materialization")
-        if not self._visualization_materialized:
-            self._visualization_result = self.__session.visualizer.visualize(request, self._data_result)
+        data = self.__materialize_data(rows_limit)
+        if not self._visualization_materialized or request != self._visualization_request:
+            # TODO Cache visualization results as in Executor.execute()?
+            self._visualization_result = self.__session.visualizer.visualize(request, data)
             self._visualization_materialized = True
+            self._visualization_request = request
             self._meta.update(self._visualization_result.meta)
             self._meta["plot_code"] = self._visualization_result.code  # maybe worth to expand as a property later
         if self._visualization_result is None:
@@ -55,6 +57,9 @@ class Pipe:
         return self.__materialize_data(rows_limit if rows_limit else self._data_materialized_rows).df
 
     def plot(self, request: str = "visualize data", *, rows_limit: int | None = None) -> "VisualisationResult":
+        # TODO Currently, we can't chain calls or maintain a "plot history": pipe.plot("red").plot("blue").
+        #  We have to do pipe.plot("red"), but then pipe.plot("blue") is independent of the first call.
+        # TODO Optional request parameter.
         return self.__materialize_visualization(request, rows_limit if rows_limit else self._data_materialized_rows)
 
     def text(self) -> str:

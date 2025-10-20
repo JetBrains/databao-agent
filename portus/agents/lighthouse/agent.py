@@ -62,7 +62,10 @@ class LighthouseAgent(AgentExecutor):
         # Prepend system message if not present
         messages_with_system = messages
         if not messages_with_system or messages_with_system[0].type != "system":
-            messages_with_system = [SystemMessage(self.render_system_prompt(data_connection, session)), *messages_with_system]
+            messages_with_system = [
+                SystemMessage(self.render_system_prompt(data_connection, session)),
+                *messages_with_system,
+            ]
 
         init_state = graph.init_state(messages_with_system)
         last_state: dict[str, Any] | None = None

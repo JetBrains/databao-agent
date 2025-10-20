@@ -589,8 +589,8 @@ wheels = [
 
 [[package]]
 name = "edaplot"
-version = "0.1.0"
-source = { editable = "../edaplot-github" }
+version = "0.2.0"
+source = { git = "ssh://git@github.com/JetBrains/edaplot.git?rev=76a485e3792006265c5f021fd8add75952600f88#76a485e3792006265c5f021fd8add75952600f88" }
 dependencies = [
     { name = "altair", extra = ["all"] },
     { name = "commentjson" },
@@ -602,20 +602,6 @@ dependencies = [
     { name = "pillow" },
     { name = "tqdm" },
     { name = "vl-convert-python" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "altair", extras = ["all"], specifier = ">=5.5.0,<6.0.0" },
-    { name = "commentjson", specifier = ">=0.9.0,<0.10.0" },
-    { name = "langchain", specifier = ">=0.3.14,<0.4.0" },
-    { name = "langchain-anthropic", specifier = ">=0.3.13,<0.4.0" },
-    { name = "langchain-ollama", specifier = ">=0.3.10,<0.4.0" },
-    { name = "langchain-openai", specifier = ">=0.3.30,<0.4.0" },
-    { name = "pandas", specifier = ">=2.2.3,<3.0.0" },
-    { name = "pillow", specifier = ">=11.1.0,<12.0.0" },
-    { name = "tqdm", specifier = ">=4.67.1,<5.0.0" },
-    { name = "vl-convert-python", specifier = ">=1.7.0,<2.0.0" },
 ]
 
 [[package]]
@@ -2132,7 +2118,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "duckdb", specifier = ">=1.3.0" },
-    { name = "edaplot", editable = "../edaplot-github" },
+    { name = "edaplot", git = "ssh://git@github.com/JetBrains/edaplot.git?rev=76a485e3792006265c5f021fd8add75952600f88" },
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "langchain", specifier = ">=0.3.20,<0.4" },
     { name = "langchain-anthropic", specifier = ">=0.3.10,<0.4" },

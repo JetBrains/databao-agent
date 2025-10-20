@@ -2,6 +2,8 @@
 
 ## Setup connection
 
+Create a `.env` file in the project root from `.env.template` file.
+
 ```python
 from sqlalchemy import create_engine
 
@@ -47,3 +49,16 @@ Examples of OAI compatible servers:
 - [llama.cpp](https://github.com/ggml-org/llama.cpp/tree/master/tools/server) using `llama-server`
 - [vLLM](https://github.com/vllm-project/vllm)
 - etc.
+
+
+## Dev environment
+
+We recommend using [uv](https://docs.astral.sh/uv/) as the package manager.
+
+```bash
+# Install dependencies
+uv sync --all-extras
+
+# Install pre-commit hooks for development
+uv run pre-commit install
+```

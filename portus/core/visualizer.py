@@ -18,11 +18,21 @@ class VisualisationResult(BaseModel):
     # Immutable model; allow arbitrary plot types (e.g., matplotlib objects)
     model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
 
-    def _repr_html_(self) -> str | None:
-        """Return HTML representation for IPython notebooks."""
+    def _repr_mimebundle_(self, include: Any = None, exclude: Any = None) -> Any:
+        """Return MIME bundle for IPython notebooks."""
         # See docs for the behavior of magic methods https://ipython.readthedocs.io/en/stable/config/integrating.html#custom-methods
         # If None is returned, IPython will fall back to repr()
-        return self._get_plot_html()
+        if self.plot is None:
+            return None
+
+        # Altair uses _repr_mimebundle_ as per: https://altair-viz.github.io/user_guide/custom_renderers.html
+        if hasattr(self.plot, "_repr_mimebundle_"):
+            return self.plot._repr_mimebundle_(include, exclude)
+
+        plot_html = self._get_plot_html()
+        if plot_html is not None:
+            return {"text/html": plot_html}
+        return None
 
     def _get_plot_html(self) -> str | None:
         """Convert plot to HTML representation."""
@@ -31,7 +41,6 @@ class VisualisationResult(BaseModel):
 
         html_text: str | None = None
         if hasattr(self.plot, "_repr_mimebundle_"):
-            # Altair always uses _repr_mimebundle_ as per: https://altair-viz.github.io/user_guide/custom_renderers.html
             bundle = self.plot._repr_mimebundle_()
             if isinstance(bundle, tuple):
                 format_dict, _metadata_dict = bundle

@@ -5,7 +5,7 @@ from portus.core.visualizer import VisualisationResult
 
 def test_visualisation_result_get_plot_html_with_no_plot() -> None:
     result = VisualisationResult(text="Test", meta={}, plot=None, code=None)
-    assert result._repr_html_() is None
+    assert result._repr_mimebundle_() is None
 
 
 def test_visualisation_result_get_plot_html_with_invalid_plot() -> None:
@@ -13,7 +13,7 @@ def test_visualisation_result_get_plot_html_with_invalid_plot() -> None:
         pass
 
     result = VisualisationResult(text="Test", meta={}, plot=InvalidPlot(), code=None)
-    assert result._repr_html_() is None
+    assert result._repr_mimebundle_() is None
 
 
 def test_visualisation_result_altair() -> None:
@@ -36,7 +36,7 @@ def test_visualisation_result_altair() -> None:
     )
 
     result = VisualisationResult(text="Test representation", meta={}, plot=chart, code=None)
-    assert result._repr_html_() is not None
+    assert result._repr_mimebundle_() is not None
 
 
 @pytest.mark.xfail(reason="matplotlib does not support _repr_*_ methods")
@@ -50,4 +50,4 @@ def test_visualisation_result_matplotlib() -> None:
     ax.set_ylabel("Y axis")
     ax.set_xlabel("X axis")
     result = VisualisationResult(text="Test representation", meta={}, plot=fig, code=None)
-    assert result._repr_html_() is not None
+    assert result._repr_mimebundle_() is not None

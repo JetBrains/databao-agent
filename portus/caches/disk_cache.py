@@ -99,18 +99,18 @@ class DiskCache(Cache):
         self._prefix = prefix
 
     def put(self, key: str, source: BytesIO) -> None:
-        k = f"{self._prefix}/{key}"
+        k = f"{self._prefix}{key}"
         self._cache.set(k, value=source.getvalue(), tag=self._prefix)
 
     def get(self, key: str, dest: BytesIO) -> None:
-        k = f"{self._prefix}/{key}"
+        k = f"{self._prefix}{key}"
         val = self._cache.get(k, default=None)
         if val is None:
             raise KeyError(f"Key {key} not found in cache.")
         dest.write(val)
 
     def scoped(self, scope: str) -> "DiskCache":
-        return DiskCache(self._cache, prefix=self._prefix + scope + ":")
+        return DiskCache(self._cache, prefix=f"{self._prefix}/{scope}/")
 
     @classmethod
     def from_config(cls, config: DiskCacheConfig) -> Self:

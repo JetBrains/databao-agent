@@ -3,6 +3,8 @@ from pathlib import Path
 
 import jinja2
 
+from portus._template_utils import make_jinja_package_environment
+
 _jinja_prompts_env: jinja2.Environment | None = None
 
 
@@ -11,28 +13,13 @@ def get_today_date_str() -> str:
 
 
 def read_prompt_template(relative_path: Path) -> jinja2.Template:
-    env = _get_jinja_prompts_env()
-    template = env.get_template(str(relative_path))
-    return template
+    global _jinja_prompts_env
+    if _jinja_prompts_env is None:
+        _jinja_prompts_env = make_jinja_package_environment(package_name="portus.agents.lighthouse")
+    return _jinja_prompts_env.get_template(str(relative_path))
 
 
 def exception_to_string(e: Exception | str) -> str:
     if isinstance(e, str):
         return e
     return f"Exception Name: {type(e).__name__}. Exception Desc: {e}"
-
-
-def _get_jinja_prompts_env(prompts_dir: Path | None = None) -> jinja2.Environment:
-    if prompts_dir:
-        return jinja2.Environment(loader=jinja2.FileSystemLoader(prompts_dir))
-
-    global _jinja_prompts_env
-    if _jinja_prompts_env is None:
-        # A package loader must be used for using as a library!
-        # Use empty string to load from package directory itself, not from 'templates' subdirectory
-        _jinja_prompts_env = jinja2.Environment(
-            loader=jinja2.PackageLoader("portus.agents.lighthouse", ""),
-            trim_blocks=True,  # better whitespace handling
-            lstrip_blocks=True,
-        )
-    return _jinja_prompts_env

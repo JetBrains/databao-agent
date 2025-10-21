@@ -45,6 +45,8 @@ dev = [
     "pytest>=7.4.0",
     "ruff>=0.13.2",
     "types-pyyaml>=6.0.12.20250915",
+    "types-requests>=2.32.4.20250913",
+    "types-tqdm>=4.67.0.20250809",
 ]
 
 [tool.mypy]

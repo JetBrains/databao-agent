@@ -2083,8 +2083,8 @@ wheels = [
 ]
 
 [[package]]
-name = "portus"
-version = "0.0.1.dev1"
+name = "portus-ai"
+version = "0.0.1.dev2"
 source = { editable = "." }
 dependencies = [
     { name = "duckdb" },

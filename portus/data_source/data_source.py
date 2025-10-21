@@ -14,6 +14,8 @@ if TYPE_CHECKING:
     from portus.data_source.configs.sqlalchemy_data_source_config import SqlAlchemyDataSourceConfig
     from portus.data_source.sqlalchemy_source import SqlAlchemyDataSource
 
+type SemanticDict = dict[str, Any] | Literal["full"]  # TODO rename and make a pydantic model
+
 
 class DataSource[T: DataSourceConfig](abc.ABC):
     def __init__(self, config: T):
@@ -39,7 +41,7 @@ class DataSource[T: DataSourceConfig](abc.ABC):
     @abc.abstractmethod
     async def inspect_schema(
         self,
-        semantic_dict: dict[str, Any] | Literal["full"],
+        semantic_dict: SemanticDict,
         options: InspectionOptions,
     ) -> DatabaseSchema:
         """Inspect the schema of the data source.

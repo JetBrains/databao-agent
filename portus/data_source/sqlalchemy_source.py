@@ -3,7 +3,7 @@ import itertools
 import re
 import warnings
 from collections.abc import Collection
-from typing import Any, Literal
+from typing import Any
 
 import pandas as pd
 import sqlalchemy as sa
@@ -15,7 +15,7 @@ from tqdm.asyncio import tqdm
 from portus.caches.disk_cache import DiskCache, DiskCacheConfig
 from portus.data_source.configs.schema_inspection_config import InspectionOptions, ValueSamplingStrategy
 from portus.data_source.configs.sqlalchemy_data_source_config import SqlAlchemyDataSourceConfig
-from portus.data_source.data_source import DataSource
+from portus.data_source.data_source import DataSource, SemanticDict
 from portus.data_source.database_schema import format_values_list
 from portus.data_source.database_schema_types import (
     ColumnSchema,
@@ -78,7 +78,7 @@ class SqlAlchemyDataSource(DataSource[SqlAlchemyDataSourceConfig]):
     # TODO: improve these names! inspect schema / inspect schema / inspect schema...
     async def inspect_schema(
         self,
-        semantic_dict: dict[str, Any] | Literal["full"],
+        semantic_dict: SemanticDict,
         options: InspectionOptions,
     ) -> DatabaseSchema:
         if self.config.database_or_schema is None or isinstance(self.config.database_or_schema, str):
@@ -112,7 +112,7 @@ class SqlAlchemyDataSource(DataSource[SqlAlchemyDataSourceConfig]):
 
     async def _inspect_schema(
         self,
-        semantic_dict: dict[str, Any] | Literal["full"],
+        semantic_dict: SemanticDict,
         options: InspectionOptions,
         database_or_schema: str | None,
     ) -> DatabaseSchema:
@@ -122,6 +122,7 @@ class SqlAlchemyDataSource(DataSource[SqlAlchemyDataSourceConfig]):
         # TODO move common logic to DataSource?
         if options.cache_intermediate_results:
             # TODO how/when to invalidate the cache?
+            # TODO support using Session's Cache
             cache = DiskCache(DiskCacheConfig())
             # Storing json keys/values allows querying like `SELECT json_extract(tag, '$.source') FROM Cache;`
             cache_dict = {

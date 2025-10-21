@@ -37,7 +37,7 @@ class VisualisationResult(BaseModel):
                 format_dict, _metadata_dict = bundle
             else:
                 format_dict = bundle
-            if "text/html" in format_dict:
+            if format_dict is not None and "text/html" in format_dict:
                 html_text = format_dict["text/html"]
         if html_text is None and hasattr(self.plot, "_repr_html_"):
             html_text = self.plot._repr_html_()

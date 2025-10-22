@@ -1,3 +1,4 @@
+import os
 from functools import cached_property
 from pathlib import Path
 from typing import Any, Literal, Self
@@ -77,6 +78,14 @@ class LLMConfig(BaseModel):
                     # The old API errors out if you provide a temperature for reasoning models
                     temperature=self.temperature if not is_reasoning else None,
                 )
+
+            # Set a default API key for local models if the user didn't provide one
+            if (
+                self.api_base_url is not None
+                and "api_key" not in self.model_kwargs
+                and "OPENAI_API_KEY" not in os.environ
+            ):
+                extra_kwargs["api_key"] = "local-api-key"
 
             return ChatOpenAI(
                 model=model_name,

@@ -1,4 +1,5 @@
 from portus.core.cache import Cache
+from portus.core.data_engine import DataEngine
 from portus.core.data_source import DataSource
 from portus.core.executor import ExecutionResult, Executor
 from portus.core.opa import Opa

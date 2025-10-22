@@ -42,11 +42,6 @@ def summarize_table_schemas(schema: DatabaseSchema, table_names: list[str]) -> s
     return s
 
 
-#################
-# Summary types #
-#################
-
-
 def summarize_full_schema(schema: DatabaseSchema) -> str:
     """
     The "Full" summary type summarizes the database by providing the summaries of each of the tables which (summaries)

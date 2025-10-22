@@ -9,8 +9,8 @@ from langgraph.prebuilt import create_react_agent
 from pydantic import BaseModel
 
 from portus.data_source.configs.schema_inspection_config import SchemaSummaryType
-from portus.data_source.database_schema import summarize_schema
 from portus.data_source.duckdb.utils import inspect_duckdb_schema
+from portus.data_source.schema_summary import summarize_schema
 
 
 class AgentResponse(BaseModel):

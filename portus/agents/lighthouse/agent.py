@@ -10,8 +10,8 @@ from portus.agents.lighthouse.utils import get_today_date_str, read_prompt_templ
 from portus.configs.llm import LLMConfig
 from portus.core import ExecutionResult, Opa, Session
 from portus.data_source.configs.schema_inspection_config import SchemaSummaryType
-from portus.data_source.database_schema import summarize_schema
 from portus.data_source.duckdb.utils import inspect_duckdb_schema
+from portus.data_source.schema_summary import summarize_schema
 
 
 class LighthouseAgent(AgentExecutor):

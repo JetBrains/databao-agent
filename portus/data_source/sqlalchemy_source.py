@@ -16,7 +16,6 @@ from portus.caches.disk_cache import DiskCache, DiskCacheConfig
 from portus.data_source.configs.schema_inspection_config import InspectionOptions, ValueSamplingStrategy
 from portus.data_source.configs.sqlalchemy_data_source_config import SqlAlchemyDataSourceConfig
 from portus.data_source.data_source import DataSource, SemanticDict
-from portus.data_source.database_schema import format_values_list
 from portus.data_source.database_schema_types import (
     ColumnSchema,
     ColumnValuesStats,
@@ -33,6 +32,7 @@ from portus.data_source.database_type_utils import (
     is_numeric_dtype,
     is_string_dtype,
 )
+from portus.data_source.schema_summary import format_values_list
 from portus.data_source.sqlalchemy_utils import (
     GeneralSchemaValueStats,
     execute_sql_query,

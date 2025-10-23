@@ -37,6 +37,7 @@ from portus.data.schema_summary import format_values_list
 from portus.data.sqlalchemy_utils import (
     GeneralSchemaValueStats,
     execute_sql_query,
+    execute_sql_query_sync,
     fetch_distinct_values,
     inspect_database_schema,
     retrieve_first_order_numeric_stats,
@@ -77,6 +78,11 @@ class SqlAlchemyDataSource(DataSource[SqlAlchemyDataSourceConfig]):
             query = self.preprocess_query_hook(query)
         async with self._semaphore:
             return await execute_sql_query(self.engine, query)
+
+    def execute_sync(self, query: str, *, enable_hooks: bool = True) -> pd.DataFrame | Exception:
+        if enable_hooks:
+            query = self.preprocess_query_hook(query)
+        return execute_sql_query_sync(self.engine, query)
 
     # TODO: improve these names! inspect schema / inspect schema / inspect schema...
     async def inspect_schema(

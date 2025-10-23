@@ -32,6 +32,10 @@ class DataSource[T: DataSourceConfig](abc.ABC):
         pass
 
     @abc.abstractmethod
+    def execute_sync(self, query: str) -> pd.DataFrame | Exception:
+        pass
+
+    @abc.abstractmethod
     async def inspect_schema(
         self,
         semantic_dict: SemanticDict,

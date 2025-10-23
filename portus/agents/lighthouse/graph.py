@@ -1,4 +1,3 @@
-import asyncio
 from collections.abc import Sequence
 from typing import Annotated, Any, Literal, TypedDict
 
@@ -88,8 +87,7 @@ class ExecuteSubmit:
             Args:
                 sql: SQL query
             """
-            # TODO remove asyncio.run
-            df_or_error = asyncio.run(self._data_engine.execute(sql))
+            df_or_error = self._data_engine.execute_sync(sql)
             if isinstance(df_or_error, pd.DataFrame):
                 df_csv = df_or_error.head(self.MAX_ROWS).to_csv(index=False)
                 df_markdown = df_or_error.head(self.MAX_ROWS).to_markdown(index=False)

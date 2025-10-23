@@ -65,6 +65,9 @@ class DuckDBCollection(DataSource[DuckDBCollectionConfig]):
     async def execute(self, query: str) -> pd.DataFrame | Exception:
         return await self._sa_source.execute(query)
 
+    def execute_sync(self, query: str) -> pd.DataFrame | Exception:
+        return self._sa_source.execute_sync(query)
+
     async def inspect_schema(self, semantic_dict: SemanticDict, options: InspectionOptions) -> DatabaseSchema:
         return await self._sa_source.inspect_schema(semantic_dict, options)
 

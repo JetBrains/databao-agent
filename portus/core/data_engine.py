@@ -38,22 +38,27 @@ class DataEngine:
         if self._default_source_name is None:
             self._default_source_name = source.name
 
-    async def execute(self, query: str, *, source: str | None = None) -> pd.DataFrame | Exception:
-        # For now, we use a single source only, so make selecting the source optional.
-        if source is None and self._default_source_name is None:
+    def _get_source(self, name: str | None) -> DataSource[DataSourceConfig]:
+        if name is None and self._default_source_name is None:
             raise ValueError("No data sources have been added yet!")
-        name = source if source is not None else self._default_source_name
+        name = name if name is not None else self._default_source_name
         assert name is not None
-        src = self._sources[name]
-        result = await src.execute(query)
-        return result
+        return self._sources[name]
+
+    async def execute(self, query: str, *, source: str | None = None) -> pd.DataFrame | Exception:
+        src = self._get_source(source)
+        return await src.execute(query)
+
+    def execute_sync(self, query: str, *, source: str | None = None) -> pd.DataFrame | Exception:
+        src = self._get_source(source)
+        return src.execute_sync(query)
 
     async def get_source_schema(
         self,
         source: str,
         inspection_config: SchemaInspectionConfig,
     ) -> DatabaseSchema:
-        ds = self._sources[source]
+        ds = self._get_source(source)
         if source in self._source_schemas:
             return self._source_schemas[source]
         schema = await get_db_schema(ds, inspection_config)

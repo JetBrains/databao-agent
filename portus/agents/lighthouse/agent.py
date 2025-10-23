@@ -17,7 +17,7 @@ class LighthouseAgent(AgentExecutor):
     def __init__(self) -> None:
         """Initialize agent with lazy graph compilation."""
         super().__init__()
-        self._inspection_config = SchemaInspectionConfig(summary_type=SchemaSummaryType.FULL, cache_final_results=False)
+        self._inspection_config = SchemaInspectionConfig(summary_type=SchemaSummaryType.FULL)
 
     def render_system_prompt(self, session: Session) -> str:
         """Render system prompt with database schema."""

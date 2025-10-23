@@ -10,7 +10,6 @@ from portus.data.configs.data_source_config import DataSourceConfig
 from portus.data.configs.schema_inspection_config import SchemaInspectionConfig
 from portus.data.data_source_utils import get_data_source
 from portus.data.database_schema_types import DatabaseSchema
-from portus.data.schema_inspection import get_db_schema
 from portus.data.schema_summary import summarize_schemas
 
 
@@ -61,7 +60,7 @@ class DataEngine:
         ds = self._get_source(source)
         if source in self._source_schemas:
             return self._source_schemas[source]
-        schema = await get_db_schema(ds, inspection_config)
+        schema = await ds.inspect_schema("full", inspection_config.inspection_options)
         self._source_schemas[source] = schema
         return schema
 

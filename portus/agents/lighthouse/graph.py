@@ -14,6 +14,8 @@ from langgraph.graph.state import CompiledStateGraph, StateGraph
 from portus.agents.lighthouse.utils import exception_to_string
 from portus.configs.llm import LLMConfig
 from portus.core import DataEngine, ExecutionResult
+from portus.data.configs.schema_inspection_config import SchemaInspectionConfig
+from portus.data.schema_summary import summarize_table_schemas
 
 
 class AgentState(TypedDict):
@@ -25,6 +27,14 @@ class AgentState(TypedDict):
     ready_for_user: bool
 
 
+def get_query_ids_mapping(messages: list[BaseMessage]) -> dict[str, ToolMessage]:
+    query_ids = {}
+    for message in messages:
+        if isinstance(message, ToolMessage) and isinstance(message.artifact, dict) and "query_id" in message.artifact:
+            query_ids[message.artifact["query_id"]] = message
+    return query_ids
+
+
 # TODO combine with LighthouseAgent
 class LighthouseAgentGraph:
     """Simple graph with two tools: run_sql_query and submit_query_id.
@@ -32,13 +42,21 @@ class LighthouseAgentGraph:
 
     MAX_ROWS = 12
 
-    def __init__(self, data_engine: DataEngine):
+    def __init__(
+        self,
+        data_engine: DataEngine,
+        inspection_config: SchemaInspectionConfig,
+        *,
+        enable_inspect_tables_tool: bool = True,
+    ):
         self._data_engine = data_engine
+        self._inspection_config = inspection_config
+        self._enable_inspect_tables_tool = enable_inspect_tables_tool
 
     def init_state(self, messages: list[BaseMessage]) -> dict[str, Any]:
         state: dict[str, Any] = {
             "messages": messages,
-            "query_ids": {},
+            "query_ids": get_query_ids_mapping(messages),
             "sql": None,
             "df": None,
             "visualization_prompt": None,
@@ -80,6 +98,31 @@ class LighthouseAgentGraph:
 
     def make_tools(self) -> list[BaseTool]:
         @tool(parse_docstring=True)
+        def inspect_tables(table_names: list[str]) -> str:
+            """
+            Reveal the detailed schema of one or more tables in the database.
+            The output will include a summary of every column in the table, including types, and column descriptions.
+
+            Use this tool before running a SQL query to ensure that the tables and columns you are using are correct.
+
+            Args:
+                table_names: List of fully qualified table names to inspect.
+            """
+            # TODO Lazily inspect just the provided tables
+            source_name = self._data_engine.default_source_name
+            assert source_name is not None
+            db_schema = self._data_engine.get_source_schema_sync(source_name, self._inspection_config)
+            available_tables = {table.qualified_name for table in db_schema.tables.values()}
+            available_tables_str = ", ".join(f"`{name}`" for name in available_tables)
+            if len(table_names) == 0:
+                return f"No tables specified. Available tables: {available_tables_str}."
+            nonexistent_tables = [name for name in table_names if name not in available_tables]
+            if len(nonexistent_tables) > 0:
+                return f"Tables {nonexistent_tables} do not exist. Available tables: {available_tables_str}."
+
+            return summarize_table_schemas(db_schema, table_names)
+
+        @tool(parse_docstring=True)
         def run_sql_query(sql: str) -> dict[str, Any]:
             """
             Run a SELECT SQL query in the database. Returns the first 12 rows in csv format.
@@ -119,6 +162,8 @@ class LighthouseAgentGraph:
             return f"Query {query_id} submitted successfully. Your response is now visible to the user."
 
         tools = [run_sql_query, submit_query_id]
+        if self._enable_inspect_tables_tool:
+            tools.append(inspect_tables)
         return tools
 
     def compile(self, model_config: LLMConfig) -> CompiledStateGraph[Any]:
@@ -194,7 +239,10 @@ class LighthouseAgentGraph:
                 try:
                     result = tool.invoke(args)
                 except Exception as e:
-                    result = {"error": exception_to_string(e) + f"\nTool: {name}, Args: {args}"}
+                    # TODO distinguish between retryable exceptions (database error)
+                    #  and non-retryable ones (connection issues)
+                    result = {"error": exception_to_string(e)}
+
                 content = ""
                 if name == "run_sql_query":
                     sql = result.get("sql")
@@ -212,6 +260,8 @@ class LighthouseAgentGraph:
                             tool_call_id=tool_call_id,
                             artifact=result,
                         )
+                elif name == "inspect_tables":
+                    content = str(result)
                 elif name == "submit_query_id":
                     content = str(result)
                     query_id = tool_call["args"]["query_id"]

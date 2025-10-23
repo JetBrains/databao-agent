@@ -18,6 +18,13 @@ class LighthouseAgent(AgentExecutor):
         super().__init__()
         self._inspection_config = SchemaInspectionConfig(summary_type=SchemaSummaryType.FULL)
 
+    def _get_agent_graph(self, session: Session) -> LighthouseAgentGraph:
+        return LighthouseAgentGraph(
+            session.data_engine,
+            self._inspection_config,
+            enable_inspect_tables_tool=self._inspection_config.summary_type == SchemaSummaryType.LIST_ALL_TABLES,
+        )
+
     def render_system_prompt(self, session: Session) -> str:
         """Render system prompt with database schema."""
         data_engine = session.data_engine
@@ -40,14 +47,14 @@ class LighthouseAgent(AgentExecutor):
 
     def _create_graph(self, session: Session) -> CompiledStateGraph[Any]:
         """Create and compile the Lighthouse agent graph."""
-        agent_graph = LighthouseAgentGraph(session.data_engine)
+        agent_graph = self._get_agent_graph(session)
         return agent_graph.compile(session.llm_config)
 
     def execute(
         self, session: Session, opa: Opa, *, rows_limit: int = 100, cache_scope: str = "common_cache"
     ) -> ExecutionResult:
         # Get or create graph (cached after first use)
-        agent_graph = LighthouseAgentGraph(session.data_engine)
+        agent_graph = self._get_agent_graph(session)
         compiled_graph = self._get_or_create_cached_graph(session)
 
         messages = self._process_opa(session, opa, cache_scope)

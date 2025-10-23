@@ -30,6 +30,10 @@ class DataEngine:
     def sources(self) -> dict[str, DataSource[DataSourceConfig]]:
         return self._sources
 
+    @property
+    def default_source_name(self) -> str | None:
+        return self._default_source_name
+
     def add_source(self, source: DataSource[DataSourceConfig]) -> None:
         if source.name in self._sources:
             raise KeyError(f"Data source with name {source.name} already exists.")

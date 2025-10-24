@@ -1,3 +1,4 @@
+import os
 from functools import cached_property
 from pathlib import Path
 from typing import Any, Literal, Self
@@ -59,7 +60,10 @@ class LLMConfig(BaseModel):
         if provider == "openai" or self.api_base_url is not None:
             from langchain_openai import ChatOpenAI
 
-            is_reasoning = _is_reasoning_model(name)
+            # Use the verbatim name if using an OAI server
+            model_name = self.name if self.api_base_url is not None else name
+
+            is_reasoning = _is_reasoning_model(model_name)
             extra_kwargs: dict[str, Any] = {}
             if self.use_responses_api:
                 extra_kwargs.update(
@@ -75,8 +79,16 @@ class LLMConfig(BaseModel):
                     temperature=self.temperature if not is_reasoning else None,
                 )
 
+            # Set a default API key for local models if the user didn't provide one
+            if (
+                self.api_base_url is not None
+                and "api_key" not in self.model_kwargs
+                and "OPENAI_API_KEY" not in os.environ
+            ):
+                extra_kwargs["api_key"] = "local-api-key"
+
             return ChatOpenAI(
-                model=name,
+                model=model_name,
                 timeout=self._resolve_timeout(),
                 max_tokens=self.max_tokens,
                 base_url=self.api_base_url,

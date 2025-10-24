@@ -1,10 +1,9 @@
 version = 1
 revision = 3
-requires-python = ">=3.12.9"
+requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.14'",
-    "python_full_version == '3.13.*'",
-    "python_full_version < '3.13'",
+    "python_full_version < '3.14'",
 ]
 
 [[package]]
@@ -611,9 +610,9 @@ wheels = [
 ]
 
 [[package]]
-name = "edaplot"
-version = "0.2.0"
-source = { git = "ssh://git@github.com/JetBrains/edaplot.git?rev=76a485e3792006265c5f021fd8add75952600f88#76a485e3792006265c5f021fd8add75952600f88" }
+name = "edaplot-vl"
+version = "0.0.3"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "altair", extra = ["all"] },
     { name = "commentjson" },
@@ -625,6 +624,10 @@ dependencies = [
     { name = "pillow" },
     { name = "tqdm" },
     { name = "vl-convert-python" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/2f/6b/913fc1e3961f1b2521d47b7453f5549d58dac32a97c95df27fe253c3bb80/edaplot_vl-0.0.3.tar.gz", hash = "sha256:3dd8b3ef3018d301dde856fd9dbb301e3287f36fca5cd5ce30c080f10fdefabb", size = 44787, upload-time = "2025-10-23T15:06:32.7Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/49/ef/9e37e7978e9688e484f94d6f05b81a0c4bbf494be990c5c59f2786d9c032/edaplot_vl-0.0.3-py3-none-any.whl", hash = "sha256:ee547199243b40a9df0f2d89e8a4c453578f347d78965169d4b082291044ee3b", size = 52553, upload-time = "2025-10-23T15:06:31.623Z" },
 ]
 
 [[package]]
@@ -2103,14 +2106,14 @@ wheels = [
 ]
 
 [[package]]
-name = "portus"
-version = "0.0.1"
+name = "portus-ai"
+version = "0.0.4"
 source = { editable = "." }
 dependencies = [
     { name = "diskcache" },
     { name = "duckdb" },
     { name = "duckdb-engine" },
-    { name = "edaplot" },
+    { name = "edaplot-vl" },
     { name = "jinja2" },
     { name = "langchain" },
     { name = "langchain-anthropic" },
@@ -2147,16 +2150,16 @@ requires-dist = [
     { name = "diskcache", specifier = ">=5.6.3" },
     { name = "duckdb", specifier = ">=1.3.0" },
     { name = "duckdb-engine", specifier = ">=0.17.0" },
-    { name = "edaplot", git = "ssh://git@github.com/JetBrains/edaplot.git?rev=76a485e3792006265c5f021fd8add75952600f88" },
+    { name = "edaplot-vl", specifier = "~=0.0.3" },
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "langchain", specifier = ">=0.3.20,<0.4" },
     { name = "langchain-anthropic", specifier = ">=0.3.10,<0.4" },
     { name = "langchain-ollama", specifier = ">=0.3.10" },
     { name = "langchain-openai", specifier = ">=0.3.8,<0.4" },
     { name = "langgraph", specifier = ">=0.6.8" },
-    { name = "matplotlib", specifier = ">=3.10.6" },
+    { name = "matplotlib", specifier = ">=3.10.0" },
     { name = "notebook", marker = "extra == 'examples'", specifier = ">=7.4.7" },
-    { name = "pandas", specifier = ">=2.3.0" },
+    { name = "pandas", specifier = ">=2.2.2" },
     { name = "psycopg2-binary", specifier = ">=2.9.10" },
     { name = "pydantic", specifier = ">=2.8.0,<3" },
     { name = "python-dotenv", marker = "extra == 'examples'", specifier = ">=1.1.1" },

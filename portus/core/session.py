@@ -79,7 +79,7 @@ class Session:
                 context = pathlib.Path(context).read_text()
             self.__df_contexts[df_name] = context
 
-    def ask(self, query: str) -> Pipe:
+    def thread(self, query: str) -> Pipe:
         return Pipe(self, default_rows_limit=self.__default_rows_limit).ask(query)
 
     @property

@@ -1,0 +1,45 @@
+name: pytest
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version-file: ".python-version"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.9.5"
+          enable-cache: true
+
+      - name: Install the project
+        run: uv sync --locked --all-extras --dev
+
+      # Run fast tests on all PRs
+      - name: Run pytest (fast)
+        if: github.ref != 'refs/heads/main'
+        env:
+          OPENAI_API_KEY: 'test'  # dummy key for ChatOpenAI() to not fail since it expects a key
+        run: uv run pytest tests -v -m "not apikey"  # Skip tests requiring an API key
+
+      # TODO Use merge queues to make the PR fail should the tests fail before merging
+      # Run all tests on main
+      - name: Run pytest (all)
+        if: github.ref == 'refs/heads/main'
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}  # Real API key for integration tests
+        run: uv run pytest tests -v

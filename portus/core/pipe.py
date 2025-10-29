@@ -1,3 +1,4 @@
+import uuid
 from typing import TYPE_CHECKING, Any
 
 from pandas import DataFrame
@@ -15,26 +16,31 @@ class Pipe:
         self.__session = session
         self.__default_rows_limit = default_rows_limit
 
-        self._data_materialized = False
         self._data_materialized_rows: int | None = None
         self._data_result: ExecutionResult | None = None
+
         self._visualization_materialized = False
         self._visualization_result: VisualisationResult | None = None
         self._visualization_request: str | None = None
 
+        # N.B. Pipes/Threads are currently append-only and cannot be "forked".
+        self._opas_processed_count = 0
         self._opas: list[Opa] = []
         self._meta: dict[str, Any] = {}
 
+        self._cache_scope = f"{self.__session.name}/{uuid.uuid4()}"
+
     def __materialize_data(self, rows_limit: int | None) -> "ExecutionResult":
+        # TODO Recompute on rows_limit change without recomputing the last Opa
         rows_limit = rows_limit if rows_limit else self.__default_rows_limit
-        if not self._data_materialized or rows_limit != self._data_materialized_rows:
-            # Execute each opa individually, keeping the last result
-            for opa in self._opas:
+        new_opas = self._opas[self._opas_processed_count :]
+        if len(new_opas) > 0 or rows_limit != self._data_materialized_rows:
+            for opa in new_opas:
                 self._data_result = self.__session.executor.execute(
-                    self.__session, opa, rows_limit=rows_limit, cache_scope=str(id(self))
+                    self.__session, opa, rows_limit=rows_limit, cache_scope=self._cache_scope
                 )
                 self._meta.update(self._data_result.meta)
-            self._data_materialized = True
+            self._opas_processed_count += len(new_opas)
             self._data_materialized_rows = rows_limit
         if self._data_result is None:
             raise RuntimeError("__data_result is None after materialization")
@@ -69,7 +75,6 @@ class Pipe:
 
     def ask(self, query: str) -> "Pipe":
         self._opas.append(Opa(query=query))
-        self._data_materialized = False
         self._visualization_materialized = False
         return self
 

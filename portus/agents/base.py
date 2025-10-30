@@ -171,9 +171,10 @@ class AgentExecutor(Executor):
             config=config,
             **kwargs,
         ):
-            writer.add_chunk(mode, chunk)
+            writer.write_stream_chunk(mode, chunk)
             if mode == "values":
                 last_state = chunk
+        writer.end()
         assert last_state is not None
         return last_state
 
@@ -193,8 +194,9 @@ class AgentExecutor(Executor):
             config=config,
             **kwargs,
         ):
-            writer.add_chunk(mode, chunk)
+            writer.write_stream_chunk(mode, chunk)
             if mode == "values":
                 last_state = chunk
+        writer.end()
         assert last_state is not None
         return last_state

@@ -17,7 +17,7 @@ class VegaChatResult(VisualisationResult):
     spec: dict[str, Any] | None = None
     spec_df: pd.DataFrame | None = None
 
-    def display_interactive(self, *, force_display: bool = False) -> VegaVisTool | None:
+    def interactive(self, *, force_display: bool = False) -> VegaVisTool | None:
         if self.spec is None or self.spec_df is None:
             return None
         vis_tool = VegaVisTool(self.spec, self.spec_df)

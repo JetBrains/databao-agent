@@ -8,9 +8,10 @@ from portus.agents.frontend.messages import get_reasoning_content, get_tool_call
 
 
 class TextWriterFrontend:
-    def __init__(self, *, writer: TextIO | None = None):
+    def __init__(self, *, writer: TextIO | None = None, escape_markdown: bool = False):
         self._writer = writer  # Use io.Writer type in Python 3.14
         self._is_tool_calling = False
+        self._escape_markdown = escape_markdown
 
     def write(self, text: str) -> None:
         print(text, end="", flush=True, file=self._writer)
@@ -20,11 +21,12 @@ class TextWriterFrontend:
 
     def add_message_chunk(self, chunk: BaseMessageChunk) -> None:
         if not isinstance(chunk, AIMessageChunk):
-            return  # Handle ToolMessages in chunk.tag == StreamTag.messages branch
+            return  # Handle ToolMessage results in add_state_chunk
 
         reasoning_text = get_reasoning_content(chunk)
         text = reasoning_text + chunk.text()
-        text = escape_text(text)
+        if self._escape_markdown:
+            text = escape_markdown_text(text)
         self.write(text)
 
         if len(chunk.tool_call_chunks) > 0:
@@ -71,15 +73,16 @@ class TextWriterFrontend:
 
 
 def escape_currency_dollar_signs(text: str) -> str:
-    """Escapes dollar signs in a string to prevent MathJax interpretation in Streamlit."""
+    """Escapes dollar signs in a string to prevent MathJax interpretation in markdown environments."""
     return re.sub(r"\$(\d+)", r"\$\1", text)
 
 
 def escape_strikethrough(text: str) -> str:
+    """Prevents aggressive markdown strikethrough formatting."""
     return re.sub(r"~(.?\d+)", r"\~\1", text)
 
 
-def escape_text(text: str) -> str:
+def escape_markdown_text(text: str) -> str:
     text = escape_strikethrough(text)
     text = escape_currency_dollar_signs(text)
     return text

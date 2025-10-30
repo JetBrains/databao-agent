@@ -7,7 +7,7 @@ from langchain_core.messages import HumanMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph.state import CompiledStateGraph
 
-from portus.agents.frontend.text_frontend import TextWriterFrontend
+from portus.agents.frontend.text_frontend import TextStreamFrontend
 from portus.configs.llm import LLMConfig
 from portus.core import Executor, Opa, Session
 
@@ -163,7 +163,7 @@ class AgentExecutor(Executor):
         config: RunnableConfig | None = None,
         **kwargs: Any,
     ) -> Any:
-        writer = TextWriterFrontend()
+        writer = TextStreamFrontend(start_state)
         last_state = None
         async for mode, chunk in compiled_graph.astream(
             start_state,
@@ -186,7 +186,7 @@ class AgentExecutor(Executor):
         config: RunnableConfig | None = None,
         **kwargs: Any,
     ) -> Any:
-        writer = TextWriterFrontend()
+        writer = TextStreamFrontend(start_state)
         last_state = None
         for mode, chunk in compiled_graph.stream(
             start_state,

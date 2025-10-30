@@ -7,12 +7,15 @@ from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage, Base
 from portus.agents.frontend.messages import get_reasoning_content, get_tool_call_sql
 
 
-class TextWriterFrontend:
-    def __init__(self, *, writer: TextIO | None = None, escape_markdown: bool = False):
+class TextStreamFrontend:
+    """Helper for streaming LangGraph LLM outputs to a text stream (stdout, stderr, a file, etc.)."""
+
+    def __init__(self, start_state: dict[str, Any], *, writer: TextIO | None = None, escape_markdown: bool = False):
         self._writer = writer  # Use io.Writer type in Python 3.14
         self._is_tool_calling = False
         self._escape_markdown = escape_markdown
         self._started = False
+        self._message_count = len(start_state.get("messages", []))
 
     def write(self, text: str) -> None:
         if not self._started:
@@ -45,21 +48,28 @@ class TextWriterFrontend:
             self.write("\n```\n\n")
             self._is_tool_calling = False
 
-    def write_state_chunk(self, chunk: Any) -> None:
+    def write_state_chunk(self, state_chunk: dict[str, Any]) -> None:
+        """The state chunk is assumed to contain a "messages" key."""
         if self._is_tool_calling:
             self.write("\n```\n\n")
             self._is_tool_calling = False
 
-        messages: list[BaseMessage] = chunk.get("messages", [])
-        for message in messages:
+        # Loop through new messages only.
+        # We could either force the caller of the frontend to provide new messages only,
+        # but for ease of use we assume the state contains a list of messages and do it here.
+        messages: list[BaseMessage] = state_chunk.get("messages", [])
+        new_messages = messages[self._message_count :]
+        self._message_count += len(new_messages)
+
+        for message in new_messages:
             if isinstance(message, ToolMessage):
                 if message.artifact is not None:
                     if "df" in message.artifact and message.artifact["df"] is not None:
                         self.write_dataframe(message.artifact["df"])
                     else:
-                        self.write(f"\n\n```\n{message.content}\n```\n\n")  # e.g., for errors
+                        self.write(f"\n\n```\n{message.content}\n```\n\n")
                 else:
-                    self.write(f"\n\n```\n{message.content}\n```\n\n")  # e.g., for errors
+                    self.write(f"\n\n```\n{message.content}\n```\n\n")
             elif isinstance(message, AIMessage):
                 # During tool calling we show raw JSON chunks, but for SQL we also want pretty formatting.
                 for tool_call in message.tool_calls:
@@ -72,7 +82,10 @@ class TextWriterFrontend:
             token_chunk, _token_metadata = chunk
             self.write_message_chunk(token_chunk)
         elif mode == "values":
-            self.write_state_chunk(chunk)
+            if isinstance(chunk, dict):
+                self.write_state_chunk(chunk)
+            else:
+                raise ValueError(f"Unexpected chunk type: {type(chunk)}")
 
     def start(self) -> None:
         self._started = True

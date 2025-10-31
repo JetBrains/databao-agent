@@ -99,7 +99,7 @@ class Pipe:
         return self.text()
 
     def ask(self, query: str) -> "Pipe":
-        """Append a new user query to this pipe and invalidate visualization cache.
+        """Append a new user query to this pipe.
 
         Returns self to allow chaining (e.g., pipe.ask("..."))
         """

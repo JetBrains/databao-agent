@@ -66,7 +66,7 @@ llm_config = LLMConfig(name="gpt-4o-mini", temperature=0)
 session = open_session(name="demo", llm_config=llm_config)
 
 # Register your engine (also supports native DuckDB connections)
-session.add_db(engine, context="Postgres database for streaming catalog")
+session.add_db(engine)
 ```
 
 ### 3) Ask questions and materialize results
@@ -155,11 +155,7 @@ tests/                   # pytest suite
 
 ## Entry points
 - Programmatic: `from portus.api import open_session`
-- CLI: none at the moment. TODO: consider adding a CLI entry point via `[project.scripts]`.
 
 ## License
 TODO: Add a LICENSE file and state the license here.
 
-## Notes
-- This README was updated on 2025-10-30 to remove hard‑coded credentials and reflect the current stack (uv + hatchling).
-- If anything here is inaccurate or missing (e.g., additional environment variables, supported backends), please open an issue or a PR.

@@ -48,11 +48,20 @@ class Session:
         self.__default_rows_limit = default_rows_limit
 
     def add_db(self, connection: Any, *, name: str | None = None, context: str | None = None) -> None:
-        """Register a database connection in this session.
+        """
+        Add a database connection to the internal collection and optionally associate it
+        with a specific context for query execution. Supports integration with SQLAlchemy
+        engines and direct DuckDB connections.
 
-        - SQLAlchemy engines are attached to the session's DuckDB under a generated or provided name.
-        - Other connections are stored directly.
-        - Optional `context` describes the DB for the LLM (string or path to a file).
+        Args:
+            connection (Any): The database connection to be added. Can be a SQLAlchemy
+                engine or a native DuckDB connection.
+            name (str | None): Optional name to assign to the database connection. If
+                not provided, a default name such as 'db1', 'db2', etc., will be
+                generated dynamically based on the collection size.
+            context (str | None): Optional context for the database connection. It can
+                be either the path to a file whose content will be used as the context or
+                the direct context as a string.
         """
         from portus.duckdb import register_sqlalchemy
 

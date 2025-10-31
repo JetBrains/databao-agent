@@ -14,7 +14,7 @@ class ExecutionResult(BaseModel):
     Attributes:
         text: Human-readable response to the last user query.
         meta: Arbitrary metadata collected during execution (debug info, timings, etc.).
-        code: Text of generated code (e.g., SQL/Vega spec) when applicable.
+        code: Text of generated code when applicable.
         df: Optional dataframe materialized by the executor.
     """
     text: str
@@ -27,8 +27,13 @@ class ExecutionResult(BaseModel):
 
 
 class Executor(ABC):
-    """Abstract interface for components that translate OPAs into results."""
+    """
+    Defines the Executor interface as an abstract base class for execution of
+    operations within a given session.
 
+    Methods:
+        execute: Abstract method to execute a single OPA within a session.
+    """
     @abstractmethod
     def execute(
         self,

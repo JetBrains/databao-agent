@@ -17,6 +17,7 @@ class ExecutionResult(BaseModel):
         code: Text of generated code when applicable.
         df: Optional dataframe materialized by the executor.
     """
+
     text: str
     meta: dict[str, Any]
     code: str | None = None
@@ -34,6 +35,7 @@ class Executor(ABC):
     Methods:
         execute: Abstract method to execute a single OPA within a session.
     """
+
     @abstractmethod
     def execute(
         self,

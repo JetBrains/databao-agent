@@ -20,6 +20,7 @@ class Session:
     Session determines what LLM to use, what executor to use and how to visualize data for all threads.
     Several threads can be spawned out of the session.
     """
+
     def __init__(
         self,
         name: str,

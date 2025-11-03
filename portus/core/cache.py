@@ -3,7 +3,7 @@ from io import BytesIO
 
 
 class Cache(ABC):
-     """Simple byte-oriented cache interface with optional scoping."""
+    """Simple byte-oriented cache interface with optional scoping."""
 
     @abstractmethod
     def put(self, key: str, source: BytesIO) -> None:

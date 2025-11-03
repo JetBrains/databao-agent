@@ -18,6 +18,7 @@ class VisualisationResult(BaseModel):
         plot: Backend-specific plot object (Altair, matplotlib, etc.) or None if not drawable.
         code: Optional code used to generate the plot (e.g., Vega-Lite spec JSON).
     """
+
     text: str
     meta: dict[str, Any]
     plot: Any | None

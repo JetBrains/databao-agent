@@ -25,7 +25,7 @@ class _DuckDBSqlAlchemySource(SqlAlchemyDataSource):
 
 
 class DuckDBCollectionConfig(DataSourceConfig):
-    use_in_memory_database: bool = True
+    use_in_memory_database: bool = False
     # Set to False when using asyncio with multiple threads!
 
 
@@ -49,11 +49,13 @@ class DuckDBCollection(DataSource[DuckDBCollectionConfig]):
         return self._config
 
     def _init_engine(self) -> None:
-        # TODO Support multiple threads with in-memory databases.
+        # TODO Support multiple threads with in-memory databases!!!
         # When using multiple threads, we need to materialize added dfs into a file-backed duckdb database.
         # Inspecting in-memory databases with multiple threads is broken in sqlalchemy:
         # https://github.com/Mause/duckdb_engine/issues/1110
         # In native duckdb, it should work fine if done correctly: https://duckdb.org/docs/stable/guides/python/multiple_threads
+        # TODO Using the in-memory database doesn't work when streaming LLM responses.
+        #  Presumably because streaming spawns a new thread.
         if self._config.use_in_memory_database:
             sa_engine = create_engine("duckdb:///:memory:", connect_args={"read_only": False})
         else:

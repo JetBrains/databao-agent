@@ -1,18 +1,13 @@
-from typing import NamedTuple
-
 from langchain_core.messages import AIMessage, AIMessageChunk, ToolCall
 
 
-class ToolCallSQL(NamedTuple):
-    args_key: str
-    sql: str
-
-
-def get_tool_call_sql(tool_call: ToolCall) -> ToolCallSQL | None:
+def get_tool_call_sql(tool_call: ToolCall) -> str | None:
     args = tool_call["args"]
     # Currently, there is only run_sql_query with an sql param
     if "sql" in args:
-        return ToolCallSQL("sql", args["sql"])
+        sql = args["sql"]
+        assert isinstance(sql, str), f"Expected SQL to be a string, got {type(sql)}"
+        return sql
     return None
 
 

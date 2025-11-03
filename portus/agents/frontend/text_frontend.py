@@ -85,7 +85,7 @@ class TextStreamFrontend:
                 for tool_call in message.tool_calls:
                     sql = get_tool_call_sql(tool_call)
                     if sql is not None:
-                        self.write(f"\n```sql\n{sql.sql}\n```\n\n")
+                        self.write(f"\n```sql\n{sql}\n```\n\n")
 
     def write_stream_chunk(self, mode: str, chunk: Any) -> None:
         if mode == "messages":

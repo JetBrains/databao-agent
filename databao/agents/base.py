@@ -5,8 +5,8 @@ from typing import Any
 
 from langchain_core.messages import HumanMessage
 
-from portus.configs.llm import LLMConfig
-from portus.core import Executor, Opa, Session
+from databao.configs.llm import LLMConfig
+from databao.core import Executor, Opa, Session
 
 try:
     from duckdb import DuckDBPyConnection
@@ -40,7 +40,7 @@ class AgentExecutor(Executor):
         if not duckdb_connections:
             raise RuntimeError(
                 "No DuckDB connection found. LighthouseAgent requires a DuckDB connection. "
-                "Use portus.duckdb.register_sqlalchemy() or similar to attach external databases to DuckDB."
+                "Use databao.duckdb.register_sqlalchemy() or similar to attach external databases to DuckDB."
             )
 
         # Use the first DuckDB connection

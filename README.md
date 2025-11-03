@@ -3,10 +3,6 @@
 Natural‑language queries for your data — connect SQL databases and DataFrames, ask questions in plain English, and get tables, plots, and explanations back. 
 Databao runs agents on top of dataframes and your DB connections, and can use both cloud and local LLMs.
 
-<<<<<<< HEAD
-Create a `.env` file in the project root from `.env.template` file.
-
-=======
 
 ## Overview
 - Ask questions like “list all German shows” or “plot revenue by month”.
@@ -44,7 +40,6 @@ Specify your API keys in the environment variables:
 ## Quickstart
 
 ### 1) Create a database connection (SQLAlchemy)
->>>>>>> main
 ```python
 from sqlalchemy import create_engine
 
@@ -109,27 +104,6 @@ Examples of compatible servers:
 ## Scripts and common tasks
 Using Makefile targets:
 
-<<<<<<< HEAD
-Examples of OAI compatible servers:
-- [LM Studio](https://lmstudio.ai/) - Recommended for macOS (LMX engine for M-based chips, supports the [OpenAI Responses API](https://platform.openai.com/docs/api-reference/responses)).
-- [ollama](https://ollama.com/) - Run with `OLLAMA_HOST=127.0.0.1:8080 ollama serve`. We recommend using ollama directly, as described [above](#ollama).
-- [llama.cpp](https://github.com/ggml-org/llama.cpp/tree/master/tools/server) using `llama-server`
-- [vLLM](https://github.com/vllm-project/vllm)
-- etc.
-
-
-## Dev environment
-
-We recommend using [uv](https://docs.astral.sh/uv/) as the package manager.
-
-```bash
-# Install dependencies
-uv sync --all-extras
-
-# Install pre-commit hooks for development
-uv run pre-commit install
-```
-=======
 ```bash
 # Lint and static checks (pre-commit on all files)
 make check
@@ -175,4 +149,3 @@ tests/                   # pytest suite
 
 ## Entry points
 - Programmatic: `from databao.api import open_session`
->>>>>>> main

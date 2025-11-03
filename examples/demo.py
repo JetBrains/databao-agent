@@ -5,7 +5,7 @@ from sqlalchemy import create_engine
 
 import databao
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARNING)
 
 engine = create_engine(
     "postgresql://readonly_role:>sU9y95R(e4m@ep-young-breeze-a5cq8xns.us-east-2.aws.neon.tech/netflix?options=endpoint%3Dep-young-breeze-a5cq8xns&sslmode=require"
@@ -34,8 +34,9 @@ session.add_df(df)
 thread = session.thread()
 thread.ask("count cancelled shows by directors")
 print(thread.text())
-print(thread.code)
-print(thread.df())
+print(f"\n```\n{thread.code}\n```\n")
+df = thread.df()
+print(f"\n{df.to_markdown() if df is not None else df}\n")
 
 plot = thread.plot()
 print(plot.text)

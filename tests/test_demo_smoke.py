@@ -60,8 +60,9 @@ def test_demo_smoke(db_engine: Engine) -> None:
     assert plot.plot is not None
 
     # Step 8: Verify code is generated
-    assert ask.code() is not None
-    assert len(ask.code()) > 0, "Expected generated code to be non-empty"
+    code = ask.code()
+    assert code is not None
+    assert len(code) > 0, "Expected generated code to be non-empty"
 
 
 @pytest.mark.apikey

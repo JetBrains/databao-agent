@@ -1,6 +1,6 @@
 import pytest
 
-from portus.data.database_type_utils import is_id_column
+from databao.data.database_type_utils import is_id_column
 
 
 @pytest.mark.parametrize(

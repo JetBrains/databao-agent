@@ -5,7 +5,7 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 
-import portus
+import databao
 
 
 @pytest.fixture
@@ -17,6 +17,7 @@ def db_engine() -> Engine:
     return engine
 
 
+@pytest.mark.apikey
 def test_demo_smoke(db_engine: Engine) -> None:
     """Smoke test to ensure demo.py steps execute without exceptions."""
     # Configure logging
@@ -34,8 +35,8 @@ def test_demo_smoke(db_engine: Engine) -> None:
     assert df is not None
     assert len(df) > 0, "Expected to get some results from the database query"
 
-    # Step 2: Create portus session
-    session = portus.open_session("test_session")
+    # Step 2: Create databao session
+    session = databao.open_session("test_session")
     assert session is not None
 
     # Step 3: Add database to session
@@ -47,7 +48,7 @@ def test_demo_smoke(db_engine: Engine) -> None:
     session.add_df(df)
 
     # Step 5: Ask a question and get results
-    ask = session.ask("count cancelled shows by directors")
+    ask = session.thread().ask("count cancelled shows by directors")
     assert ask is not None
 
     # Step 6: Get DataFrame result
@@ -63,13 +64,14 @@ def test_demo_smoke(db_engine: Engine) -> None:
     assert len(ask.code) > 0, "Expected generated code to be non-empty"
 
 
+@pytest.mark.apikey
 def test_consecutive_ask_calls(db_engine: Engine) -> None:
-    """Test consecutive ask calls return different results (marko.py variation)."""
+    """Test consecutive ask calls return different results."""
     # Configure logging
     logging.basicConfig(level=logging.INFO)
 
-    # Step 1: Create portus session
-    session = portus.open_session("test_consecutive_session")
+    # Step 1: Create databao session
+    session = databao.open_session("test_consecutive_session")
     assert session is not None
 
     # Step 2: Add database to session
@@ -81,7 +83,7 @@ def test_consecutive_ask_calls(db_engine: Engine) -> None:
     session.add_df(df)
 
     # Step 4: First ask - count cancelled shows by directors
-    ask1 = session.ask("count cancelled shows by directors")
+    ask1 = session.thread().ask("count cancelled shows by directors")
     assert ask1 is not None
 
     # Step 5: Get text result from first ask

@@ -1,12 +1,18 @@
 [project]
-name = "portus"
-version = "0.0.1"
-description = "portus by JetBrains"
+name = "databao"
+description = "databao: NL queries for data"
+dynamic = ["version"]  # Based on the git tag
+requires-python = ">=3.12"
 readme = "README.md"
+license = "Apache-2.0 AND LicenseRef-Additional-Terms"
+license-files = ["LICENSE.md"]
 authors = []
-requires-python = ">=3.12.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
 dependencies = [
-    "pandas>=2.3.0",
+    "pandas>=2.2.2",
     "pydantic>=2.8.0,<3",
     "langgraph>=0.6.8",
     "langchain>=0.3.20,<0.4",
@@ -17,8 +23,8 @@ dependencies = [
     "jinja2>=3.1.6",
     "tabulate>=0.9.0",
     "psycopg2-binary>=2.9.10",
-    "matplotlib>=3.10.6",
-    "edaplot",
+    "matplotlib>=3.10.0",
+    "edaplot-vl~=0.0.3",
     "diskcache>=5.6.3",
     "duckdb-engine>=0.17.0",
 ]
@@ -30,13 +36,24 @@ examples = [
 ]
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "uv-dynamic-versioning"]
 build-backend = "hatchling.build"
 
-[tool.uv.sources]
-# TODO This is a temporary solution until edaplot is published to PyPI
-edaplot = { git = "ssh://git@github.com/JetBrains/edaplot.git", rev = "76a485e3792006265c5f021fd8add75952600f88" }
-#edaplot = { path = "../edaplot-github", editable = true }
+[tool.hatch.version]
+source = "uv-dynamic-versioning"
+
+[tool.uv-dynamic-versioning]
+# Use `git tag -a v0.0.0 -m "v0.0.0"` to create a tag.
+vcs = "git"
+style = "pep440"
+fallback-version = "0.0.0"  # https://github.com/ninoseki/uv-dynamic-versioning/blob/main/docs/tips.md
+bump = true
+
+[tool.hatch.build.targets.sdist]
+include = ["/databao"]
+
+[tool.hatch.build.targets.wheel]
+include = ["/databao"]
 
 [dependency-groups]
 dev = [
@@ -60,7 +77,7 @@ warn_unused_configs = true
 warn_unused_ignores = true
 allow_redefinition_new = true
 local_partial_types = true
-files = ["portus", "tests", "examples"]
+files = ["databao", "tests", "examples"]
 plugins = ["pydantic.mypy", "sqlalchemy.ext.mypy.plugin"]
 
 [tool.ruff]
@@ -89,3 +106,15 @@ select = [
 [tool.ruff.lint.flake8-tidy-imports]
 # Disallow all relative imports.
 ban-relative-imports = "all"
+
+[tool.uv]
+required-version = "==0.9.5"
+
+# https://github.com/ninoseki/uv-dynamic-versioning/blob/main/docs/tips.md#build-caching-and-editable-installs
+cache-keys = [{ file = "pyproject.toml" }, { git = { commit = true, tags = true }}]
+
+[tool.pytest.ini_options]
+addopts = ["--strict-markers"]
+markers = [
+    "apikey: marks tests that require an API key",
+]

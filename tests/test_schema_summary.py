@@ -1,6 +1,6 @@
 import pytest
 
-from portus.data.schema_summary import normalize_dtype
+from databao.data.schema_summary import normalize_dtype
 
 
 @pytest.mark.parametrize(

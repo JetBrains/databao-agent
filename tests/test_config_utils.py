@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from portus._config_utils import expand_env_vars_str
+from databao._config_utils import expand_env_vars_str
 
 
 def test_no_placeholders_returns_input_unchanged() -> None:

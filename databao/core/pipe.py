@@ -107,7 +107,7 @@ class Pipe:
 
     def __str__(self) -> str:
         if self._data_result is not None:
-            return f"Materialized {self.__class__.__name__} with {self._data_result.rows} data rows."
+            return f"Materialized {self.__class__.__name__} with {len(self._data_result.df) if self._data_result.df is not None else 0} data rows."
         else:
             return f"Unmaterialized {self.__class__.__name__}."
 

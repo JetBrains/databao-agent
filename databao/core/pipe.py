@@ -105,7 +105,10 @@ class Pipe:
         return self._materialize_data(self._data_materialized_rows).text
 
     def __str__(self) -> str:
-        return self.text()
+        if self._data_result is not None:
+            return f"Materialized {self.__class__.__name__} with {self._data_result.rows} data rows."
+        else:
+            return f"Unmaterialized {self.__class__.__name__}."
 
     def ask(self, query: str, *, stream: bool = True) -> "Pipe":
         """Append a new user query to this pipe.

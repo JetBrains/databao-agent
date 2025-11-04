@@ -34,7 +34,7 @@ session.add_df(df)
 thread = session.thread()
 thread.ask("count cancelled shows by directors")
 print(thread.text())
-print(f"\n```\n{thread.code}\n```\n")
+print(f"\n```\n{thread.code()}\n```\n")
 df = thread.df()
 print(f"\n{df.to_markdown() if df is not None else df}\n")
 

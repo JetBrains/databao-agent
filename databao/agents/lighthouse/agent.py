@@ -18,27 +18,23 @@ class LighthouseAgent(AgentExecutor):
         super().__init__()
         self._inspection_config = inspection_config or SchemaInspectionConfig()
 
-    def _get_agent_graph(self, session: Session) -> LighthouseAgentGraph:
+    def _get_agent_graph(self) -> LighthouseAgentGraph:
         return LighthouseAgentGraph(
-            session.data_engine,
+            self._duckdb_collection,
             self._inspection_config,
             enable_inspect_tables_tool=self._inspection_config.summary_type == SchemaSummaryType.LIST_ALL_TABLES,
         )
 
     def render_system_prompt(self, session: Session) -> str:
         """Render system prompt with database schema."""
-        data_engine = session.data_engine
-        db_schema_str = data_engine.get_source_schemas_summarization_sync(self._inspection_config)
-        # db_schema_str = asyncio.run(data_engine.get_source_schemas_summarization(self._inspection_config))  # Faster
+        db_schema_str = self._summarize_schema(self._inspection_config)
 
         # TODO add "context" as the DatabaseSchema.description?
         context = ""
         for db_name, db_context in session.db_contexts.items():
-            if db_context is not None:
-                context += f"## Context for {db_name}\n\n{db_context}\n\n"
+            context += f"## Context for DB {db_name}\n\n{db_context}\n\n"
         for df_name, df_context in session.df_contexts.items():
-            if df_context is not None:
-                context += f"## Context for {df_name}\n\n{df_context}\n\n"
+            context += f"## Context for DF {df_name}\n\n{df_context}\n\n"
 
         prompt_template = read_prompt_template(Path("system_prompt.jinja"))
         prompt = prompt_template.render(
@@ -50,7 +46,7 @@ class LighthouseAgent(AgentExecutor):
 
     def _create_graph(self, session: Session) -> CompiledStateGraph[Any]:
         """Create and compile the Lighthouse agent graph."""
-        agent_graph = self._get_agent_graph(session)
+        agent_graph = self._get_agent_graph()
         return agent_graph.compile(session.llm_config)
 
     def execute(
@@ -65,8 +61,8 @@ class LighthouseAgent(AgentExecutor):
         # TODO rows_limit is ignored
 
         # Get or create graph (cached after first use)
-        agent_graph = self._get_agent_graph(session)
         compiled_graph = self._get_or_create_cached_graph(session)
+        agent_graph = self._get_agent_graph()
 
         messages = self._process_opa(session, opa, cache_scope)
 

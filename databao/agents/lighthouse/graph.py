@@ -13,8 +13,9 @@ from langgraph.graph.state import CompiledStateGraph, StateGraph
 
 from databao.agents.lighthouse.utils import exception_to_string
 from databao.configs.llm import LLMConfig
-from databao.core import DataEngine, ExecutionResult
+from databao.core import ExecutionResult
 from databao.data.configs.schema_inspection_config import SchemaInspectionConfig
+from databao.data.data_source import DataSource
 from databao.data.schema_summary import summarize_table_schemas
 
 
@@ -44,12 +45,12 @@ class LighthouseAgentGraph:
 
     def __init__(
         self,
-        data_engine: DataEngine,
+        data_source: DataSource[Any],
         inspection_config: SchemaInspectionConfig,
         *,
         enable_inspect_tables_tool: bool = True,
     ):
-        self._data_engine = data_engine
+        self._data_source = data_source
         self._inspection_config = inspection_config
         self._enable_inspect_tables_tool = enable_inspect_tables_tool
 
@@ -109,9 +110,7 @@ class LighthouseAgentGraph:
                 table_names: List of fully qualified table names to inspect.
             """
             # TODO Lazily inspect just the provided tables
-            source_name = self._data_engine.default_source_name
-            assert source_name is not None
-            db_schema = self._data_engine.get_source_schema_sync(source_name, self._inspection_config)
+            db_schema = self._data_source.inspect_schema_sync(self._inspection_config.inspection_options)
             available_tables = {table.qualified_name for table in db_schema.tables.values()}
             available_tables_str = ", ".join(f"`{name}`" for name in available_tables)
             if len(table_names) == 0:
@@ -130,7 +129,7 @@ class LighthouseAgentGraph:
             Args:
                 sql: SQL query
             """
-            df_or_error = self._data_engine.execute_sync(sql)
+            df_or_error = self._data_source.execute_sync(sql)
             if isinstance(df_or_error, pd.DataFrame):
                 df_csv = df_or_error.head(self.MAX_ROWS).to_csv(index=False)
                 df_markdown = df_or_error.head(self.MAX_ROWS).to_markdown(index=False)

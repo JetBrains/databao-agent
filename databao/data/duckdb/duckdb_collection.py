@@ -7,10 +7,10 @@ import pandas as pd
 from duckdb import DuckDBPyConnection
 from sqlalchemy import Engine, create_engine
 
-from databao.core.data_source import DataSource, SemanticDict
 from databao.data.configs.data_source_config import DataSourceConfig
 from databao.data.configs.schema_inspection_config import InspectionOptions
 from databao.data.configs.sqlalchemy_data_source_config import SqlAlchemyDataSourceConfig
+from databao.data.data_source import DataSource
 from databao.data.database_schema_types import DatabaseSchema
 from databao.data.duckdb.duckdb_source import DatabaseSource, DataFrameSource
 from databao.data.duckdb.utils import inspect_duckdb_schema, list_inspectable_duckdb_tables
@@ -77,11 +77,11 @@ class DuckDBCollection(DataSource[DuckDBCollectionConfig]):
     def execute_sync(self, query: str) -> pd.DataFrame | Exception:
         return self._sa_source.execute_sync(query)
 
-    async def inspect_schema(self, semantic_dict: SemanticDict, options: InspectionOptions) -> DatabaseSchema:
-        return await self._sa_source.inspect_schema(semantic_dict, options)
+    async def inspect_schema(self, options: InspectionOptions) -> DatabaseSchema:
+        return await self._sa_source.inspect_schema(options)
 
-    def inspect_schema_sync(self, semantic_dict: SemanticDict, options: InspectionOptions) -> DatabaseSchema:
-        return self._sa_source.inspect_schema_sync(semantic_dict, options)
+    def inspect_schema_sync(self, options: InspectionOptions) -> DatabaseSchema:
+        return self._sa_source.inspect_schema_sync(options)
 
     async def close(self) -> None:
         await self._sa_source.close()
@@ -110,9 +110,9 @@ class DuckDBCollection(DataSource[DuckDBCollectionConfig]):
         self._db_sources[db_name] = source
         self._data_changed = True
 
-    def register_data_sources(self) -> None:
+    def register_data_sources(self) -> bool:
         if not self._data_changed:
-            return
+            return False
 
         # Reset the engine and re-register all sources, as otherwise we get "Failed to attach database" errors.
         self._init_engine()
@@ -129,6 +129,7 @@ class DuckDBCollection(DataSource[DuckDBCollectionConfig]):
         self._sa_source.config.database_or_schema = schemas_to_inspect
 
         self._data_changed = False
+        return True
 
     def make_duckdb_connection(self) -> DuckDBPyConnection:
         # This method is for temporary backwards compatibility only.

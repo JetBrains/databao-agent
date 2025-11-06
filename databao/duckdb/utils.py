@@ -1,3 +1,4 @@
+import re
 from typing import Any
 from urllib.parse import quote, urlsplit, urlunsplit
 
@@ -58,6 +59,13 @@ def register_sqlalchemy(con: DuckDBPyConnection, sqlalchemy_engine: Any, name: s
         con.execute("LOAD mysql;")
         mysql_url = sqlalchemy_to_duckdb_mysql(str(url))
         con.execute(f"ATTACH '{mysql_url}' AS {name} (TYPE MYSQL);")
+    elif dialect.startswith("sqlite"):
+        con.execute("INSTALL sqlite;")
+        con.execute("LOAD sqlite;")
+        sqlite_path = re.sub("^sqlite:///", "", url)
+        con.execute(f"ATTACH '{sqlite_path}' AS {name} (TYPE SQLITE);")
+        con.execute(f"USE {name};")
+    # elif dialect.startswith("")
     else:
         raise ValueError(f"Database engine '{sqlalchemy_engine.dialect.name}' is not supported yet")
 

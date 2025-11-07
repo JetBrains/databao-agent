@@ -106,9 +106,14 @@ class Session:
                 context = pathlib.Path(context).read_text()
             self.__df_contexts[df_name] = context
 
-    def thread(self) -> Pipe:
+    def thread(self, *, stream_ask: bool = True, stream_plot: bool = False) -> Pipe:
         """Start a new thread in this session."""
-        return Pipe(self, default_rows_limit=self.__default_rows_limit)
+        return Pipe(
+            self,
+            default_rows_limit=self.__default_rows_limit,
+            default_stream_ask=stream_ask,
+            default_stream_plot=stream_plot,
+        )
 
     @property
     def dbs(self) -> dict[str, Any]:

@@ -19,12 +19,21 @@ class Pipe:
     - Exposes helpers to get the latest dataframe/text/plot/code.
     """
 
-    def __init__(self, session: "Session", *, default_rows_limit: int = 1000):
+    def __init__(
+        self,
+        session: "Session",
+        *,
+        default_rows_limit: int = 1000,
+        default_stream_ask: bool = True,
+        default_stream_plot: bool = False,
+    ):
         self._session = session
         self._default_rows_limit = default_rows_limit
 
-        self._stream_ask = True
-        self._stream_plot = False
+        self._stream_ask: bool | None = None
+        self._stream_plot: bool | None = None
+        self._default_stream_ask: bool = default_stream_ask
+        self._default_stream_plot: bool = default_stream_plot
 
         self._data_materialized_rows: int | None = None
         self._data_result: ExecutionResult | None = None
@@ -50,13 +59,14 @@ class Pipe:
         rows_limit = rows_limit if rows_limit else self._default_rows_limit
         new_opas = self._opas[self._opas_processed_count :]
         if len(new_opas) > 0 or rows_limit != self._data_materialized_rows:
+            stream = self._stream_ask if self._stream_ask is not None else self._default_stream_ask
             for opa in new_opas:
                 self._data_result = self._session.executor.execute(
                     self._session,
                     opa,
                     rows_limit=rows_limit,
                     cache_scope=self._cache_scope,
-                    stream=self._stream_ask,
+                    stream=stream,
                 )
                 self._meta.update(self._data_result.meta)
             self._opas_processed_count += len(new_opas)
@@ -70,7 +80,8 @@ class Pipe:
         data = self._materialize_data(rows_limit)
         if not self._visualization_materialized or request != self._visualization_request:
             # TODO Cache visualization results as in Executor.execute()?
-            self._visualization_result = self._session.visualizer.visualize(request, data, stream=self._stream_plot)
+            stream = self._stream_plot if self._stream_plot is not None else self._default_stream_plot
+            self._visualization_result = self._session.visualizer.visualize(request, data, stream=stream)
             self._visualization_materialized = True
             self._visualization_request = request
             self._meta.update(self._visualization_result.meta)
@@ -92,7 +103,7 @@ class Pipe:
         return self._materialize_data(rows_limit if rows_limit else self._data_materialized_rows).df
 
     def plot(
-        self, request: str | None = None, *, rows_limit: int | None = None, stream: bool = False
+        self, request: str | None = None, *, rows_limit: int | None = None, stream: bool | None = None
     ) -> "VisualisationResult":
         """Generate or return the latest visualization for the current data.
 
@@ -118,13 +129,15 @@ class Pipe:
         else:
             return f"Unmaterialized {self.__class__.__name__}."
 
-    def ask(self, query: str, *, stream: bool = True) -> Self:
+    def ask(self, query: str, *, stream: bool | None = None) -> Self:
         """Append a new user query to this pipe.
 
         Returns self to allow chaining (e.g., pipe.ask("..."))
         """
         self._opas.append(Opa(query=query))
         self._visualization_materialized = False
+        # If multiple .asks are chained, the last setting takes precedence.
+        # Tracking the stream setting for each ask in a chain would not work with "opa-collocation".
         self._stream_ask = stream
         return self
 

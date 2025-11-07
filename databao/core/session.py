@@ -29,6 +29,7 @@ class Session:
         visualizer: "Visualizer",
         cache: "Cache",
         default_rows_limit: int,
+        lazy: bool = False,
     ):
         self.__name = name
         self.__llm = llm.chat_model
@@ -47,6 +48,7 @@ class Session:
         self.__visualizer = visualizer
         self.__cache = cache
         self.__default_rows_limit = default_rows_limit
+        self.__default_lazy = lazy
 
     def _parse_context_arg(self, context: str | Path | None) -> str | None:
         if context is None:
@@ -109,9 +111,10 @@ class Session:
         if (context_text := self._parse_context_arg(context)) is not None:
             self.__df_contexts[df_name] = context_text
 
-    def thread(self) -> Pipe:
+    def thread(self, *, lazy: bool | None = None) -> Pipe:
         """Start a new thread in this session."""
-        return Pipe(self, default_rows_limit=self.__default_rows_limit)
+        lazy_mode = lazy if lazy is not None else self.__default_lazy
+        return Pipe(self, default_rows_limit=self.__default_rows_limit, lazy=lazy_mode)
 
     @property
     def dbs(self) -> dict[str, Any]:

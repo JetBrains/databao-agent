@@ -19,9 +19,10 @@ class Pipe:
     - Exposes helpers to get the latest dataframe/text/plot/code.
     """
 
-    def __init__(self, session: "Session", *, default_rows_limit: int = 1000):
+    def __init__(self, session: "Session", *, default_rows_limit: int = 1000, lazy: bool = False):
         self._session = session
         self._default_rows_limit = default_rows_limit
+        self._lazy_mode = lazy
 
         self._streaming_enabled = True
 
@@ -99,6 +100,7 @@ class Pipe:
         """
         # TODO Currently, we can't chain calls or maintain a "plot history": pipe.plot("red").plot("blue").
         #  We have to do pipe.plot("red"), but then pipe.plot("blue") is independent of the first call.
+        # Plotting is always computed eagerly.
         return self._materialize_visualization(request, rows_limit if rows_limit else self._data_materialized_rows)
 
     def text(self) -> str:
@@ -122,6 +124,10 @@ class Pipe:
         self._opas.append(Opa(query=query))
         self._visualization_materialized = False
         self._streaming_enabled = stream
+
+        if not self._lazy_mode:
+            self._materialize_data(self._data_materialized_rows)
+
         return self
 
     @property

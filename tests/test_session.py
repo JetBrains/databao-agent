@@ -79,3 +79,25 @@ def test_add_df_with_string_context() -> None:
     _db_contexts, df_contexts = session.context
     assert "df1" in df_contexts
     assert df_contexts["df1"] == context_string
+
+
+def test_add_additional_context_with_nonexistent_path_raises() -> None:
+    """add_additional_context should raise if given a non-existent Path."""
+    session = databao.open_session("additional_ctx_missing_path")
+    with pytest.raises(FileNotFoundError):
+        session.add_additional_context(Path("no_such_context_file_123.md"))
+
+
+def test_add_additional_context_with_temp_file(temp_context_file: Path) -> None:
+    """Ensure additional context can be loaded from a temporary file path."""
+    session = databao.open_session("additional_ctx_from_file")
+    session.add_additional_context(temp_context_file)
+    assert session.additional_context == temp_context_file.read_text()
+
+
+def test_add_additional_context_with_string() -> None:
+    """Ensure additional context can be provided directly as a string."""
+    session = databao.open_session("additional_ctx_from_string")
+    text = "Global instructions for the session go here."
+    session.add_additional_context(text)
+    assert session.additional_context == text

@@ -64,7 +64,6 @@ def register_sqlalchemy(con: DuckDBPyConnection, sqlalchemy_engine: Any, name: s
         con.execute("LOAD sqlite;")
         sqlite_path = re.sub("^sqlite:///", "", url)
         con.execute(f"ATTACH '{sqlite_path}' AS {name} (TYPE SQLITE);")
-        con.execute(f"USE {name};")
     else:
         raise ValueError(f"Database engine '{sqlalchemy_engine.dialect.name}' is not supported yet")
 

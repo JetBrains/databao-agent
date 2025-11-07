@@ -24,11 +24,11 @@ class DiskCache(Cache):
 
     def put(self, key: str, source: BytesIO) -> None:
         k = f"{self._prefix}{key}"
-        self._cache.set_object(k, value=source.getvalue(), tag=self._prefix)
+        self.set_object(k, value=source.getvalue(), tag=self._prefix)
 
     def get(self, key: str, dest: BytesIO) -> None:
         k = f"{self._prefix}{key}"
-        val = self._cache.get_object(k, default=None)
+        val = self.get_object(k, default=None)
         if val is None:
             raise KeyError(f"Key {key} not found in cache.")
         dest.write(val)

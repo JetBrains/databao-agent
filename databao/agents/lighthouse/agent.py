@@ -28,16 +28,15 @@ class LighthouseAgent(AgentExecutor):
             context += f"## Context for DB {db_name}\n\n{db_context}\n\n"
         for df_name, df_context in df_contexts.items():
             context += f"## Context for DF {df_name} (fully qualified name 'temp.main.{df_name}')\n\n{df_context}\n\n"
+        if (additional_context := session.additional_context) is not None:
+            additional_context = additional_context.strip()
+            context += f"## Additional context\n\n{additional_context}\n\n"
 
         prompt = self._prompt_template.render(
             date=get_today_date_str(),
             db_schema=db_schema,
             context=context,
         )
-
-        if (additional_instructions := session.additional_system_instructions) is not None:
-            additional_instructions = additional_instructions.strip()
-            prompt += f"\n\n# Additional instructions\n\n{additional_instructions}"
 
         return prompt
 

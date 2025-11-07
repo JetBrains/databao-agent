@@ -41,9 +41,8 @@ def test_add_db_with_temp_file_context(temp_context_file: Path) -> None:
     session = databao.open_session("ctx_path_session_db_file")
     session.add_db(conn, context=temp_context_file)
 
-    db_contexts, _df_contexts = session.context
-    assert "db1" in db_contexts
-    assert db_contexts["db1"] == temp_context_file.read_text()
+    assert "db1" in session.db_context
+    assert session.db_context["db1"] == temp_context_file.read_text()
 
 
 def test_add_df_with_temp_file_context(temp_context_file: Path) -> None:
@@ -52,9 +51,8 @@ def test_add_df_with_temp_file_context(temp_context_file: Path) -> None:
     session = databao.open_session("ctx_path_session_df_file")
     session.add_df(df, context=temp_context_file)
 
-    _db_contexts, df_contexts = session.context
-    assert "df1" in df_contexts
-    assert df_contexts["df1"] == temp_context_file.read_text()
+    assert "df1" in session.df_context
+    assert session.df_context["df1"] == temp_context_file.read_text()
 
 
 def test_add_db_with_string_context() -> None:
@@ -64,9 +62,8 @@ def test_add_db_with_string_context() -> None:
     context_string = "This is a string context for the database."
     session.add_db(conn, context=context_string)
 
-    db_contexts, _df_contexts = session.context
-    assert "db1" in db_contexts
-    assert db_contexts["db1"] == context_string
+    assert "db1" in session.db_context
+    assert session.db_context["db1"] == context_string
 
 
 def test_add_df_with_string_context() -> None:
@@ -76,9 +73,8 @@ def test_add_df_with_string_context() -> None:
     context_string = "This is a string context for the DataFrame."
     session.add_df(df, context=context_string)
 
-    _db_contexts, df_contexts = session.context
-    assert "df1" in df_contexts
-    assert df_contexts["df1"] == context_string
+    assert "df1" in session.df_context
+    assert session.df_context["df1"] == context_string
 
 
 def test_add_additional_context_with_nonexistent_path_raises() -> None:
@@ -92,7 +88,7 @@ def test_add_additional_context_with_temp_file(temp_context_file: Path) -> None:
     """Ensure additional context can be loaded from a temporary file path."""
     session = databao.open_session("additional_ctx_from_file")
     session.add_general_context(temp_context_file)
-    assert session.additional_context == [temp_context_file.read_text()]
+    assert session.general_context == [temp_context_file.read_text()]
 
 
 def test_add_additional_context_with_string() -> None:
@@ -100,7 +96,7 @@ def test_add_additional_context_with_string() -> None:
     session = databao.open_session("additional_ctx_from_string")
     text = "Global instructions for the session go here."
     session.add_general_context(text)
-    assert session.additional_context == [text]
+    assert session.general_context == [text]
 
 
 def test_add_additional_context_multiple_calls_mixed_sources(temp_context_file: Path) -> None:
@@ -114,6 +110,6 @@ def test_add_additional_context_multiple_calls_mixed_sources(temp_context_file: 
     session.add_general_context(temp_context_file)
     session.add_general_context(third)
 
-    assert first in session.additional_context
-    assert second in session.additional_context
-    assert third in session.additional_context
+    assert first in session.general_context
+    assert second in session.general_context
+    assert third in session.general_context

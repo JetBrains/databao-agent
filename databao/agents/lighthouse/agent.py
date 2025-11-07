@@ -31,7 +31,7 @@ class LighthouseAgent(AgentExecutor):
             context += f"## Context for DF {df_name} (fully qualified name 'temp.main.{df_name}')\n\n{df_context}\n\n"
         for idx, additional_ctx in enumerate(session.additional_context, start=1):
             additional_context = additional_ctx.strip()
-            context += f"## Additional context {idx}\n\n{additional_context}\n\n"
+            context += f"## General information {idx}\n\n{additional_context}\n\n"
         context = context.strip()
 
         prompt = self._prompt_template.render(

@@ -113,6 +113,9 @@ class Session:
     def add_additional_context(self, context: str | Path) -> None:
         """Add additional context to help models understand your data.
 
+        Use this method to add general information that might not be associated with a specific data source.
+        If the information is specific to a data source, use the `context` argument of `add_db` and `add_df`.
+
         Args:
             context: The string or the path to a file containing the additional context.
         """

@@ -27,10 +27,20 @@ class Pipe:
         default_stream_ask: bool = True,
         default_stream_plot: bool = False,
         lazy: bool = False,
+        automatic_modality: bool = True,
     ):
         self._session = session
         self._default_rows_limit = default_rows_limit
+
         self._lazy_mode = lazy
+
+        self._automatic_modality = automatic_modality
+        """Automatically detect the appropriate modality to output based on the user's input. If False, you must
+        manually call the appropriate ask/plot method.
+        
+        This allows .ask to be used for plotting, i.e. `ask("show a bar chart")` will result in a plot being generated.
+        """
+        # TODO In the future .ask and .plot should be interchangeable with automatic_modality=True
 
         self._stream_ask: bool | None = None
         self._stream_plot: bool | None = None
@@ -68,6 +78,7 @@ class Pipe:
                     rows_limit=rows_limit,
                     cache_scope=self._cache_scope,
                     stream=stream,
+                    # TODO automatic_modality
                 )
                 self._meta.update(self._data_result.meta)
             self._opas_processed_count += len(new_opas)
@@ -89,6 +100,23 @@ class Pipe:
         if self._visualization_result is None:
             raise RuntimeError("_visualization_result is None after materialization")
         return self._visualization_result
+
+    def _materialize(self, rows_limit: int | None) -> None:
+        data_result = self._materialize_data(rows_limit)
+
+        if not self._automatic_modality or data_result.df is None or len(data_result.df) == 0:
+            return
+
+        # The Executor is responsible for returning a visualization prompt suggestion if the data should be visualized.
+        vis_prompt = data_result.meta.get("visualization_prompt", None)
+        if vis_prompt is not None and len(vis_prompt) > 0:
+            self.plot(vis_prompt)
+        else:
+            self.plot()  # Let the Visualizer recommend a plot based on the df
+
+    def text(self) -> str:
+        """Return the latest textual answer from the executor/LLM."""
+        return self._materialize_data(self._data_materialized_rows).text
 
     def code(self) -> str | None:
         """Return the latest generated code."""
@@ -118,13 +146,11 @@ class Pipe:
         """
         # TODO Currently, we can't chain calls or maintain a "plot history": pipe.plot("red").plot("blue").
         #  We have to do pipe.plot("red"), but then pipe.plot("blue") is independent of the first call.
-        # Plotting is always computed eagerly.
+        # TODO Determine if .ask should be called first (e.g., if the first pipe call is .plot or if a new dataframe
+        #  is necessary first before using .plot). Maybe treat .plot as a different Opa type
+        #  and compute everything in Executor.
         self._stream_plot = stream
         return self._materialize_visualization(request, rows_limit if rows_limit else self._data_materialized_rows)
-
-    def text(self) -> str:
-        """Return the latest textual answer from the executor/LLM."""
-        return self._materialize_data(self._data_materialized_rows).text
 
     def ask(self, query: str, *, rows_limit: int | None = None, stream: bool | None = None) -> Self:
         """Append a new user query to this pipe.
@@ -143,7 +169,7 @@ class Pipe:
         self._stream_ask = stream
 
         if not self._lazy_mode:
-            self._materialize_data(rows_limit)
+            self._materialize(rows_limit)
 
         return self
 

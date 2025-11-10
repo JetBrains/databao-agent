@@ -540,7 +540,7 @@ dev = [
 requires-dist = [
     { name = "diskcache", specifier = ">=5.6.3" },
     { name = "duckdb", specifier = ">=1.3.0" },
-    { name = "edaplot-vl", specifier = "~=0.0.3" },
+    { name = "edaplot-vl", specifier = "~=0.1.0" },
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "langchain", specifier = ">=0.3.20,<0.4" },
     { name = "langchain-anthropic", specifier = ">=0.3.10,<0.4" },
@@ -664,7 +664,7 @@ wheels = [
 
 [[package]]
 name = "edaplot-vl"
-version = "0.0.3"
+version = "0.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "altair", extra = ["all"] },
@@ -673,14 +673,15 @@ dependencies = [
     { name = "langchain-anthropic" },
     { name = "langchain-ollama" },
     { name = "langchain-openai" },
+    { name = "langgraph" },
     { name = "pandas" },
     { name = "pillow" },
     { name = "tqdm" },
     { name = "vl-convert-python" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/2f/6b/913fc1e3961f1b2521d47b7453f5549d58dac32a97c95df27fe253c3bb80/edaplot_vl-0.0.3.tar.gz", hash = "sha256:3dd8b3ef3018d301dde856fd9dbb301e3287f36fca5cd5ce30c080f10fdefabb", size = 44787, upload-time = "2025-10-23T15:06:32.7Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/fc/fd/f72199eaa6cd9790e5b934ab4d801d047711e85d7634bf07094fc620ccfc/edaplot_vl-0.1.0.tar.gz", hash = "sha256:f49d41a8f5d4677aa163ff1356ec1c13485005c2345e1331980bb5651de12b6a", size = 45735, upload-time = "2025-11-05T11:44:46.001Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/49/ef/9e37e7978e9688e484f94d6f05b81a0c4bbf494be990c5c59f2786d9c032/edaplot_vl-0.0.3-py3-none-any.whl", hash = "sha256:ee547199243b40a9df0f2d89e8a4c453578f347d78965169d4b082291044ee3b", size = 52553, upload-time = "2025-10-23T15:06:31.623Z" },
+    { url = "https://files.pythonhosted.org/packages/dc/5f/653b23643e5851d0137a4882d051df4fc6a4a6e28aedf6621676cf3b6d17/edaplot_vl-0.1.0-py3-none-any.whl", hash = "sha256:ee85e2843e264d7e5d8c91939bc65495e9fafe656d9015c77963f38641f1313e", size = 53313, upload-time = "2025-11-05T11:44:44.838Z" },
 ]
 
 [[package]]

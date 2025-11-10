@@ -28,7 +28,10 @@ class Session:
         data_executor: "Executor",
         visualizer: "Visualizer",
         cache: "Cache",
+        *,
         default_rows_limit: int,
+        default_stream_ask: bool = True,
+        default_stream_plot: bool = False,
         lazy: bool = False,
     ):
         self.__name = name
@@ -47,8 +50,12 @@ class Session:
         self.__executor = data_executor
         self.__visualizer = visualizer
         self.__cache = cache
+
+        # Pipe/thread defaults
         self.__default_rows_limit = default_rows_limit
         self.__default_lazy = lazy
+        self.__default_stream_ask = default_stream_ask
+        self.__default_stream_plot = default_stream_plot
 
     def _parse_context_arg(self, context: str | Path | None) -> str | None:
         if context is None:
@@ -111,10 +118,17 @@ class Session:
         if (context_text := self._parse_context_arg(context)) is not None:
             self.__df_contexts[df_name] = context_text
 
-    def thread(self, *, lazy: bool | None = None) -> Pipe:
+    def thread(
+        self, *, stream_ask: bool | None = None, stream_plot: bool | None = None, lazy: bool | None = None
+    ) -> Pipe:
         """Start a new thread in this session."""
-        lazy_mode = lazy if lazy is not None else self.__default_lazy
-        return Pipe(self, default_rows_limit=self.__default_rows_limit, lazy=lazy_mode)
+        return Pipe(
+            self,
+            default_rows_limit=self.__default_rows_limit,
+            default_stream_ask=stream_ask if stream_ask is not None else self.__default_stream_ask,
+            default_stream_plot=stream_plot if stream_plot is not None else self.__default_stream_plot,
+            lazy=lazy if lazy is not None else self.__default_lazy,
+        )
 
     @property
     def dbs(self) -> dict[str, Any]:

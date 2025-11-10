@@ -1,4 +1,14 @@
-from langchain_core.messages import AIMessage, AIMessageChunk, ToolCall
+from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage, ToolCall, ToolMessage
+
+
+def get_tool_call(messages: list[BaseMessage], tool_message: ToolMessage) -> ToolCall | None:
+    """Returns the tool call which caused the ToolMessage."""
+    for message in reversed(messages):
+        if isinstance(message, AIMessage):
+            for tool_call in message.tool_calls:
+                if tool_call["id"] == tool_message.tool_call_id:
+                    return tool_call
+    return None
 
 
 def get_tool_call_sql(tool_call: ToolCall) -> str | None:

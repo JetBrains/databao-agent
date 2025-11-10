@@ -9,9 +9,11 @@ import pandas as pd
 from edaplot.image_utils import vl_to_png_bytes
 from edaplot.llms import LLMConfig as VegaLLMConfig
 from edaplot.vega import to_altair_chart
-from edaplot.vega_chat.vega_chat import VegaChat, VegaChatConfig
+from edaplot.vega_chat.vega_chat import VegaChat, VegaChatConfig, VegaChatState
+from langchain_core.runnables import RunnableConfig
 from PIL import Image
 
+from databao.agents.base import AgentExecutor
 from databao.configs.llm import LLMConfig
 from databao.core import ExecutionResult, VisualisationResult, Visualizer
 from databao.visualizers.vega_vis_tool import VegaVisTool
@@ -72,10 +74,9 @@ class VegaChatVisualizer(Visualizer):
             llm_config=vega_llm,
             data_normalize_column_names=True,  # To deal with column names that have special characters
         )
-
         self._return_interactive_chart = return_interactive_chart
 
-    def visualize(self, request: str | None, data: ExecutionResult) -> VegaChatResult:
+    def visualize(self, request: str | None, data: ExecutionResult, *, stream: bool = True) -> VegaChatResult:
         if data.df is None:
             return VegaChatResult(text="Nothing to visualize", meta={}, plot=None, code=None)
 
@@ -86,11 +87,16 @@ class VegaChatVisualizer(Visualizer):
                 "I don't know what the data is about. Show me an interesting plot. Don't show the same plot twice."
             )
 
-        model = VegaChat.from_config(config=self._vega_config, df=data.df)
-        model_out = model.query_sync(request)
+        vega_chat = VegaChat.from_config(config=self._vega_config, df=data.df)
+        start_state, compiled_graph = vega_chat.start_query(request, is_async=False)
+        # Use an empty `config` instead of `None` due to a bug in the "AI Agents Debugger" PyCharm plugin.
+        final_state: VegaChatState = AgentExecutor._invoke_graph_sync(
+            compiled_graph, start_state, config=RunnableConfig(), stream=stream
+        )
+        model_out = vega_chat.submit_query(final_state)
 
         # Use the possibly transformed dataframe tied to the generated spec
-        preprocessed_df = model.dataframe
+        preprocessed_df = vega_chat.dataframe
         text = model_out.message.text()
         meta = dataclasses.asdict(model_out)
         spec = model_out.spec

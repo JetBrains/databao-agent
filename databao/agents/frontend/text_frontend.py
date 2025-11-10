@@ -4,7 +4,7 @@ from typing import Any, TextIO
 import pandas as pd
 from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage, BaseMessageChunk, ToolMessage
 
-from databao.agents.frontend.messages import get_reasoning_content, get_tool_call_sql
+from databao.agents.frontend.messages import get_reasoning_content, get_tool_call, get_tool_call_sql
 
 
 class TextStreamFrontend:
@@ -32,9 +32,10 @@ class TextStreamFrontend:
             self.start()
         print(text, end="", flush=True, file=self._writer)
 
-    def write_dataframe(self, df: pd.DataFrame) -> None:
-        self.write(df.to_markdown())
-        self.write("\n\n")
+    def write_dataframe(self, df: pd.DataFrame, *, name: str | None = None, max_rows: int = 10) -> None:
+        rows_to_show = min(max_rows, len(df))
+        self.write(f"[df: name={name or ''}, showing {rows_to_show} / {len(df)} rows]\n")
+        self.write(df.head(rows_to_show).to_markdown() + "\n\n")
 
     def write_message_chunk(self, chunk: BaseMessageChunk) -> None:
         if not isinstance(chunk, AIMessageChunk):
@@ -50,7 +51,10 @@ class TextStreamFrontend:
             # N.B. LangChain sometimes waits for the whole string to complete before yielding chunks
             # That's why long "sql" tool calls take some time to show up and then the whole sql is shown in a batch
             if not self._is_tool_calling:
-                self.write("\n\n```\n")  # Open code block
+                self.write("\n\n")
+                for tool_call_chunk in chunk.tool_call_chunks:
+                    self.write(f"[tool_call: '{tool_call_chunk['name']}']\n")
+                self.write("```\n")  # Open code block
                 self._is_tool_calling = True
             for tool_call_chunk in chunk.tool_call_chunks:
                 if tool_call_chunk["args"] is not None:
@@ -74,19 +78,20 @@ class TextStreamFrontend:
 
         for message in new_messages:
             if isinstance(message, ToolMessage):
-                if message.artifact is not None:
-                    if "df" in message.artifact and message.artifact["df"] is not None:
-                        self.write_dataframe(message.artifact["df"])
-                    else:
-                        self.write(f"\n```\n{message.content}\n```\n\n")
-                else:
-                    self.write(f"\n```\n{message.content}\n```\n\n")
+                tool_call = get_tool_call(messages, message)
+                tool_name = tool_call["name"] if tool_call is not None else "unknown"
+                self.write(f"\n[tool_call_output: '{tool_name}']")
+                self.write(f"\n```\n{message.text().strip()}\n```\n\n")
+                if message.artifact is not None and isinstance(message.artifact, dict):
+                    for art_name, art_value in message.artifact.items():
+                        if isinstance(art_value, pd.DataFrame):
+                            self.write_dataframe(art_value, name=art_name)
             elif self._pretty_sql and isinstance(message, AIMessage):
                 # During tool calling we show raw JSON chunks, but for SQL we also want pretty formatting.
                 for tool_call in message.tool_calls:
                     sql = get_tool_call_sql(tool_call)
                     if sql is not None:
-                        self.write(f"\n```sql\n{sql}\n```\n\n")
+                        self.write(f"\n```sql\n{sql.strip()}\n```\n\n")
 
     def write_stream_chunk(self, mode: str, chunk: Any) -> None:
         if mode == "messages":

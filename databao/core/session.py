@@ -41,8 +41,9 @@ class Session:
         self.__dbs: dict[str, Any] = {}
         self.__dfs: dict[str, DataFrame] = {}
 
-        self.__db_contexts: dict[str, str] = {}
-        self.__df_contexts: dict[str, str] = {}
+        self.__db_context: dict[str, str] = {}
+        self.__df_context: dict[str, str] = {}
+        self.__additional_context: list[str] = []
 
         # Create a DuckDB connection for the session
         self.__duckdb_connection = duckdb.connect(":memory:")
@@ -95,7 +96,7 @@ class Session:
             self.__dbs[conn_name] = connection
 
         if (context_text := self._parse_context_arg(context)) is not None:
-            self.__db_contexts[conn_name] = context_text
+            self.__db_context[conn_name] = context_text
 
     def add_df(self, df: DataFrame, *, name: str | None = None, context: str | Path | None = None) -> None:
         """Register a DataFrame in this session and in the session's DuckDB.
@@ -116,7 +117,21 @@ class Session:
             self.__dbs["duckdb"] = self.__duckdb_connection
 
         if (context_text := self._parse_context_arg(context)) is not None:
-            self.__df_contexts[df_name] = context_text
+            self.__df_context[df_name] = context_text
+
+    def add_context(self, context: str | Path) -> None:
+        """Add additional context to help models understand your data.
+
+        Use this method to add general information that might not be associated with a specific data source.
+        If the information is specific to a data source, use the `context` argument of `add_db` and `add_df`.
+
+        Args:
+            context: The string or the path to a file containing the additional context.
+        """
+        text = self._parse_context_arg(context)
+        if text is None:
+            raise ValueError("Invalid context provided.")
+        self.__additional_context.append(text)
 
     def thread(
         self, *, stream_ask: bool | None = None, stream_plot: bool | None = None, lazy: bool | None = None
@@ -163,6 +178,16 @@ class Session:
         return self.__cache
 
     @property
-    def context(self) -> tuple[dict[str, str], dict[str, str]]:
-        """Per-source natural-language context for DBs and DFs: (db_contexts, df_contexts)."""
-        return self.__db_contexts, self.__df_contexts
+    def db_context(self) -> dict[str, str]:
+        """Per-source natural-language context for DBs."""
+        return self.__db_context
+
+    @property
+    def df_context(self) -> dict[str, str]:
+        """Per-source natural-language context for DFs."""
+        return self.__df_context
+
+    @property
+    def additional_context(self) -> list[str]:
+        """General additional context not specific to any one data source."""
+        return self.__additional_context

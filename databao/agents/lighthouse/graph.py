@@ -63,8 +63,19 @@ class ExecuteSubmit:
         if last_ai_message is None:
             raise RuntimeError("No AI message found in message log")
         if len(last_ai_message.tool_calls) == 0:
+            # Sometimes models don't call the submit_query_id tool, but we still want to return some dataframe.
+            sql = state.get("sql", "")
+            df = state.get("df")  # Latest df result (usually from run_sql_query)
+            visualization_prompt = state.get("visualization_prompt")
             result = ExecutionResult(
-                text=last_ai_message.text(), df=None, code="", meta={"messages": state["messages"]}
+                text=last_ai_message.text(),
+                df=df,
+                code=sql,
+                meta={
+                    "visualization_prompt": visualization_prompt,
+                    "messages": state["messages"],
+                    "submit_called": False,
+                },
             )
         elif len(last_ai_message.tool_calls) > 1:
             raise RuntimeError("Expected exactly one tool call in AI message")
@@ -82,7 +93,11 @@ class ExecuteSubmit:
                 text=text,
                 df=df,
                 code=sql,
-                meta={"visualization_prompt": visualization_prompt, "messages": state["messages"]},
+                meta={
+                    "visualization_prompt": visualization_prompt,
+                    "messages": state["messages"],
+                    "submit_called": True,
+                },
             )
         return result
 

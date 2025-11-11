@@ -1,0 +1,48 @@
+version: 2
+
+models:
+  - name: dim_products
+    description: |
+      Dimension table for products sold on the platform. Grain is one row per product.
+    columns:
+      - name: product_id
+        description: Primary key for products.
+        tests:
+          - unique
+          - not_null
+      - name: product_category_name
+        description: Product category name
+      - name: product_name_length
+        description: Length of the product name
+      - name: product_description_length
+        description: Length of the product description
+      - name: product_photos_qty
+        description: Number of product photos available
+      - name: product_weight_g
+        description: Weight of the product in grams
+      - name: product_length_cm
+        description: Length of the product in centimeters
+      - name: product_height_cm
+        description: Height of the product in centimeters
+      - name: product_width_cm
+        description: Width of the product in centimeters
+      - name: product_category_name_english
+        description: Product category name in English
+
+semantic_models:
+  - name: dim_products
+    description: |
+      Dimension table for products sold on the platform. Grain is one row per product.
+    model: ref('dim_products')
+    entities:
+      - name: product
+        type: primary
+        expr: product_id
+    dimensions:
+      - name: category_name
+        type: categorical
+        expr: product_category_name
+      - name: category_name_english
+        type: categorical
+        expr: product_category_name_english
+

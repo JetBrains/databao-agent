@@ -1,0 +1,15 @@
+version: 2
+
+models:
+  - name: stg__product_category_name_translations
+    description: Staging model for webshop product category name translations. Grain is one row per product category name.
+    columns:
+      - name: product_category_name
+        description: Primary key for product category names
+        tests:
+          - unique
+          - not_null
+      - name: product_category_name_english
+        description: Product category name in English
+        tests:
+          - not_null

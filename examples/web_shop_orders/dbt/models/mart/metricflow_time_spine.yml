@@ -1,0 +1,9 @@
+models:
+  - name: metricflow_time_spine
+    description: |
+      Technical model that defines the time spine for the metricflow mart.
+    time_spine:
+      standard_granularity_column: date_day 
+    columns:
+      - name: date_day
+        granularity: day 

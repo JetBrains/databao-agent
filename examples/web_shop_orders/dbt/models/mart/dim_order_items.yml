@@ -1,0 +1,38 @@
+version: 2
+
+models:
+  - name: dim_order_items
+    description: |
+      Dimension table containing order items data. Grain is one row per order item.
+    columns:
+      - name: order_item_id
+        description: Surrogate key for order items.
+        tests:
+          - unique
+          - not_null
+      - name: order_item_sequential_number
+        description: Order item sequential number for each order.
+      - name: shipping_limit_date
+        description: Shows the seller shipping limit date for handling the order over to the logistic partner.
+
+semantic_models:
+  - name: dim_order_items
+    description: |
+      Dimension table containing order items data. Grain is one row per order item.
+    model: ref('dim_order_items')
+    entities:
+      - name: order_item
+        type: primary
+        expr: order_item_id
+    dimensions:
+      - name: sequential_number
+        type: categorical
+        expr: order_item_sequential_number
+      - name: shipping_limit_date
+        type: time
+        expr: shipping_limit_date
+        type_params:
+          time_granularity: day
+
+
+   

@@ -1,0 +1,57 @@
+version: 2
+
+models:
+  - name: dim_order_reviews
+    description: |
+     Dimension table for reviews left by customers. Grain is one row per review.
+    columns:
+      - name: review_id
+        description: Primary key for reviews.
+        tests:
+          - unique
+          - not_null
+      - name: review_score
+        description: Score given by the customer in the review
+      - name: review_comment_title
+        description: Title of the review comment
+      - name: review_comment_message
+        description: Message of the review comment
+      - name: review_sent_at
+        description: Date when the review was sent to a customer
+      - name: review_answered_at
+        description: Timestamp when the review was answered
+
+semantic_models:
+  - name: dim_order_reviews
+    defaults:
+        agg_time_dimension: answered_at
+    description: |
+     Dimension table for reviews left by customers. Grain is one row per review.
+    model: ref('dim_order_reviews')
+    entities:
+      - name: review
+        type: primary
+        expr: review_id
+    dimensions:
+      - name: sent_at
+        type: time
+        expr: review_sent_at
+        type_params:
+          time_granularity: day
+      - name: answered_at
+        type: time
+        expr: review_answered_at
+        type_params:
+          time_granularity: day
+      - name: score
+        type: categorical
+        expr: review_score
+      - name: has_title
+        type: categorical
+        expr: case when review_comment_title is not null then true else false end
+      - name: has_comment
+        type: categorical
+        expr: case when review_comment_message is not null then true else false end
+      - name: has_review
+        type: categorical
+        expr: case when true then true else false end

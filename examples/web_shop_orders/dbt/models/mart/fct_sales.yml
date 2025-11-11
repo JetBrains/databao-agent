@@ -1,0 +1,170 @@
+version: 2
+
+models:
+  - name: fct_sales
+    description: |
+      Fact table containing sales data. Grain is one row per order item.
+    columns:
+      - name: order_item_id
+        description: Surrogate key for order items.
+        tests:
+          - unique
+          - not_null
+      - name: order_id
+        description: Foreign key referencing order ID
+        tests:
+          - not_null
+      - name: product_id
+        description: Foreign key referencing product ID
+        tests:
+          - not_null
+      - name: seller_id
+        description: Foreign key referencing seller ID
+        tests:
+          - not_null
+      - name: order_item_sequential_number
+        description: Order item sequential number for each order.
+      - name: shipping_limit_date
+        description: Shows the seller shipping limit date for handling the order over to the logistic partner.
+      - name: item_price
+        description: Item price
+        tests:
+          - not_null
+      - name: item_freight_value
+        description: Freight value
+      - name: order_purchased_at
+        description: Order purchase timestamp
+      - name: order_approved_at
+        description: Order approval timestamp
+      - name: order_delivered_to_carrier_at
+        description: Order delivery to carrier timestamp
+      - name: order_delivered_to_customer_at
+        description: Order delivery to customer timestamp
+      - name: order_estimated_delivery_date
+        description: Order estimated delivery date
+
+semantic_models:
+  - name: fct_sales
+    defaults:
+        agg_time_dimension: purchased_at
+    description: |
+      Fact table containing sales data. Grain is one row per order item.
+    model: ref('fct_sales')
+    entities:
+      - name: order_item
+        type: primary
+        expr: order_item_id
+      - name: order
+        type: foreign
+        expr: order_id
+      - name: product
+        type: foreign
+        expr: product_id
+      - name: seller
+        type: foreign
+        expr: seller_id
+      - name: customer
+        type: foreign
+        expr: customer_id
+      - name: review
+        type: foreign
+        expr: review_id
+      
+    dimensions:
+      - name: purchased_at
+        type: time
+        expr: order_purchased_at
+        type_params:
+          time_granularity: day
+      - name: estimated_delivery_date
+        type: time
+        expr: order_estimated_delivery_date
+        type_params:
+          time_granularity: day
+      - name: delivered_to_customer_at
+        type: time
+        expr: order_delivered_to_customer_at
+        type_params:
+          time_granularity: day
+    measures:
+      - name: revenue
+        description: The revenue generated for each order item. Revenue is calculated as a sum of item prices.
+        agg: sum
+        expr: item_price
+        
+      - name: freight_value
+        description: The total freight value for each order item.
+        agg: sum
+        expr: item_freight_value
+
+      - name: total_cost
+        description: The total cost for each order item. Total cost is calculated as a sum of item prices and freight values.
+        agg: sum
+        expr: item_price + item_freight_value
+
+      - name: order_count
+        description: Count of orders
+        agg: count_distinct
+        expr: order_id
+        label: Order Count
+        create_metric: true
+
+      - name: product_count
+        description: Count of products
+        agg: count_distinct
+        expr: product_id
+        label: Product Count
+        create_metric: true
+
+      - name: customer_count
+        description: Count of customers
+        agg: count_distinct
+        expr: customer_id
+        label: Customer Count
+        create_metric: true
+
+      - name: seller_count
+        description: Count of sellers
+        agg: count_distinct
+        expr: seller_id
+        label: Seller Count
+        create_metric: true
+
+metrics: 
+  - name: revenue
+    description: Sum of the product revenue for each order item. Excludes freight value.
+    type: simple
+    label: Revenue
+    type_params:
+      measure: revenue
+
+  - name: cumulative_revenue
+    description: The cumulative revenue for all orders.
+    label: Cumulative Revenue (All Time)
+    type: cumulative
+    type_params:
+      measure: revenue
+
+  - name: order_delivered_on_time_pct
+    description: Percentage of orders delivered on time.
+    type: derived
+    label: Orders Delivered on Time %
+    type_params:
+      expr: order_delivered_on_time_count / order_count
+      metrics:
+        - name: order_count
+          alias: order_delivered_on_time_count
+          filter: "{{ TimeDimension('order__delivered_to_customer_at', 'day') }} <= {{ TimeDimension('order__delivered_to_customer_at', 'day') }}"
+        - name: order_count
+  
+  - name: orders_w_reviews_pct
+    description: Percentage of orders with reviews.
+    type: derived
+    label: Orders with Reviews %
+    type_params:
+      expr: order_w_reviews_count / order_count
+      metrics:
+        - name: order_count
+          alias: order_w_reviews_count
+          filter: "{{ Entity('review') }} is not null"
+        - name: order_count

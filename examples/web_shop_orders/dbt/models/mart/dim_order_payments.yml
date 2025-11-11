@@ -1,0 +1,40 @@
+version: 2
+
+models:
+  - name: dim_order_payments
+    description: |
+      Dimension table containing payments data. 
+      Grain is one row per payment. One order can have multiple payments.
+    columns:
+      - name: payment_id
+        description: Primary key for payments.
+        tests:
+          - unique
+          - not_null
+      - name: payment_sequential_number
+        description: Payment sequential number inside the order
+      - name: payment_type
+        description: Payment type - credit card, ideal, etc.
+      - name: payment_installments
+        description: Number of payment installments
+
+semantic_models:
+  - name: dim_order_payments
+    description: |
+      Dimension table containing payments data. 
+      Grain is one row per payment. One order can have multiple payments.
+    model: ref('dim_order_payments')
+    entities:
+      - name: payment
+        type: primary
+        expr: payment_id
+    dimensions:
+      - name: sequential_number
+        type: categorical
+        expr: payment_sequential_number
+      - name: type
+        type: categorical
+        expr: payment_type
+      - name: installments
+        type: categorical
+        expr: payment_installments

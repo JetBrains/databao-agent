@@ -1,0 +1,21 @@
+version: 2
+
+models:
+  - name: stg__order_customers
+    description: Staging model for webshop order customers data. Grain is one row per order per customer.
+    columns:
+      - name: order_customer_id
+        description: Primary key, unique per order per customer
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: Unique customer identifier
+        tests:
+          - not_null
+      - name: customer_zip_code_prefix
+        description: Customer's zip code prefix
+      - name: customer_city
+        description: Customer's city
+      - name: customer_state
+        description: Customer's state

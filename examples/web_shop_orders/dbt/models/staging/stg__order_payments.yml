@@ -1,0 +1,26 @@
+version: 2
+
+models:
+  - name: stg__order_payments
+    description: |
+      Staging model for webshop order payments data. 
+      Grain is one row per payment per order. One order may have multiple payments
+    columns:
+      - name: payment_id
+        description: Surrogate key for order payments. Made by concatenating order_id and payment_sequential_number
+        tests:
+          - unique
+          - not_null
+      - name: order_id
+        description: Foreign key referencing order ID
+      - name: payment_sequential_number
+        description: |
+          Payment sequential number. 
+          A customer may pay an order with more than one payment method, 
+          so this number identifies the sequence of each payment method used.
+      - name: payment_type
+        description: Payment type
+      - name: payment_installments
+        description: Payment installments
+      - name: payment_value
+        description: Payment value

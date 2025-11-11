@@ -1,0 +1,58 @@
+version: 2
+
+models:
+  - name: dim_customers
+    description: |
+      Dimension table for customers who placed orders. 
+      Grain is one row per customer. Model stores latest information about customers.
+    columns:
+      - name: customer_id
+        description: Primary key for customers. 
+        tests:
+          - unique
+          - not_null
+      - name: customer_zip_code_prefix
+        description: First 5 digits of customer's zip code
+      - name: customer_city
+        description: Customer's city name
+      - name: customer_state
+        description: Customer's state
+      - name: first_order_made_at
+        description: Timestamp of the customer's first order
+      - name: last_order_made_at
+        description: Timestamp of the customer's last order
+      - name: customer_latitude
+        description: Customer's zip code latitude
+      - name: customer_longitude
+        description: Customer's zip code longitude
+
+semantic_models:
+  - name: dim_customers
+    description: |
+      Dimension table for customers who placed orders. 
+      Grain is one row per customer. Model stores latest information about customers.
+    model: ref('dim_customers')
+    entities:
+      - name: customer
+        type: primary
+        expr: customer_id
+    dimensions:
+      - name: first_order_made_at
+        type: time
+        expr: first_order_made_at
+        type_params:
+          time_granularity: day
+      - name: last_order_made_at
+        type: time
+        expr: last_order_made_at
+        type_params:
+          time_granularity: day
+      - name: zip_code_prefix
+        type: categorical
+        expr: customer_zip_code_prefix
+      - name: city
+        type: categorical
+        expr: customer_city
+      - name: state
+        type: categorical
+        expr: customer_state

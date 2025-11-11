@@ -1,0 +1,70 @@
+version: 2
+
+models:
+  - name: dim_orders
+    description: |
+      Dimension table containing orders data. Grain is one row per order.
+    columns:
+      - name: order_id
+        description: Primary key for orders.
+        tests:
+          - unique
+          - not_null
+      - name: order_status
+        description: Order status
+      - name: order_purchased_at
+        description: Order purchase timestamp
+      - name: order_approved_at
+        description: Order approval timestamp
+      - name: order_delivered_to_carrier_at
+        description: Order delivery to carrier timestamp
+      - name: order_delivered_to_customer_at
+        description: Order delivery to customer timestamp
+      - name: order_estimated_delivery_date
+        description: Order estimated delivery date.
+
+semantic_models:
+  - name: dim_orders
+    defaults:
+        agg_time_dimension: purchased_at
+    description: |
+      Dimension table containing orders data. Grain is one row per order.
+    model: ref('dim_orders')
+    entities:
+      - name: order
+        type: primary
+        expr: order_id
+    dimensions:
+      - name: purchased_at
+        type: time
+        expr: order_purchased_at
+        type_params:
+          time_granularity: day
+      - name: approved_at
+        type: time
+        expr: order_approved_at
+        type_params:
+          time_granularity: day
+      - name: delivered_to_carrier_at
+        type: time
+        expr: order_delivered_to_carrier_at
+        type_params:
+          time_granularity: day
+        type_params:
+          time_granularity: day
+      - name: delivered_to_customer_at
+        type: time
+        expr: order_delivered_to_customer_at
+        type_params:
+          time_granularity: day
+      - name: estimated_delivery_date
+        type: time
+        expr: order_estimated_delivery_date
+        type_params:
+          time_granularity: day
+      - name: status
+        type: categorical
+        expr: order_status
+  
+
+

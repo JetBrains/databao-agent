@@ -1,0 +1,119 @@
+version: 2
+
+sources:
+  - name: webshop
+    schema: raw
+    tables:
+      - name: customers
+      - name: geolocation
+        columns:
+          - name: geolocation_zip_code_prefix
+            description: First 5 digits of zip code
+          - name: geolocation_lat
+            description: Latitude
+          - name: geolocation_lng
+            description: Longitude
+          - name: geolocation_city
+            description: City name
+          - name: geolocation_state
+            description: State
+      - name: order_items
+        columns:
+          - name: order_id
+            description: Unique identifier of an order
+          - name: order_item_id
+            description: Sequential number identifying number of items included in the same order
+          - name: product_id
+            description: Unique identifier of product
+          - name: seller_id
+            description: Unique identifier of a seller
+          - name: shipping_limit_date
+            description: Shows the date when seller has the shipping limit to fulfill the order
+          - name: price
+            description: Price of single item
+          - name: freight_value
+            description: Item freight value item (if an order has more than 1 item the freight value is splitted between items)
+      - name: order_payments
+        columns:
+          - name: order_id
+            description: Unique identifier of an order
+          - name: payment_sequential
+            description: Customer may pay an order with more than one payment method. If so, a sequential number will identify the order
+          - name: payment_type
+            description: Method of payment chosen by customer
+          - name: payment_installments
+            description: Number of installments chosen by customer
+          - name: payment_value
+            description: Transaction value
+      - name: order_reviews
+        columns:
+          - name: review_id
+            description: Unique review identifier
+          - name: order_id
+            description: Order unique identifier
+          - name: review_score
+            description: Note ranging from 1 to 5 given for the experience
+          - name: review_comment_title
+            description: Review title from customer
+          - name: review_comment_message
+            description: Review message from customer
+          - name: review_creation_date
+            description: Shows the date when the review was created
+          - name: review_answer_timestamp
+            description: Shows the date when the answer was provided
+      - name: orders
+        columns:
+          - name: order_id
+            description: Unique identifier of the order
+          - name: customer_id
+            description: Unique identifier of a customer
+          - name: order_status
+            description: Reference to the order status (delivered, shipped, etc)
+          - name: order_purchase_timestamp
+            description: Shows the purchase timestamp
+          - name: order_approved_at
+            description: Shows the payment approval timestamp
+          - name: order_delivered_carrier_date
+            description: Shows the order posting timestamp, when it was handled to the carrier
+          - name: order_delivered_customer_date
+            description: Shows the actual order delivery date to the customer
+          - name: order_estimated_delivery_date
+            description: Shows the estimated delivery date that was informed to customer at the purchase moment
+      - name: products
+        columns:
+          - name: product_id
+            description: Unique product identifier
+          - name: product_category_name
+            description: Category name of the product
+          - name: product_name_length
+            description: Number of characters extracted from the product name
+          - name: product_description_length
+            description: Number of characters extracted from the product description
+          - name: product_photos_qty
+            description: Number of product published photos
+          - name: product_weight_g
+            description: Product weight measured in grams
+          - name: product_length_cm
+            description: Product length measured in centimeters
+          - name: product_height_cm
+            description: Product height measured in centimeters
+          - name: product_width_cm
+            description: Product width measured in centimeters
+      - name: sellers
+        columns:
+          - name: seller_id
+            description: Unique identifier of a seller
+          - name: seller_zip_code_prefix
+            description: First 5 digits of seller zip code
+          - name: seller_city
+            description: Seller city name
+          - name: seller_state
+            description: Seller state
+      - name: product_category_name_translation
+        columns:
+          - name: product_category_name
+            description: Product category name in portuguese
+          - name: product_category_name_english
+            description: Product category name in english
+    meta:
+      contains_pii: true

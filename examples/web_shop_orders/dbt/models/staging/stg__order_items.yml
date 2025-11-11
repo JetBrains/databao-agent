@@ -1,0 +1,35 @@
+version: 2
+
+models:
+  - name: stg__order_items
+    description: Staging model for webshop order items. Grain is one row per order item.
+    columns:
+      - name: order_item_id
+        description: |
+          Surrogate key for order items.
+          Made by concatenating order_id and order_item_sequential_number
+        tests:
+          - unique
+          - not_null
+      - name: order_id
+        description: Foreign key referencing order ID
+        tests:
+          - not_null
+      - name: product_id
+        description: Foreign key referencing product ID
+        tests:
+          - not_null
+      - name: seller_id
+        description: Foreign key referencing seller ID
+        tests:
+          - not_null
+      - name: order_item_sequential_number
+        description: Order item sequential number
+      - name: shipping_limit_date
+        description: Shows the seller shipping limit date for handling the order over to the logistic partner.
+      - name: item_price
+        description: Item price
+        tests:
+          - not_null
+      - name: item_freight_value
+        description: Freight value

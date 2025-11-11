@@ -1,0 +1,7 @@
+web_shop_orders:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "../data/web_shop.duckdb"
+      threads: 24

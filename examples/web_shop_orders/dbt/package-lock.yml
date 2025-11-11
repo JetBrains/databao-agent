@@ -1,0 +1,6 @@
+packages:
+  - package: dbt-labs/dbt_utils
+    version: 1.3.0
+  - package: godatadriven/dbt_date
+    version: 0.11.0
+sha1_hash: c000aedeee29e79f8d4762dd4ad1676ce0ee5213

@@ -1,0 +1,25 @@
+version: 2
+
+models:
+  - name: stg__order_reviews
+    description: Staging model for webshop order reviews data. Grain is one row per review.
+    columns:
+      - name: review_id
+        description: Primary key for reviews
+        tests:
+          - unique
+          - not_null
+      - name: order_id
+        description: Foreign key referencing order ID
+        tests:
+          - not_null
+      - name: review_score
+        description: Review score
+      - name: review_comment_title
+        description: Review comment title
+      - name: review_comment_message
+        description: Review comment message
+      - name: review_sent_at
+        description: Review creation date
+      - name: review_answered_at
+        description: Review answer timestamp

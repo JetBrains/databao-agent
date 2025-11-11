@@ -1,0 +1,19 @@
+version: 2
+
+models:
+  - name: stg__geolocations
+    description: Staging model for webshop geolocation data. Grain is one row per zip code.
+    columns:
+      - name: zip_code_prefix
+        description: Geolocation zip code prefix
+        tests:
+          - unique
+          - not_null
+      - name: latitude
+        description: Geolocation latitude
+      - name: longitude
+        description: Geolocation longitude
+      - name: city
+        description: Geolocation city
+      - name: state
+        description: Geolocation state

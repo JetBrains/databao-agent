@@ -1,0 +1,27 @@
+version: 2
+
+models:
+  - name: stg__products
+    description: Staging model for webshop products. Grain is one row per product.
+    columns:
+      - name: product_id
+        description: Primary key for products
+        tests:
+          - unique
+          - not_null
+      - name: product_category_name
+        description: Product category name
+      - name: product_name_length
+        description: Product name length
+      - name: product_description_length
+        description: Product description length
+      - name: product_photos_qty
+        description: Number of product photos
+      - name: product_weight_g
+        description: Product weight in grams
+      - name: product_length_cm
+        description: Product length in centimeters
+      - name: product_height_cm
+        description: Product height in centimeters
+      - name: product_width_cm
+        description: Product width in centimeters

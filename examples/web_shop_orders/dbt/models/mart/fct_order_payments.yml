@@ -1,0 +1,78 @@
+version: 2
+
+models:
+  - name: fct_order_payments
+    description: |
+      Fact table containing payments made for each order. 
+      Grain is one row per payment. One order can have multiple payments.
+    columns:
+      - name: payment_id
+        description: Primary key for payments.
+        tests:
+          - unique
+          - not_null
+      - name: order_id
+        description: Foreign key referencing order ID
+        tests:
+          - not_null
+      - name: payment_value
+        description: Payment value
+        tests:
+          - not_null
+      - name: order_purchased_at
+        description: Order purchase timestamp
+
+semantic_models:
+  - name: fct_order_payments
+    defaults:
+        agg_time_dimension: purchased_at
+    description: |
+      Items contained in each order. Grain is one row per order item.
+    model: ref('fct_order_payments')
+    entities:
+      - name: payment
+        type: primary
+        expr: payment_id
+      - name: order
+        type: foreign
+        expr: order_id
+    dimensions:
+      - name: purchased_at
+        type: time
+        expr: order_purchased_at
+        type_params:
+          time_granularity: day
+    measures:
+      - name: payment_count
+        description: Count of payments.
+        agg: sum
+        expr: 1
+      - name: sum_payment
+        description: Sum of payment value for each order payment.
+        agg: sum
+        expr: payment_value
+      - name: avg_payment
+        description: Average payment value for each order payment.
+        agg: average
+        expr: payment_value
+
+metrics: 
+  - name: payment_count
+    description: Count of payments.
+    type: simple
+    label: Payment Count
+    type_params:
+      measure: payment_count
+  - name: sum_payment
+    description: Sum of payment value for each order payment.
+    type: simple
+    label: Total Payment Value
+    type_params:
+      measure: sum_payment
+  - name: avg_payment
+    description: Average payment value for each order payment.
+    type: simple
+    label: Average Payment Value
+    type_params:
+      measure: avg_payment
+

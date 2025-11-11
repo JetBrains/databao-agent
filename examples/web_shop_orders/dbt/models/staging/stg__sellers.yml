@@ -1,0 +1,17 @@
+version: 2
+
+models:
+  - name: stg__sellers
+    description: "Staging model for webshop sellers data"
+    columns:
+      - name: seller_id
+        description: Primary key for sellers
+        tests:
+          - unique
+          - not_null
+      - name: seller_zip_code_prefix
+        description: Seller's zip code prefix
+      - name: seller_city
+        description: Seller's city
+      - name: seller_state
+        description: Seller's state

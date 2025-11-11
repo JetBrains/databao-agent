@@ -1,0 +1,42 @@
+version: 2
+
+models:
+  - name: dim_sellers
+    description: |
+      Dimension table for sellers who sold products. Grain is one row per seller.
+    columns:
+      - name: seller_id
+        description: Primary key for sellers. 
+        tests:
+          - unique
+          - not_null
+      - name: seller_zip_code_prefix
+        description: First 5 digits of seller's zip code
+      - name: seller_city
+        description: Seller's city name
+      - name: seller_state
+        description: Seller's state
+      - name: seller_latitude
+        description: Seller's zip code latitude
+      - name: seller_longitude
+        description: Seller's zip code longitude
+
+semantic_models:
+  - name: dim_sellers
+    description: |
+      Dimension table for sellers who sold products. Grain is one row per seller.
+    model: ref('dim_sellers')
+    entities:
+      - name: seller
+        type: primary
+        expr: seller_id
+    dimensions:
+      - name: zip_code_prefix
+        type: categorical
+        expr: seller_zip_code_prefix
+      - name: city
+        type: categorical
+        expr: seller_city
+      - name: state
+        type: categorical
+        expr: seller_state

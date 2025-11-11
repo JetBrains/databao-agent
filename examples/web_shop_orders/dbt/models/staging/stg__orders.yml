@@ -1,0 +1,25 @@
+version: 2
+
+models:
+  - name: stg__orders
+    description: Staging model for webshop orders data. Grain is one row per order.
+    columns:
+      - name: order_id
+        description: Primary key for orders
+        tests:
+          - unique
+          - not_null
+      - name: customer_order_id
+        description: Foreign key referencing customer ID
+      - name: order_status
+        description: Order status
+      - name: order_purchased_at
+        description: Order purchase timestamp
+      - name: order_approved_at
+        description: Order approval timestamp
+      - name: order_delivered_to_carrier_at
+        description: Order delivery to carrier timestamp
+      - name: order_delivered_to_customer_at
+        description: Order delivery to customer timestamp
+      - name: order_estimated_delivery_date
+        description: Order estimated delivery date. 

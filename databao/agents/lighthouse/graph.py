@@ -26,6 +26,14 @@ class AgentState(TypedDict):
     ready_for_user: bool
 
 
+def get_query_ids_mapping(messages: list[BaseMessage]) -> dict[str, ToolMessage]:
+    query_ids = {}
+    for message in messages:
+        if isinstance(message, ToolMessage) and isinstance(message.artifact, dict) and "query_id" in message.artifact:
+            query_ids[message.artifact["query_id"]] = message
+    return query_ids
+
+
 class ExecuteSubmit:
     """Simple graph with two tools: run_sql_query and submit_query_id.
     All context must be in the SystemMessage."""
@@ -38,7 +46,7 @@ class ExecuteSubmit:
     def init_state(self, messages: list[BaseMessage]) -> dict[str, Any]:
         state: dict[str, Any] = {
             "messages": messages,
-            "query_ids": {},
+            "query_ids": get_query_ids_mapping(messages),
             "sql": None,
             "df": None,
             "visualization_prompt": None,
@@ -195,6 +203,7 @@ class ExecuteSubmit:
                     result = tool.invoke(args)
                 except Exception as e:
                     result = {"error": exception_to_string(e) + f"\nTool: {name}, Args: {args}"}
+
                 content = ""
                 if name == "run_sql_query":
                     sql = result.get("sql")

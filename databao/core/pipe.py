@@ -40,7 +40,6 @@ class Pipe:
         
         This allows .ask to be used for plotting, i.e. `ask("show a bar chart")` will result in a plot being generated.
         """
-        # TODO In the future .ask and .plot should be interchangeable with automatic_modality=True
 
         self._stream_ask: bool | None = None
         self._stream_plot: bool | None = None

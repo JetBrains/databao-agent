@@ -10,11 +10,23 @@ if TYPE_CHECKING:
 
 
 class OutputModalityHints(BaseModel):
-    """Hints on how to present the execution results."""
+    """Hints on how to present the execution results.
+
+    The Executor can optionally provide hints to influence how the execution results will be presented.
+    The frontend code is responsible for adhering to these hints at the best effort level.
+    """
 
     META_KEY: ClassVar[Literal["output_modality_hints"]] = "output_modality_hints"
-    is_visualizable: bool | None = None
+
+    # Currently, the only modality that makes sense to request outside the Executor is visualization.
+    # If Executor was responsible for plotting as well (instead of Visualizer), then we could fully control and
+    # customize rendering in ExecutionResult._repr_mimebundle_.
+    # But now we need hints to tell Pipe how to handle plotting.
+
+    should_visualize: bool = False
+    """Whether the execution results can be visualized."""
     visualization_prompt: str | None = None
+    """Optional visualization prompt to be used by a Visualizer to generate a plot."""
 
 
 class ExecutionResult(BaseModel):
@@ -34,6 +46,59 @@ class ExecutionResult(BaseModel):
 
     # Pydantic v2 configuration: make the model immutable and allow pandas DataFrame
     model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+
+    def _to_markdown(self) -> str:
+        text_parts = []
+        text_parts.append(self.text)
+        if self.code is not None:
+            text_parts.append(f"```\n{self.code}\n```")
+        if self.df is not None:
+            text_parts.append(self.df.head(10).to_markdown())
+        return "\n\n".join(text_parts)
+
+    def _to_html(self, *, plot_mimebundle: dict[str, Any] | None = None) -> str:
+        import html
+
+        modality_hints = self.meta.get(OutputModalityHints.META_KEY, OutputModalityHints())
+        html_parts = []
+
+        text_html = f"<p>{html.escape(self.text)}</p>"  # TODO markdown to html
+        html_parts.append(text_html)
+        if self.code is not None:
+            code_html = f"<pre><code>{html.escape(self.code)}</code></pre>"
+            html_parts.append(code_html)
+
+        if self.df is not None and hasattr(self.df, "_repr_html_") and callable(self.df._repr_html_):
+            # Use _repr_html_ to get the exact same output as if evaluating `df` in a notebook.
+            # NB. PyCharm notebooks have special rendering if the output type is a pd.DataFrame,
+            #  so returning just the correct mimetype is not enough to "unlock" all features, but
+            #  it's the best we can do for now.
+            html_parts.append(self.df._repr_html_())
+
+        if modality_hints.should_visualize and plot_mimebundle is not None:  # noqa: SIM102
+            if (plot_html := plot_mimebundle.get("text/html")) is not None:
+                html_parts.append(plot_html)
+            # TODO embed image/png and image/jpeg into html
+            # elif (png_base64 := plot_mimebundle.get("image/png")) is not None:
+            #     png_html = f'<img src="data:image/png;base64,{png_base64}" alt="Plot"/>'
+            #     html_parts.append(png_html)
+            # elif (jpeg_base64 := plot_mimebundle.get("image/jpeg")) is not None:
+            #     jpeg_html = f'<img src="data:image/jpeg;base64,{jpeg_base64}" alt="Plot"/>'
+            #     html_parts.append(jpeg_html)
+
+        return "\n\n".join(html_parts)
+
+    def _repr_mimebundle_(
+        self, include: Any = None, exclude: Any = None, *, plot_mimebundle: dict[str, Any] | None = None
+    ) -> dict[str, Any] | None:
+        """Subclass ExecutionResult with its own _repr_mimebundle_ method to customize displaying outputs."""
+        markdown = self._to_markdown()
+        html_ = self._to_html(plot_mimebundle=plot_mimebundle)
+        mimebundle = {
+            "text/markdown": markdown,
+            "text/html": html_,
+        }
+        return mimebundle
 
 
 class Executor(ABC):

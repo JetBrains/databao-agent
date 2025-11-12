@@ -107,7 +107,7 @@ class Pipe:
 
         # The Executor can provide output modality hints
         hints = data_result.meta.get(OutputModalityHints.META_KEY, OutputModalityHints())
-        if not hints.is_visualizable:
+        if not hints.should_visualize:
             return
 
         # Let the Visualizer recommend a plot based on the df if no prompt is provided (None)
@@ -181,37 +181,18 @@ class Pipe:
         else:
             return f"Unmaterialized {self.__class__.__name__}."
 
-    def _repr_mimebundle_(self, include: Any = None, exclude: Any = None) -> Any:
+    def _repr_mimebundle_(self, include: Any = None, exclude: Any = None) -> dict[str, Any] | None:
         """Return MIME bundle for rendering in notebooks.
 
         No materialization is performed in this method. If using lazy mode, you must trigger materialization manually.
         """
         # See docs for the behavior of magic methods https://ipython.readthedocs.io/en/stable/config/integrating.html#custom-methods
-
-        # Prioritize plots over other modalities
-        if self._visualization_result is not None:
-            plot_mimebundle = self._visualization_result._repr_mimebundle_(include, exclude)
-            if plot_mimebundle is not None:
-                return plot_mimebundle
-
         # If None is returned, IPython will fall back to repr()
         if self._data_result is None:
             return None
-
-        text_parts = [self._data_result.text]
-        if self._data_result.code is not None:
-            text_parts.append(self._data_result.code)
-
-        mimebundle = {}
-        if (df := self._data_result.df) is not None:
-            if hasattr(df, "_repr_html_") and callable(df._repr_html_):
-                # Use _repr_html_ to get the exact same output as if evaluating `df` in a notebook.
-                # NB. PyCharm notebooks have special rendering if the output type is a pd.DataFrame,
-                #  so returning just the correct mimetype is not enough to "unlock" all features, but
-                #  it's the best we can do for now.
-                mimebundle["text/html"] = df._repr_html_()
-            text_parts.append(df.to_string())
-
-        # Fallback text-only representation
-        mimebundle["text/plain"] = "\n".join(text_parts)
+        modality_hints = self._data_result.meta.get(OutputModalityHints.META_KEY, OutputModalityHints())
+        plot_mimebundle: dict[str, Any] | None = None
+        if modality_hints.should_visualize and self._visualization_result is not None:
+            plot_mimebundle = self._visualization_result._repr_mimebundle_(include, exclude)
+        mimebundle = self._data_result._repr_mimebundle_(include, exclude, plot_mimebundle=plot_mimebundle)
         return mimebundle

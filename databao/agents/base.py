@@ -145,8 +145,8 @@ class AgentExecutor(Executor):
         if vis_prompt is not None and len(vis_prompt) == 0:
             vis_prompt = None
 
-        is_visualizable = vis_prompt is not None or (result.df is not None and len(result.df) >= 3)
-        return OutputModalityHints(visualization_prompt=vis_prompt, is_visualizable=is_visualizable)
+        should_visualize = vis_prompt is not None or (result.df is not None and len(result.df) >= 3)
+        return OutputModalityHints(visualization_prompt=vis_prompt, should_visualize=should_visualize)
 
     @staticmethod
     def _invoke_graph_sync(

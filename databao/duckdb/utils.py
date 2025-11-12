@@ -4,6 +4,13 @@ from urllib.parse import quote, urlsplit, urlunsplit
 
 from duckdb import DuckDBPyConnection
 
+def get_db_path(conn):
+    """Get the database file path for DuckDB connection, or None if in-memory."""
+    if isinstance(conn, DuckDBPyConnection):
+        db_path = conn.execute("PRAGMA database_list").fetchone()[2]
+        return None if db_path == "memory" else db_path
+    return None
+
 
 def describe_duckdb_schema(con: DuckDBPyConnection, max_cols_per_table: int = 40) -> str:
     """Return a compact textual description of tables and columns in DuckDB.

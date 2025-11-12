@@ -51,6 +51,7 @@ class Session:
         self.__executor = data_executor
         self.__visualizer = visualizer
         self.__cache = cache
+        self.__threads: list[Pipe] = []
 
         # Pipe/thread defaults
         self.__default_rows_limit = default_rows_limit
@@ -64,6 +65,10 @@ class Session:
         if isinstance(context, Path):
             return context.read_text()
         return context
+
+    def _register_change(self):
+        for thread in self.__threads:
+            thread.deactivate()
 
     def add_db(self, connection: Any, *, name: str | None = None, context: str | Path | None = None) -> None:
         """
@@ -97,6 +102,7 @@ class Session:
 
         if (context_text := self._parse_context_arg(context)) is not None:
             self.__db_context[conn_name] = context_text
+        self._register_change()
 
     def add_df(self, df: DataFrame, *, name: str | None = None, context: str | Path | None = None) -> None:
         """Register a DataFrame in this session and in the session's DuckDB.
@@ -118,6 +124,7 @@ class Session:
 
         if (context_text := self._parse_context_arg(context)) is not None:
             self.__df_context[df_name] = context_text
+        self._register_change()
 
     def add_context(self, context: str | Path) -> None:
         """Add additional context to help models understand your data.
@@ -132,18 +139,21 @@ class Session:
         if text is None:
             raise ValueError("Invalid context provided.")
         self.__additional_context.append(text)
+        self._register_change()
 
     def thread(
         self, *, stream_ask: bool | None = None, stream_plot: bool | None = None, lazy: bool | None = None
     ) -> Pipe:
         """Start a new thread in this session."""
-        return Pipe(
+        thread = Pipe(
             self,
             default_rows_limit=self.__default_rows_limit,
             default_stream_ask=stream_ask if stream_ask is not None else self.__default_stream_ask,
             default_stream_plot=stream_plot if stream_plot is not None else self.__default_stream_plot,
             lazy=lazy if lazy is not None else self.__default_lazy_threads,
         )
+        self.__threads.append(thread)
+        return thread
 
     @property
     def dbs(self) -> dict[str, Any]:

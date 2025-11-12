@@ -48,6 +48,8 @@ class Pipe:
         self._opas: list[Opa] = []
         self._meta: dict[str, Any] = {}
 
+        self._active = True
+
         # A unique cache scope so agents can store per-thread state (e.g., message history)
         self._cache_scope = f"{self._session.name}/{uuid.uuid4()}"
 
@@ -90,6 +92,9 @@ class Pipe:
             raise RuntimeError("_visualization_result is None after materialization")
         return self._visualization_result
 
+    def deactivate(self) -> None:
+        self._active = False
+
     def code(self) -> str | None:
         """Return the latest generated code."""
         return self._materialize_data(self._data_materialized_rows).code
@@ -131,6 +136,10 @@ class Pipe:
 
         Returns self to allow chaining (e.g., pipe.ask("..."))
         """
+        if not self._active:
+            print("Thread is not active due to changes in the session. Create new thread.")
+            return self
+
         # NB. A new Opa is created even if it's identical to the previous one.
         self._opas.append(Opa(query=query))
 

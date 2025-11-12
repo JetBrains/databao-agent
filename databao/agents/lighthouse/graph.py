@@ -12,6 +12,7 @@ from langgraph.constants import END, START
 from langgraph.graph import add_messages
 from langgraph.graph.state import CompiledStateGraph, StateGraph
 
+from databao.agents.frontend.text_frontend import dataframe_to_markdown
 from databao.agents.lighthouse.utils import exception_to_string
 from databao.configs.llm import LLMConfig
 from databao.core import ExecutionResult
@@ -90,7 +91,7 @@ class ExecuteSubmit:
             df_or_error = self._connection.execute(sql).df()
             if isinstance(df_or_error, pd.DataFrame):
                 df_csv = df_or_error.head(self.MAX_ROWS).to_csv(index=False)
-                df_markdown = df_or_error.head(self.MAX_ROWS).to_markdown(index=False)
+                df_markdown = dataframe_to_markdown(df_or_error.head(self.MAX_ROWS), index=False)
                 if len(df_or_error) > self.MAX_ROWS:
                     df_csv += f"\nResult is truncated from {len(df_or_error)} to {self.MAX_ROWS} rows."
                     df_markdown += f"\nResult is truncated from {len(df_or_error)} to {self.MAX_ROWS} rows."

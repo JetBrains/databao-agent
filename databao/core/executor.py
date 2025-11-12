@@ -1,3 +1,4 @@
+import base64
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
@@ -78,10 +79,18 @@ class ExecutionResult(BaseModel):
             df_html = self.df._repr_html_()
             html_parts["df"] = f"<summary>Data</summary>{df_html}"
 
-        if modality_hints.should_visualize and plot_mimebundle is not None:  # noqa: SIM102
+        if modality_hints.should_visualize and plot_mimebundle is not None:
+            vis_html: str | None = None
             if (plot_html := plot_mimebundle.get("text/html")) is not None:
-                html_parts["visualization"] = f"<summary>Visualization</summary>{plot_html}"
-            # TODO embed image/png and image/jpeg into html
+                vis_html = plot_html
+            elif (png_bytes := plot_mimebundle.get("image/png")) is not None:
+                png_base64 = base64.b64encode(png_bytes).decode("utf-8")
+                vis_html = f'<img src="data:image/png;base64,{png_base64}" alt="Plot"/>'
+            elif (jpeg_bytes := plot_mimebundle.get("image/jpeg")) is not None:
+                jpeg_base64 = base64.b64encode(jpeg_bytes).decode("utf-8")
+                vis_html = f'<img src="data:image/jpeg;base64,{jpeg_base64}" alt="Plot"/>'
+            if vis_html is not None:
+                html_parts["visualization"] = f"<summary>Visualization</summary>{vis_html}"
 
         # Determine which section should be expanded by default
         expand_keys = ["visualization"] if "visualization" in html_parts else ["df", "text"]

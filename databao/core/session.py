@@ -1,10 +1,8 @@
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-import duckdb
 from langchain_core.language_models.chat_models import BaseChatModel
 from pandas import DataFrame
-from sqlalchemy import Engine
 
 from databao.configs.llm import LLMConfig
 from databao.core.pipe import Pipe
@@ -32,6 +30,7 @@ class Session:
         default_rows_limit: int,
         default_stream_ask: bool = True,
         default_stream_plot: bool = False,
+        default_lazy_threads: bool = False,
     ):
         self.__name = name
         self.__llm = llm.chat_model
@@ -44,15 +43,13 @@ class Session:
         self.__df_context: dict[str, str] = {}
         self.__additional_context: list[str] = []
 
-        # Create a DuckDB connection for the session
-        self.__duckdb_connection = duckdb.connect(":memory:")
-
         self.__executor = data_executor
         self.__visualizer = visualizer
         self.__cache = cache
 
         # Pipe/thread defaults
         self.__default_rows_limit = default_rows_limit
+        self.__default_lazy_threads = default_lazy_threads
         self.__default_stream_ask = default_stream_ask
         self.__default_stream_plot = default_stream_plot
 
@@ -79,19 +76,10 @@ class Session:
                 be either the path to a file whose content will be used as the context or
                 the direct context as a string.
         """
-        from databao.duckdb import register_sqlalchemy
-
         conn_name = name or f"db{len(self.__dbs) + 1}"
 
-        # If it's a SQLAlchemy engine, register it with our DuckDB connection
-        if isinstance(connection, Engine):
-            register_sqlalchemy(self.__duckdb_connection, connection, conn_name)
-            # Store the DuckDB connection in dbs if not already there
-            if "duckdb" not in self.__dbs:
-                self.__dbs["duckdb"] = self.__duckdb_connection
-        else:
-            # For other connection types (like native DuckDB), store directly
-            self.__dbs[conn_name] = connection
+        self.__dbs[conn_name] = connection
+        self.executor.register_db(conn_name, connection)
 
         if (context_text := self._parse_context_arg(context)) is not None:
             self.__db_context[conn_name] = context_text
@@ -107,12 +95,7 @@ class Session:
         df_name = name or f"df{len(self.__dfs) + 1}"
         self.__dfs[df_name] = df
 
-        # Register the DataFrame with DuckDB
-        self.__duckdb_connection.register(df_name, df)
-
-        # Store the DuckDB connection in dbs if not already there
-        if "duckdb" not in self.__dbs:
-            self.__dbs["duckdb"] = self.__duckdb_connection
+        self.executor.register_df(df_name, df)
 
         if (context_text := self._parse_context_arg(context)) is not None:
             self.__df_context[df_name] = context_text
@@ -131,13 +114,16 @@ class Session:
             raise ValueError("Invalid context provided.")
         self.__additional_context.append(text)
 
-    def thread(self, *, stream_ask: bool | None = None, stream_plot: bool | None = None) -> Pipe:
+    def thread(
+        self, *, stream_ask: bool | None = None, stream_plot: bool | None = None, lazy: bool | None = None
+    ) -> Pipe:
         """Start a new thread in this session."""
         return Pipe(
             self,
             default_rows_limit=self.__default_rows_limit,
             default_stream_ask=stream_ask if stream_ask is not None else self.__default_stream_ask,
             default_stream_plot=stream_plot if stream_plot is not None else self.__default_stream_plot,
+            lazy=lazy if lazy is not None else self.__default_lazy_threads,
         )
 
     @property

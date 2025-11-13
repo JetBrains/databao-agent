@@ -15,6 +15,7 @@ def open_session(
     default_rows_limit: int = 1000,
     default_stream_ask: bool = True,
     default_stream_plot: bool = False,
+    default_lazy_threads: bool = False,
 ) -> Session:
     """This is an entry point for users to open a session.
     Session can't be modified after it's created. Only new data sources can be added.
@@ -29,4 +30,5 @@ def open_session(
         default_rows_limit=default_rows_limit,
         default_stream_ask=default_stream_ask,
         default_stream_plot=default_stream_plot,
+        default_lazy_threads=default_lazy_threads,
     )

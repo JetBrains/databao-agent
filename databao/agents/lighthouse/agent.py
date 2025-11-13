@@ -18,7 +18,7 @@ from databao.duckdb.utils import describe_duckdb_schema, get_db_path, register_s
 class LighthouseAgent(AgentExecutor):
     def __init__(self) -> None:
         super().__init__()
-        self._prompt_template = read_prompt_template(Path("system_prompt_simple.jinja"))
+        self._prompt_template = read_prompt_template(Path("system_prompt.jinja"))
 
         # Create a DuckDB connection for the agent
         self._duckdb_connection = duckdb.connect(":memory:")

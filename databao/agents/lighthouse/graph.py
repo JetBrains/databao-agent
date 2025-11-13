@@ -11,11 +11,13 @@ from langchain_openai import ChatOpenAI
 from langgraph.constants import END, START
 from langgraph.graph import add_messages
 from langgraph.graph.state import CompiledStateGraph, StateGraph
+from langgraph.prebuilt import InjectedState
 
 from databao.agents.frontend.text_frontend import dataframe_to_markdown
 from databao.agents.lighthouse.utils import exception_to_string
 from databao.configs.llm import LLMConfig
 from databao.core import ExecutionResult
+from databao.duckdb.react_tools import execute_duckdb_sql
 
 
 class AgentState(TypedDict):
@@ -25,29 +27,31 @@ class AgentState(TypedDict):
     df: pd.DataFrame | None
     visualization_prompt: str | None
     ready_for_user: bool
+    limit_max_rows: int | None
 
 
 class ExecuteSubmit:
     """Simple graph with two tools: run_sql_query and submit_query_id.
     All context must be in the SystemMessage."""
 
-    MAX_ROWS = 12
+    MAX_TOOL_ROWS = 12
+    """Max number of rows to return in SQL tool calls."""
 
     def __init__(self, connection: DuckDBPyConnection):
         self._connection = connection
 
-    def init_state(self, messages: list[BaseMessage]) -> dict[str, Any]:
-        state: dict[str, Any] = {
-            "messages": messages,
-            "query_ids": {},
-            "sql": None,
-            "df": None,
-            "visualization_prompt": None,
-            "ready_for_user": False,
-        }
-        return state
+    def init_state(self, messages: list[BaseMessage], *, limit_max_rows: int | None = None) -> AgentState:
+        return AgentState(
+            messages=messages,
+            query_ids={},
+            sql=None,
+            df=None,
+            visualization_prompt=None,
+            ready_for_user=False,
+            limit_max_rows=limit_max_rows,
+        )
 
-    def get_result(self, state: dict[str, Any]) -> ExecutionResult:
+    def get_result(self, state: AgentState) -> ExecutionResult:
         last_ai_message = None
         for m in reversed(state["messages"]):
             if isinstance(m, AIMessage):
@@ -81,23 +85,25 @@ class ExecuteSubmit:
 
     def make_tools(self) -> list[BaseTool]:
         @tool(parse_docstring=True)
-        def run_sql_query(sql: str) -> dict[str, Any]:
+        def run_sql_query(sql: str, graph_state: Annotated[AgentState, InjectedState]) -> dict[str, Any]:
             """
             Run a SELECT SQL query in the database. Returns the first 12 rows in csv format.
 
             Args:
                 sql: SQL query
             """
-            df_or_error = self._connection.execute(sql).df()
-            if isinstance(df_or_error, pd.DataFrame):
-                df_csv = df_or_error.head(self.MAX_ROWS).to_csv(index=False)
-                df_markdown = dataframe_to_markdown(df_or_error.head(self.MAX_ROWS), index=False)
-                if len(df_or_error) > self.MAX_ROWS:
-                    df_csv += f"\nResult is truncated from {len(df_or_error)} to {self.MAX_ROWS} rows."
-                    df_markdown += f"\nResult is truncated from {len(df_or_error)} to {self.MAX_ROWS} rows."
-                return {"df": df_or_error, "sql": sql, "csv": df_csv, "markdown": df_markdown}
-            else:
-                return {"error": exception_to_string(df_or_error)}
+            try:
+                # TODO use ToolRuntime in LangChain v1.0
+                limit = graph_state["limit_max_rows"]
+                df = execute_duckdb_sql(sql, self._connection, limit=limit)
+                df_csv = df.head(self.MAX_TOOL_ROWS).to_csv(index=False)
+                df_markdown = dataframe_to_markdown(df.head(self.MAX_TOOL_ROWS), index=False)
+                if len(df) > self.MAX_TOOL_ROWS:
+                    df_csv += f"\nResult is truncated from {len(df)} to {self.MAX_TOOL_ROWS} rows."
+                    df_markdown += f"\nResult is truncated from {len(df)} to {self.MAX_TOOL_ROWS} rows."
+                return {"df": df, "sql": sql, "csv": df_csv, "markdown": df_markdown}
+            except Exception as e:
+                return {"error": exception_to_string(e)}
 
         @tool(parse_docstring=True)
         def submit_query_id(
@@ -193,9 +199,10 @@ class ExecuteSubmit:
                     continue
 
                 try:
-                    result = tool.invoke(args)
+                    result = tool.invoke(args | {"graph_state": state})
                 except Exception as e:
                     result = {"error": exception_to_string(e) + f"\nTool: {name}, Args: {args}"}
+
                 content = ""
                 if name == "run_sql_query":
                     sql = result.get("sql")

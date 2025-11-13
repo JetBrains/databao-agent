@@ -118,6 +118,8 @@ class Session:
         self, *, stream_ask: bool | None = None, stream_plot: bool | None = None, lazy: bool | None = None
     ) -> Pipe:
         """Start a new thread in this session."""
+        if not self.__dbs and not self.__dfs:
+            raise ValueError("No databases or dataframes registered in this session.")
         return Pipe(
             self,
             default_rows_limit=self.__default_rows_limit,

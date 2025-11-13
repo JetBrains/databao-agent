@@ -81,7 +81,6 @@ class LighthouseAgent(AgentExecutor):
         cache_scope: str = "common_cache",
         stream: bool = True,
     ) -> ExecutionResult:
-        # TODO rows_limit is ignored
         compiled_graph = self._get_compiled_graph(session)
 
         messages = self._process_opa(session, opa, cache_scope)
@@ -94,7 +93,7 @@ class LighthouseAgent(AgentExecutor):
                 *messages_with_system,
             ]
 
-        init_state = self._graph.init_state(messages_with_system)
+        init_state = self._graph.init_state(messages_with_system, limit_max_rows=rows_limit)
         invoke_config = RunnableConfig(recursion_limit=self._graph_recursion_limit)
         last_state = self._invoke_graph_sync(compiled_graph, init_state, config=invoke_config, stream=stream)
         execution_result = self._graph.get_result(last_state)

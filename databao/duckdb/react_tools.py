@@ -1,4 +1,5 @@
 import json
+import re
 from typing import Any
 
 import pandas as pd
@@ -24,10 +25,19 @@ def sql_strip(query: str) -> str:
     return query.strip().rstrip(";")
 
 
+def sql_with_limit(sql: str, limit: int) -> str:
+    """Ensure the SQL has a LIMIT clause, appending one if missing."""
+    sql_to_run = sql_strip(sql)
+    # Only match if there's a LIMIT clause at the end of the SQL
+    if not re.search(r"\blimit\b\s*\S+\s*$", sql_to_run, flags=re.IGNORECASE):
+        sql_to_run = f"{sql_to_run} LIMIT {limit}"
+    return sql_to_run
+
+
 def execute_duckdb_sql(sql: str, con: DuckDBPyConnection, *, limit: int | None = None) -> pd.DataFrame:
     sql_to_run = sql_strip(sql)
-    if limit is not None and " LIMIT " not in sql_to_run.upper():
-        sql_to_run = f"{sql_to_run} LIMIT {int(limit)}"
+    if limit is not None:
+        sql_to_run = sql_with_limit(sql_to_run, limit)
     return con.execute(sql_to_run).df()
 
 

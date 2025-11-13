@@ -139,11 +139,6 @@ class Pipe:
             request: Optional natural-language plotting request.
             rows_limit: Optional row limit for data materialization in lazy mode.
         """
-        # TODO Currently, we can't chain calls or maintain a "plot history": pipe.plot("red").plot("blue").
-        #  We have to do pipe.plot("red"), but then pipe.plot("blue") is independent of the first call.
-        # TODO Determine if .ask should be called first (e.g., if the first pipe call is .plot or if a new dataframe
-        #  is necessary first before using .plot). Maybe treat .plot as a different Opa type
-        #  and compute everything in Executor.
         self._stream_plot = stream
         return self._materialize_visualization(request, rows_limit if rows_limit else self._data_materialized_rows)
 

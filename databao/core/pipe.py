@@ -52,14 +52,10 @@ class Pipe:
         self._cache_scope = f"{self._session.name}/{uuid.uuid4()}"
 
     def _materialize_data(self, rows_limit: int | None) -> "ExecutionResult":
-        """Materialize latest data state by executing pending OPAs if needed.
-
-        Reuses cached result unless new OPAs were added or the row limit changed.
-        """
-        # TODO Recompute on rows_limit change without recomputing the last Opa
-        rows_limit = rows_limit if rows_limit else self._default_rows_limit
+        """Materialize the latest data state by executing pending OPAs if needed."""
         new_opas = self._opas[self._opas_processed_count :]
-        if len(new_opas) > 0 or rows_limit != self._data_materialized_rows:
+        if len(new_opas) > 0:
+            rows_limit = rows_limit if rows_limit else self._default_rows_limit
             stream = self._stream_ask if self._stream_ask is not None else self._default_stream_ask
             for opa in new_opas:
                 self._data_result = self._session.executor.execute(
@@ -103,7 +99,7 @@ class Pipe:
         """Return the latest dataframe, materializing data as needed.
 
         Args:
-            rows_limit: Optional override for the number of rows to materialize.
+            rows_limit: Optional override for the number of rows to materialize in lazy mode.
         """
         return self._materialize_data(rows_limit if rows_limit else self._data_materialized_rows).df
 
@@ -114,7 +110,7 @@ class Pipe:
 
         Args:
             request: Optional natural-language plotting request.
-            rows_limit: Optional row limit for data materialization.
+            rows_limit: Optional row limit for data materialization in lazy mode.
         """
         # TODO Currently, we can't chain calls or maintain a "plot history": pipe.plot("red").plot("blue").
         #  We have to do pipe.plot("red"), but then pipe.plot("blue") is independent of the first call.
@@ -129,7 +125,9 @@ class Pipe:
     def ask(self, query: str, *, rows_limit: int | None = None, stream: bool | None = None) -> Self:
         """Append a new user query to this pipe.
 
-        Returns self to allow chaining (e.g., pipe.ask("..."))
+        Returns self to allow chaining (e.g., pipe.ask("...")).
+
+        Setting rows_limit has no effect in lazy mode.
         """
         # NB. A new Opa is created even if it's identical to the previous one.
         self._opas.append(Opa(query=query))

@@ -6,7 +6,7 @@ from langchain_core.runnables import RunnableConfig
 from databao.agents.base import AgentExecutor
 from databao.configs.llm import LLMConfig
 from databao.core import ExecutionResult, Opa, Session
-from databao.duckdb.react_tools import AgentResponse, make_react_duckdb_agent, sql_strip
+from databao.duckdb.react_tools import AgentResponse, execute_duckdb_sql, make_react_duckdb_agent
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ class ReactDuckDBAgent(AgentExecutor):
         last_state = self._invoke_graph_sync(compiled_graph, init_state, config=invoke_config, stream=stream)
         answer: AgentResponse = last_state["structured_response"]
         logger.info("Generated query: %s", answer.sql)
-        df = data_connection.execute(f"SELECT * FROM ({sql_strip(answer.sql)}) t LIMIT {rows_limit}").df()
+        df = execute_duckdb_sql(answer.sql, data_connection, limit=rows_limit)
 
         # Update message history
         final_messages = last_state.get("messages", [])

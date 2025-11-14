@@ -63,12 +63,12 @@ class ExecutionResult(BaseModel):
         modality_hints = self.meta.get(OutputModalityHints.META_KEY, OutputModalityHints())
         html_parts = {}
 
-        text_html = f"<summary>Response</summary><pre>{html.escape(self.text.strip())}</pre>"  # TODO markdown to HTML
+        text_html = f"<pre>{html.escape(self.text.strip())}</pre>"  # TODO markdown to HTML
         html_parts["text"] = text_html
         if self.code is not None:
             code = self.code.strip()
             if len(code) > 0:
-                code_html = f"<summary>Code</summary><pre><code>{html.escape(code)}</code></pre>"
+                code_html = f"<pre><code>{html.escape(code)}</code></pre>"
                 html_parts["code"] = code_html
 
         if self.df is not None and hasattr(self.df, "_repr_html_") and callable(self.df._repr_html_):
@@ -77,7 +77,7 @@ class ExecutionResult(BaseModel):
             #  so returning just the correct mimetype is not enough to "unlock" all features, but
             #  it's the best we can do for now.
             df_html = self.df._repr_html_()
-            html_parts["df"] = f"<summary>Data</summary>{df_html}"
+            html_parts["df"] = df_html
 
         if modality_hints.should_visualize and plot_mimebundle is not None:
             vis_html: str | None = None
@@ -90,11 +90,15 @@ class ExecutionResult(BaseModel):
                 jpeg_base64 = base64.b64encode(jpeg_bytes).decode("utf-8")
                 vis_html = f'<img src="data:image/jpeg;base64,{jpeg_base64}" alt="Plot"/>'
             if vis_html is not None:
-                html_parts["visualization"] = f"<summary>Visualization</summary>{vis_html}"
+                html_parts["visualization"] = vis_html
 
         # Determine which section should be expanded by default
         expand_keys = ["visualization"] if "visualization" in html_parts else ["df", "text"]
-        html_parts = {k: f"<details{' open' if k in expand_keys else ''}>{v}</details>" for k, v in html_parts.items()}
+        section_names = {"text": "Response", "df": "Data", "visualization": "Visualization", "code": "Code"}
+        html_parts = {
+            k: f"<details{' open' if k in expand_keys else ''}><summary>{section_names[k]}</summary>{v}</details>"
+            for k, v in html_parts.items()
+        }
 
         return "\n\n".join(html_parts.values())
 

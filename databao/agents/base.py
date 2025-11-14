@@ -71,7 +71,8 @@ class AgentExecutor(Executor):
         vis_prompt = result.meta.get("visualization_prompt", None)
         if vis_prompt is not None and len(vis_prompt) == 0:
             vis_prompt = None
-        should_visualize = vis_prompt is not None
+        df = result.df
+        should_visualize = vis_prompt is not None and df is not None and len(df) >= 3
         return OutputModalityHints(visualization_prompt=vis_prompt, should_visualize=should_visualize)
 
     @staticmethod

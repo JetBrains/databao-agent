@@ -6,7 +6,7 @@ import pandas as pd
 from langchain_core.messages import SystemMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph.state import CompiledStateGraph
-from sqlalchemy import Engine, Connection
+from sqlalchemy import Connection, Engine
 
 from databao.agents.base import AgentExecutor
 from databao.agents.lighthouse.graph import ExecuteSubmit

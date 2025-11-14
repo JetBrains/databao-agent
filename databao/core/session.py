@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any
 from duckdb import DuckDBPyConnection
 from langchain_core.language_models.chat_models import BaseChatModel
 from pandas import DataFrame
-from sqlalchemy import Engine, Connection
+from sqlalchemy import Connection, Engine
 
 from databao.configs.llm import LLMConfig
 from databao.core.pipe import Pipe

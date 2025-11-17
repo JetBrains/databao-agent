@@ -11,11 +11,11 @@ def new_agent(
     data_executor: Executor | None = None,
     visualizer: Visualizer | None = None,
     cache: Cache | None = None,
-    default_rows_limit: int = 1000,
-    default_stream_ask: bool = True,
-    default_stream_plot: bool = False,
-    default_lazy_threads: bool = False,
-    default_auto_output_modality: bool = True,
+    rows_limit: int = 1000,
+    stream_ask: bool = True,
+    stream_plot: bool = False,
+    lazy_threads: bool = False,
+    auto_output_modality: bool = True,
 ) -> Agent:
     """This is an entry point for users to create a new agent.
     Agent can't be modified after it's created. Only new data sources can be added.
@@ -27,9 +27,9 @@ def new_agent(
         data_executor=data_executor or LighthouseExecutor(),
         visualizer=visualizer or VegaChatVisualizer(llm_config),
         cache=cache or InMemCache(),
-        default_rows_limit=default_rows_limit,
-        default_stream_ask=default_stream_ask,
-        default_stream_plot=default_stream_plot,
-        default_lazy_threads=default_lazy_threads,
-        default_auto_output_modality=default_auto_output_modality,
+        rows_limit=rows_limit,
+        stream_ask=stream_ask,
+        stream_plot=stream_plot,
+        lazy_threads=lazy_threads,
+        auto_output_modality=auto_output_modality,
     )

@@ -23,14 +23,14 @@ class Pipe:
         self,
         agent: "Agent",
         *,
-        default_rows_limit: int = 1000,
-        default_stream_ask: bool = True,
-        default_stream_plot: bool = False,
+        rows_limit: int = 1000,
+        stream_ask: bool = True,
+        stream_plot: bool = False,
         lazy: bool = False,
         auto_output_modality: bool = True,
     ):
         self._agent = agent
-        self._default_rows_limit = default_rows_limit
+        self._default_rows_limit = rows_limit
 
         self._lazy_mode = lazy
 
@@ -43,8 +43,8 @@ class Pipe:
 
         self._stream_ask: bool | None = None
         self._stream_plot: bool | None = None
-        self._default_stream_ask: bool = default_stream_ask
-        self._default_stream_plot: bool = default_stream_plot
+        self._default_stream_ask: bool = stream_ask
+        self._default_stream_plot: bool = stream_plot
 
         self._data_materialized_rows: int | None = None
         self._data_result: ExecutionResult | None = None

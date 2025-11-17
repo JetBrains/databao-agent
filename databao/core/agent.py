@@ -29,11 +29,11 @@ class Agent:
         cache: "Cache",
         *,
         name: str = "default_agent",
-        default_rows_limit: int,
-        default_stream_ask: bool = True,
-        default_stream_plot: bool = False,
-        default_lazy_threads: bool = False,
-        default_auto_output_modality: bool = True,
+        rows_limit: int,
+        stream_ask: bool = True,
+        stream_plot: bool = False,
+        lazy_threads: bool = False,
+        auto_output_modality: bool = True,
     ):
         self.__name = name
         self.__llm = llm.chat_model
@@ -51,11 +51,11 @@ class Agent:
         self.__cache = cache
 
         # Pipe/thread defaults
-        self.__default_rows_limit = default_rows_limit
-        self.__default_lazy_threads = default_lazy_threads
-        self.__default_auto_output_modality = default_auto_output_modality
-        self.__default_stream_ask = default_stream_ask
-        self.__default_stream_plot = default_stream_plot
+        self.__rows_limit = rows_limit
+        self.__lazy_threads = lazy_threads
+        self.__auto_output_modality = auto_output_modality
+        self.__stream_ask = stream_ask
+        self.__stream_plot = stream_plot
 
     def _parse_context_arg(self, context: str | Path | None) -> str | None:
         if context is None:
@@ -140,13 +140,13 @@ class Agent:
             raise ValueError("No databases or dataframes registered in this agent.")
         return Pipe(
             self,
-            default_rows_limit=self.__default_rows_limit,
-            default_stream_ask=stream_ask if stream_ask is not None else self.__default_stream_ask,
-            default_stream_plot=stream_plot if stream_plot is not None else self.__default_stream_plot,
-            lazy=lazy if lazy is not None else self.__default_lazy_threads,
+            rows_limit=self.__rows_limit,
+            stream_ask=stream_ask if stream_ask is not None else self.__stream_ask,
+            stream_plot=stream_plot if stream_plot is not None else self.__stream_plot,
+            lazy=lazy if lazy is not None else self.__lazy_threads,
             auto_output_modality=auto_output_modality
             if auto_output_modality is not None
-            else self.__default_auto_output_modality,
+            else self.__auto_output_modality,
         )
 
     @property

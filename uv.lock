@@ -662,7 +662,7 @@ dev = [
 requires-dist = [
     { name = "diskcache", specifier = ">=5.6.3" },
     { name = "duckdb", specifier = ">=1.3.0" },
-    { name = "edaplot-vl", specifier = "~=0.1" },
+    { name = "edaplot-vl", specifier = "==0.1.2.dev1" },
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "langchain", specifier = ">=0.3.20,<0.4" },
     { name = "langchain-anthropic", specifier = ">=0.3.10,<0.4" },
@@ -804,7 +804,7 @@ wheels = [
 
 [[package]]
 name = "edaplot-vl"
-version = "0.1.1"
+version = "0.1.2.dev1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "altair", extra = ["all"] },
@@ -819,9 +819,9 @@ dependencies = [
     { name = "tqdm" },
     { name = "vl-convert-python" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d1/d1/329b30cc683fbd469ddc83e116ad432c76b3057471a8fccf0f9c6186188e/edaplot_vl-0.1.1.tar.gz", hash = "sha256:8249ec5e09920d8d2eb0224eb7bfada6d0e7c06fff612c52de2b2ac406761374", size = 45683, upload-time = "2025-11-17T16:32:41.583Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e9/91/753d98e296dd6b9eb6e1a4fac4e9af820d00597b52bb68eac6a760ca5d7c/edaplot_vl-0.1.2.dev1.tar.gz", hash = "sha256:7fe47a751c64a009c30a879e63119ddcb9713a1d2e6eb22ba232d17c13e9fc7c", size = 45796, upload-time = "2025-11-17T18:28:40.86Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/25/58/d7a3a10d2268a799460c2cab3276aedc4c6d14cbfb04b343bfdb31d49fcf/edaplot_vl-0.1.1-py3-none-any.whl", hash = "sha256:68e64134121677e2b1e422580da122e1a3859b0bc1fa659489d513a344839e6a", size = 53317, upload-time = "2025-11-17T16:32:40.432Z" },
+    { url = "https://files.pythonhosted.org/packages/fd/82/2711e3059c82a199f36bc92cd5bfe1a29ed87b3b02897a6be9916a74fde6/edaplot_vl-0.1.2.dev1-py3-none-any.whl", hash = "sha256:6d371f48987e9f54a2a3823b05def9b543076ca49787465ba0f0ae01c05e6929", size = 53532, upload-time = "2025-11-17T18:28:39.663Z" },
 ]
 
 [[package]]

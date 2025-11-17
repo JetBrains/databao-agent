@@ -23,12 +23,12 @@ class Agent:
 
     def __init__(
         self,
-        name: str,
         llm: LLMConfig,
         data_executor: "Executor",
         visualizer: "Visualizer",
         cache: "Cache",
         *,
+        name: str = "default_agent",
         default_rows_limit: int,
         default_stream_ask: bool = True,
         default_stream_plot: bool = False,

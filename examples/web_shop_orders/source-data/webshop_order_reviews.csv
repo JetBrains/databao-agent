@@ -1,0 +1,173 @@
+review_id,order_id,review_score,review_comment_title,review_comment_message,review_creation_date,review_answer_timestamp
+rev_0001,ord_0004,2,Goed,Alles volgens verwachting. Delivery was late and arrived after the estimated date.,2025-08-19 20:23:00,2025-08-22 06:23:00
+rev_0002,ord_0007,1,Slecht,Product niet ontvangen. Delivery was late and arrived after the estimated date.,2025-06-25 04:11:00,2025-06-27 00:11:00
+rev_0003,ord_0008,5,Top!,Snelle levering en netjes verpakt. Delivery arrived earlier than expected.,2025-08-07 20:53:00,2025-08-10 07:53:00
+rev_0004,ord_0014,1,Prima,"Product oké, verpakking kon beter. Delivery was late and arrived after the estimated date.",2025-08-04 06:49:00,2025-08-05 09:49:00
+rev_0005,ord_0018,1,Prima,"Product oké, verpakking kon beter. Delivery was late and arrived after the estimated date.",2025-09-24 23:19:00,2025-09-27 02:19:00
+rev_0006,ord_0021,5,Top!,Snelle levering en netjes verpakt.,2025-08-19 13:47:00,2025-08-22 02:47:00
+rev_0007,ord_0025,5,Slecht,Product niet ontvangen. Delivery arrived earlier than expected.,2025-09-07 14:01:00,2025-09-09 07:01:00
+rev_0008,ord_0027,5,Top!,Snelle levering en netjes verpakt. Delivery arrived earlier than expected.,2025-09-15 11:51:00,2025-09-17 02:51:00
+rev_0009,ord_0030,2,Slecht,Product niet ontvangen. Delivery was late and arrived after the estimated date.,2025-08-08 02:09:00,2025-08-08 05:09:00
+rev_0010,ord_0036,5,Top!,Snelle levering en netjes verpakt. Delivery arrived earlier than expected.,2025-08-09 21:36:00,2025-08-10 23:36:00
+rev_0011,ord_0040,5,Slecht,Product niet ontvangen. Delivery arrived earlier than expected.,2025-08-26 01:25:00,2025-08-26 05:25:00
+rev_0012,ord_0041,1,Top!,Snelle levering en netjes verpakt. Delivery was late and arrived after the estimated date.,2025-09-05 19:35:00,2025-09-08 03:35:00
+rev_0013,ord_0046,5,Top!,Snelle levering en netjes verpakt. Delivery arrived earlier than expected.,2025-06-11 21:18:00,2025-06-13 11:18:00
+rev_0014,ord_0048,5,Matig,Pakket kwam beschadigd aan. Delivery arrived earlier than expected.,2025-08-08 13:12:00,2025-08-10 06:12:00
+rev_0015,ord_0053,2,Slecht,Product niet ontvangen. Delivery was late and arrived after the estimated date.,2025-06-25 20:14:00,2025-06-25 23:14:00
+rev_0016,ord_0055,5,Prima,"Product oké, verpakking kon beter. Delivery arrived earlier than expected.",2025-09-17 02:26:00,2025-09-19 04:26:00
+rev_0017,ord_0056,2,Matig,Pakket kwam beschadigd aan.,2025-08-14 00:38:00,2025-08-14 03:38:00
+rev_0018,ord_0062,2,Top!,Snelle levering en netjes verpakt. Delivery was late and arrived after the estimated date.,2025-08-29 02:11:00,2025-08-30 15:11:00
+rev_0019,ord_0063,1,Top!,Snelle levering en netjes verpakt. Delivery was late and arrived after the estimated date.,2025-08-16 02:15:00,2025-08-17 07:15:00
+rev_0020,ord_0065,5,Matig,Pakket kwam beschadigd aan. Delivery arrived earlier than expected.,2025-09-15 15:03:00,2025-09-16 06:03:00
+rev_0021,ord_0079,1,Prima,"Product oké, verpakking kon beter. Delivery was late and arrived after the estimated date.",2025-09-03 03:22:00,2025-09-03 12:22:00
+rev_0022,ord_0085,5,Slecht,Product niet ontvangen. Delivery arrived earlier than expected.,2025-07-15 21:25:00,2025-07-17 19:25:00
+rev_0023,ord_0086,5,Slecht,Product niet ontvangen. Delivery arrived earlier than expected.,2025-09-04 19:33:00,2025-09-06 16:33:00
+rev_0024,ord_0090,2,Matig,Pakket kwam beschadigd aan. Delivery was late and arrived after the estimated date.,2025-09-21 19:25:00,2025-09-21 21:25:00
+rev_0025,ord_0094,5,Slecht,Product niet ontvangen. Delivery arrived earlier than expected.,2025-08-28 01:30:00,2025-08-28 14:30:00
+rev_0026,ord_0099,2,Goed,Alles volgens verwachting. Delivery was late and arrived after the estimated date.,2025-08-15 01:07:00,2025-08-16 14:07:00
+rev_0027,ord_0101,1,Top!,Snelle levering en netjes verpakt. Delivery was late and arrived after the estimated date.,2025-07-11 11:33:00,2025-07-11 23:33:00
+rev_0028,ord_0104,5,Goed,Alles volgens verwachting. Delivery arrived earlier than expected.,2025-08-06 21:23:00,2025-08-08 18:23:00
+rev_0029,ord_0105,2,Matig,Pakket kwam beschadigd aan. Delivery was late and arrived after the estimated date.,2025-09-08 16:04:00,2025-09-10 06:04:00
+rev_0030,ord_0107,5,Top!,Snelle levering en netjes verpakt. Delivery arrived earlier than expected.,2025-09-23 09:17:00,2025-09-25 16:17:00
+rev_0031,ord_0108,1,Matig,Pakket kwam beschadigd aan. Delivery was late and arrived after the estimated date.,2025-09-30 23:58:00,2025-10-01 08:58:00
+rev_0032,ord_0109,1,Matig,Pakket kwam beschadigd aan. Delivery was late and arrived after the estimated date.,2025-07-06 06:30:00,2025-07-08 07:30:00
+rev_0033,ord_0110,5,Goed,Alles volgens verwachting. Delivery arrived earlier than expected.,2025-09-20 05:03:00,2025-09-21 23:03:00
+rev_0034,ord_0113,5,Matig,Pakket kwam beschadigd aan. Delivery arrived earlier than expected.,2025-10-04 00:23:00,2025-10-06 05:23:00
+rev_0035,ord_0114,2,Matig,Pakket kwam beschadigd aan.,2025-08-27 07:49:00,2025-08-28 22:49:00
+rev_0036,ord_0116,5,Slecht,Product niet ontvangen. Delivery arrived earlier than expected.,2025-10-06 21:19:00,2025-10-07 23:19:00
+rev_0037,ord_0122,5,Prima,"Product oké, verpakking kon beter. Delivery arrived earlier than expected.",2025-07-10 09:55:00,2025-07-10 18:55:00
+rev_0038,ord_0123,2,Matig,Pakket kwam beschadigd aan. Delivery was late and arrived after the estimated date.,2025-07-17 08:14:00,2025-07-17 20:14:00
+rev_0039,ord_0129,5,Matig,Pakket kwam beschadigd aan. Delivery arrived earlier than expected.,2025-06-20 06:07:00,2025-06-22 01:07:00
+rev_0040,ord_0133,2,Slecht,Product niet ontvangen. Delivery was late and arrived after the estimated date.,2025-08-10 10:24:00,2025-08-11 04:24:00
+rev_0041,ord_0135,5,Top!,Snelle levering en netjes verpakt. Delivery arrived earlier than expected.,2025-10-02 13:12:00,2025-10-03 20:12:00
+rev_0042,ord_0142,5,Slecht,Product niet ontvangen. Delivery arrived earlier than expected.,2025-06-22 02:25:00,2025-06-24 17:25:00
+rev_0043,ord_0144,5,Goed,Alles volgens verwachting. Delivery arrived earlier than expected.,2025-09-16 06:59:00,2025-09-16 18:59:00
+rev_0044,ord_0145,2,Prima,"Product oké, verpakking kon beter. Delivery was late and arrived after the estimated date.",2025-09-15 13:53:00,2025-09-18 07:53:00
+rev_0045,ord_0153,2,Top!,Snelle levering en netjes verpakt. Delivery was late and arrived after the estimated date.,2025-09-14 04:11:00,2025-09-17 01:11:00
+rev_0046,ord_0159,4,Goed,Alles volgens verwachting.,2025-07-21 07:39:00,2025-07-23 11:39:00
+rev_0047,ord_0161,5,Top!,Snelle levering en netjes verpakt. Delivery arrived earlier than expected.,2025-09-08 13:56:00,2025-09-09 17:56:00
+rev_0048,ord_0162,2,Prima,"Product oké, verpakking kon beter. Delivery was late and arrived after the estimated date.",2025-09-04 17:19:00,2025-09-06 22:19:00
+rev_0049,ord_0164,1,Goed,Alles volgens verwachting. Delivery was late and arrived after the estimated date.,2025-07-10 01:44:00,2025-07-11 07:44:00
+rev_0050,ord_0172,1,Slecht,Product niet ontvangen. Delivery was late and arrived after the estimated date.,2025-07-28 00:07:00,2025-07-30 23:07:00
+rev_0051,ord_0180,1,Top!,Snelle levering en netjes verpakt. Delivery was late and arrived after the estimated date.,2025-08-01 15:44:00,2025-08-02 11:44:00
+rev_0052,ord_0184,5,Top!,Snelle levering en netjes verpakt. Delivery arrived earlier than expected.,2025-09-25 02:22:00,2025-09-25 03:22:00
+rev_0053,ord_0189,2,Matig,Pakket kwam beschadigd aan. Delivery was late and arrived after the estimated date.,2025-06-29 14:22:00,2025-06-29 17:22:00
+rev_0054,ord_0192,2,Top!,Snelle levering en netjes verpakt. Delivery was late and arrived after the estimated date.,2025-08-19 15:11:00,2025-08-20 20:11:00
+rev_0055,ord_0202,5,Matig,Pakket kwam beschadigd aan. Delivery arrived earlier than expected.,2025-08-24 19:27:00,2025-08-26 14:27:00
+rev_0056,ord_0205,5,Slecht,Product niet ontvangen. Delivery arrived earlier than expected.,2025-06-17 15:17:00,2025-06-18 12:17:00
+rev_0057,ord_0212,2,Matig,Pakket kwam beschadigd aan. Delivery was late and arrived after the estimated date.,2025-08-13 22:36:00,2025-08-15 02:36:00
+rev_0058,ord_0214,1,Slecht,Product niet ontvangen. Delivery was late and arrived after the estimated date.,2025-08-01 01:33:00,2025-08-03 07:33:00
+rev_0059,ord_0217,2,Slecht,Product niet ontvangen. Delivery was late and arrived after the estimated date.,2025-08-12 16:42:00,2025-08-15 02:42:00
+rev_0060,ord_0220,5,Matig,Pakket kwam beschadigd aan. Delivery arrived earlier than expected.,2025-08-20 10:13:00,2025-08-21 14:13:00
+rev_0061,ord_0221,5,Goed,Alles volgens verwachting. Delivery arrived earlier than expected.,2025-07-06 14:28:00,2025-07-08 20:28:00
+rev_0062,ord_0227,1,Matig,Pakket kwam beschadigd aan. Delivery was late and arrived after the estimated date.,2025-09-22 05:58:00,2025-09-23 10:58:00
+rev_0063,ord_0230,5,Prima,"Product oké, verpakking kon beter. Delivery arrived earlier than expected.",2025-09-29 07:34:00,2025-10-01 18:34:00
+rev_0064,ord_0237,2,Slecht,Product niet ontvangen. Delivery was late and arrived after the estimated date.,2025-10-02 08:57:00,2025-10-04 15:57:00
+rev_0065,ord_0243,5,Top!,Snelle levering en netjes verpakt. Delivery arrived earlier than expected.,2025-09-24 15:29:00,2025-09-25 05:29:00
+rev_0066,ord_0245,5,Goed,Alles volgens verwachting. Delivery arrived earlier than expected.,2025-09-26 19:53:00,2025-09-29 03:53:00
+rev_0067,ord_0246,5,Top!,Snelle levering en netjes verpakt. Delivery arrived earlier than expected.,2025-08-07 22:35:00,2025-08-08 11:35:00
+rev_0068,ord_0247,2,Prima,"Product oké, verpakking kon beter. Delivery was late and arrived after the estimated date.",2025-09-04 01:10:00,2025-09-05 22:10:00
+rev_0069,ord_0248,1,Slecht,Product niet ontvangen. Delivery was late and arrived after the estimated date.,2025-08-01 17:44:00,2025-08-01 23:44:00
+rev_0070,ord_0251,5,Matig,Pakket kwam beschadigd aan. Delivery arrived earlier than expected.,2025-08-09 21:30:00,2025-08-11 04:30:00
+rev_0071,ord_0258,5,Matig,Pakket kwam beschadigd aan. Delivery arrived earlier than expected.,2025-07-11 21:08:00,2025-07-12 01:08:00
+rev_0072,ord_0267,5,Matig,Pakket kwam beschadigd aan. Delivery arrived earlier than expected.,2025-09-13 20:58:00,2025-09-16 16:58:00
+rev_0073,ord_0268,5,Matig,Pakket kwam beschadigd aan. Delivery arrived earlier than expected.,2025-07-13 07:46:00,2025-07-15 23:46:00
+rev_0074,ord_0273,2,Matig,Pakket kwam beschadigd aan. Delivery was late and arrived after the estimated date.,2025-09-01 11:43:00,2025-09-03 02:43:00
+rev_0075,ord_0277,1,Top!,Snelle levering en netjes verpakt. Delivery was late and arrived after the estimated date.,2025-10-03 05:04:00,2025-10-05 12:04:00
+rev_0076,ord_0278,3,Prima,"Product oké, verpakking kon beter.",2025-09-10 17:54:00,2025-09-11 04:54:00
+rev_0077,ord_0279,1,Matig,Pakket kwam beschadigd aan. Delivery was late and arrived after the estimated date.,2025-07-18 08:54:00,2025-07-18 19:54:00
+rev_0078,ord_0280,1,Top!,Snelle levering en netjes verpakt. Delivery was late and arrived after the estimated date.,2025-07-20 07:08:00,2025-07-21 04:08:00
+rev_0079,ord_0283,5,Prima,"Product oké, verpakking kon beter. Delivery arrived earlier than expected.",2025-08-12 21:56:00,2025-08-14 12:56:00
+rev_0080,ord_0284,2,Slecht,Product niet ontvangen. Delivery was late and arrived after the estimated date.,2025-07-10 16:28:00,2025-07-13 03:28:00
+rev_0081,ord_0287,5,Matig,Pakket kwam beschadigd aan. Delivery arrived earlier than expected.,2025-07-16 23:33:00,2025-07-19 01:33:00
+rev_0082,ord_0289,1,Prima,"Product oké, verpakking kon beter. Delivery was late and arrived after the estimated date.",2025-09-18 22:26:00,2025-09-21 11:26:00
+rev_0083,ord_0292,2,Goed,Alles volgens verwachting. Delivery was late and arrived after the estimated date.,2025-07-02 10:17:00,2025-07-03 16:17:00
+rev_0084,ord_0296,5,Prima,"Product oké, verpakking kon beter. Delivery arrived earlier than expected.",2025-07-01 09:54:00,2025-07-01 22:54:00
+rev_0085,ord_0301,5,Goed,Alles volgens verwachting. Delivery arrived earlier than expected.,2025-06-29 16:05:00,2025-07-02 14:05:00
+rev_0086,ord_0305,2,Slecht,Product niet ontvangen. Delivery was late and arrived after the estimated date.,2025-06-13 06:12:00,2025-06-15 06:12:00
+rev_0087,ord_0306,2,Goed,Alles volgens verwachting. Delivery was late and arrived after the estimated date.,2025-06-12 05:06:00,2025-06-13 04:06:00
+rev_0088,ord_0307,5,Slecht,Product niet ontvangen. Delivery arrived earlier than expected.,2025-08-06 08:29:00,2025-08-07 09:29:00
+rev_0089,ord_0309,2,Matig,Pakket kwam beschadigd aan.,2025-06-18 07:01:00,2025-06-19 03:01:00
+rev_0090,ord_0310,2,Top!,Snelle levering en netjes verpakt. Delivery was late and arrived after the estimated date.,2025-07-18 14:04:00,2025-07-20 11:04:00
+rev_0091,ord_0311,5,Goed,Alles volgens verwachting. Delivery arrived earlier than expected.,2025-09-09 18:18:00,2025-09-11 10:18:00
+rev_0092,ord_0312,5,Goed,Alles volgens verwachting. Delivery arrived earlier than expected.,2025-08-04 12:33:00,2025-08-06 18:33:00
+rev_0093,ord_0315,1,Slecht,Product niet ontvangen. Delivery was late and arrived after the estimated date.,2025-07-30 05:13:00,2025-07-30 23:13:00
+rev_0094,ord_0319,1,Matig,Pakket kwam beschadigd aan. Delivery was late and arrived after the estimated date.,2025-06-27 00:57:00,2025-06-29 01:57:00
+rev_0095,ord_0321,3,Prima,"Product oké, verpakking kon beter.",2025-07-05 11:02:00,2025-07-07 07:02:00
+rev_0096,ord_0327,5,Prima,"Product oké, verpakking kon beter. Delivery arrived earlier than expected.",2025-08-30 12:03:00,2025-09-01 19:03:00
+rev_0097,ord_0334,5,Goed,Alles volgens verwachting. Delivery arrived earlier than expected.,2025-07-18 20:24:00,2025-07-20 03:24:00
+rev_0098,ord_0335,2,Prima,"Product oké, verpakking kon beter. Delivery was late and arrived after the estimated date.",2025-09-21 01:41:00,2025-09-21 04:41:00
+rev_0099,ord_0336,5,Top!,Snelle levering en netjes verpakt. Delivery arrived earlier than expected.,2025-09-06 18:23:00,2025-09-09 05:23:00
+rev_0100,ord_0338,5,Prima,"Product oké, verpakking kon beter. Delivery arrived earlier than expected.",2025-07-04 18:33:00,2025-07-05 13:33:00
+rev_0101,ord_0343,4,Goed,Alles volgens verwachting.,2025-08-01 23:41:00,2025-08-04 00:41:00
+rev_0102,ord_0346,5,Prima,"Product oké, verpakking kon beter. Delivery arrived earlier than expected.",2025-08-05 10:41:00,2025-08-07 04:41:00
+rev_0103,ord_0349,1,Slecht,Product niet ontvangen.,2025-07-09 19:18:00,2025-07-10 23:18:00
+rev_0104,ord_0351,1,Slecht,Product niet ontvangen.,2025-09-29 01:25:00,2025-09-30 01:25:00
+rev_0105,ord_0352,5,Slecht,Product niet ontvangen. Delivery arrived earlier than expected.,2025-10-04 09:01:00,2025-10-05 01:01:00
+rev_0106,ord_0356,5,Prima,"Product oké, verpakking kon beter. Delivery arrived earlier than expected.",2025-07-06 04:35:00,2025-07-06 07:35:00
+rev_0107,ord_0357,5,Goed,Alles volgens verwachting. Delivery arrived earlier than expected.,2025-09-07 05:45:00,2025-09-08 11:45:00
+rev_0108,ord_0359,1,Goed,Alles volgens verwachting. Delivery was late and arrived after the estimated date.,2025-06-27 09:52:00,2025-06-28 03:52:00
+rev_0109,ord_0363,5,Top!,Snelle levering en netjes verpakt.,2025-06-16 13:36:00,2025-06-16 22:36:00
+rev_0110,ord_0367,5,Slecht,Product niet ontvangen. Delivery arrived earlier than expected.,2025-09-12 16:15:00,2025-09-12 19:15:00
+rev_0111,ord_0378,5,Goed,Alles volgens verwachting. Delivery arrived earlier than expected.,2025-09-12 05:20:00,2025-09-12 14:20:00
+rev_0112,ord_0380,2,Goed,Alles volgens verwachting. Delivery was late and arrived after the estimated date.,2025-07-08 23:53:00,2025-07-10 01:53:00
+rev_0113,ord_0389,2,Prima,"Product oké, verpakking kon beter. Delivery was late and arrived after the estimated date.",2025-06-29 01:28:00,2025-06-30 06:28:00
+rev_0114,ord_0390,5,Slecht,Product niet ontvangen. Delivery arrived earlier than expected.,2025-08-02 01:32:00,2025-08-04 03:32:00
+rev_0115,ord_0392,5,Top!,Snelle levering en netjes verpakt. Delivery arrived earlier than expected.,2025-08-09 05:39:00,2025-08-09 06:39:00
+rev_0116,ord_0395,1,Goed,Alles volgens verwachting. Delivery was late and arrived after the estimated date.,2025-06-30 19:45:00,2025-07-03 18:45:00
+rev_0117,ord_0396,1,Prima,"Product oké, verpakking kon beter. Delivery was late and arrived after the estimated date.",2025-09-26 09:33:00,2025-09-28 20:33:00
+rev_0118,ord_0403,5,Matig,Pakket kwam beschadigd aan. Delivery arrived earlier than expected.,2025-07-11 21:30:00,2025-07-13 15:30:00
+rev_0119,ord_0405,5,Prima,"Product oké, verpakking kon beter. Delivery arrived earlier than expected.",2025-09-12 23:59:00,2025-09-13 23:59:00
+rev_0120,ord_0408,2,Prima,"Product oké, verpakking kon beter. Delivery was late and arrived after the estimated date.",2025-10-07 01:32:00,2025-10-08 13:32:00
+rev_0121,ord_0409,5,Top!,Snelle levering en netjes verpakt. Delivery arrived earlier than expected.,2025-08-14 15:06:00,2025-08-15 12:06:00
+rev_0122,ord_0417,5,Slecht,Product niet ontvangen. Delivery arrived earlier than expected.,2025-09-06 03:11:00,2025-09-07 07:11:00
+rev_0123,ord_0418,1,Matig,Pakket kwam beschadigd aan. Delivery was late and arrived after the estimated date.,2025-06-27 02:09:00,2025-06-29 06:09:00
+rev_0124,ord_0421,2,Slecht,Product niet ontvangen. Delivery was late and arrived after the estimated date.,2025-08-04 12:18:00,2025-08-06 21:18:00
+rev_0125,ord_0427,4,Goed,Alles volgens verwachting.,2025-06-10 23:26:00,2025-06-11 23:26:00
+rev_0126,ord_0428,5,Slecht,Product niet ontvangen. Delivery arrived earlier than expected.,2025-08-12 19:10:00,2025-08-15 06:10:00
+rev_0127,ord_0431,5,Goed,Alles volgens verwachting. Delivery arrived earlier than expected.,2025-08-01 15:43:00,2025-08-02 00:43:00
+rev_0128,ord_0432,1,Slecht,Product niet ontvangen. Delivery was late and arrived after the estimated date.,2025-06-18 14:49:00,2025-06-20 21:49:00
+rev_0129,ord_0433,5,Matig,Pakket kwam beschadigd aan. Delivery arrived earlier than expected.,2025-07-08 06:16:00,2025-07-08 11:16:00
+rev_0130,ord_0447,5,Matig,Pakket kwam beschadigd aan. Delivery arrived earlier than expected.,2025-07-12 03:02:00,2025-07-13 07:02:00
+rev_0131,ord_0453,2,Top!,Snelle levering en netjes verpakt. Delivery was late and arrived after the estimated date.,2025-07-28 05:16:00,2025-07-30 12:16:00
+rev_0132,ord_0454,1,Slecht,Product niet ontvangen. Delivery was late and arrived after the estimated date.,2025-08-10 08:56:00,2025-08-12 19:56:00
+rev_0133,ord_0457,2,Goed,Alles volgens verwachting. Delivery was late and arrived after the estimated date.,2025-07-12 10:05:00,2025-07-13 08:05:00
+rev_0134,ord_0461,5,Goed,Alles volgens verwachting. Delivery arrived earlier than expected.,2025-09-27 14:18:00,2025-09-28 18:18:00
+rev_0135,ord_0464,5,Goed,Alles volgens verwachting. Delivery arrived earlier than expected.,2025-06-13 11:38:00,2025-06-14 05:38:00
+rev_0136,ord_0471,5,Prima,"Product oké, verpakking kon beter. Delivery arrived earlier than expected.",2025-09-11 23:16:00,2025-09-14 20:16:00
+rev_0137,ord_0474,5,Goed,Alles volgens verwachting. Delivery arrived earlier than expected.,2025-08-25 21:22:00,2025-08-26 12:22:00
+rev_0138,ord_0475,5,Slecht,Product niet ontvangen. Delivery arrived earlier than expected.,2025-06-16 20:32:00,2025-06-18 16:32:00
+rev_0139,ord_0476,5,Goed,Alles volgens verwachting. Delivery arrived earlier than expected.,2025-09-27 11:15:00,2025-09-27 16:15:00
+rev_0140,ord_0480,4,Goed,Alles volgens verwachting.,2025-09-29 12:48:00,2025-10-02 03:48:00
+rev_0141,ord_0481,2,Top!,Snelle levering en netjes verpakt. Delivery was late and arrived after the estimated date.,2025-09-19 08:39:00,2025-09-19 17:39:00
+rev_0142,ord_0483,5,Matig,Pakket kwam beschadigd aan. Delivery arrived earlier than expected.,2025-07-27 03:09:00,2025-07-27 16:09:00
+rev_0143,ord_0484,1,Goed,Alles volgens verwachting. Delivery was late and arrived after the estimated date.,2025-06-16 02:17:00,2025-06-17 09:17:00
+rev_0144,ord_0487,5,Slecht,Product niet ontvangen. Delivery arrived earlier than expected.,2025-10-05 01:54:00,2025-10-05 07:54:00
+rev_0145,ord_0490,5,Prima,"Product oké, verpakking kon beter. Delivery arrived earlier than expected.",2025-06-15 14:34:00,2025-06-16 11:34:00
+rev_0146,ord_0494,2,Prima,"Product oké, verpakking kon beter. Delivery was late and arrived after the estimated date.",2025-09-25 23:07:00,2025-09-27 21:07:00
+rev_0147,ord_0498,5,Top!,Snelle levering en netjes verpakt. Delivery arrived earlier than expected.,2025-09-03 04:37:00,2025-09-04 20:37:00
+rev_0148,ord_0499,5,Top!,Snelle levering en netjes verpakt. Delivery arrived earlier than expected.,2025-08-31 02:49:00,2025-09-01 13:49:00
+rev_0149,ord_0506,5,Slecht,Product niet ontvangen. Delivery arrived earlier than expected.,2025-08-11 03:29:00,2025-08-11 18:29:00
+rev_0150,ord_0508,2,Goed,Alles volgens verwachting. Delivery was late and arrived after the estimated date.,2025-09-28 12:03:00,2025-10-01 05:03:00
+rev_0151,ord_0511,1,Matig,Pakket kwam beschadigd aan. Delivery was late and arrived after the estimated date.,2025-08-22 05:14:00,2025-08-24 16:14:00
+rev_0152,ord_0514,5,Matig,Pakket kwam beschadigd aan. Delivery arrived earlier than expected.,2025-06-12 12:27:00,2025-06-14 07:27:00
+rev_0153,ord_0516,2,Prima,"Product oké, verpakking kon beter. Delivery was late and arrived after the estimated date.",2025-07-03 19:19:00,2025-07-04 08:19:00
+rev_0154,ord_0533,2,Top!,Snelle levering en netjes verpakt. Delivery was late and arrived after the estimated date.,2025-08-15 23:51:00,2025-08-16 07:51:00
+rev_0155,ord_0537,1,Slecht,Product niet ontvangen. Delivery was late and arrived after the estimated date.,2025-09-10 04:10:00,2025-09-12 14:10:00
+rev_0156,ord_0539,1,Slecht,Product niet ontvangen. Delivery was late and arrived after the estimated date.,2025-10-02 08:15:00,2025-10-05 07:15:00
+rev_0157,ord_0542,1,Goed,Alles volgens verwachting. Delivery was late and arrived after the estimated date.,2025-07-26 12:42:00,2025-07-27 03:42:00
+rev_0158,ord_0544,2,Prima,"Product oké, verpakking kon beter. Delivery was late and arrived after the estimated date.",2025-09-04 18:11:00,2025-09-05 10:11:00
+rev_0159,ord_0545,5,Top!,Snelle levering en netjes verpakt. Delivery arrived earlier than expected.,2025-07-15 23:20:00,2025-07-18 12:20:00
+rev_0160,ord_0552,2,Goed,Alles volgens verwachting. Delivery was late and arrived after the estimated date.,2025-08-18 16:44:00,2025-08-20 11:44:00
+rev_0161,ord_0554,5,Matig,Pakket kwam beschadigd aan. Delivery arrived earlier than expected.,2025-08-21 11:16:00,2025-08-23 05:16:00
+rev_0162,ord_0560,5,Goed,Alles volgens verwachting. Delivery arrived earlier than expected.,2025-09-23 22:38:00,2025-09-25 17:38:00
+rev_0163,ord_0562,5,Prima,"Product oké, verpakking kon beter. Delivery arrived earlier than expected.",2025-09-21 02:14:00,2025-09-22 17:14:00
+rev_0164,ord_0564,2,Top!,Snelle levering en netjes verpakt. Delivery was late and arrived after the estimated date.,2025-08-05 20:59:00,2025-08-06 11:59:00
+rev_0165,ord_0565,5,Matig,Pakket kwam beschadigd aan. Delivery arrived earlier than expected.,2025-07-17 07:19:00,2025-07-18 19:19:00
+rev_0166,ord_0573,5,Matig,Pakket kwam beschadigd aan. Delivery arrived earlier than expected.,2025-08-31 05:31:00,2025-09-01 06:31:00
+rev_0167,ord_0574,1,Matig,Pakket kwam beschadigd aan. Delivery was late and arrived after the estimated date.,2025-09-25 10:43:00,2025-09-28 00:43:00
+rev_0168,ord_0578,5,Slecht,Product niet ontvangen. Delivery arrived earlier than expected.,2025-10-09 08:25:00,2025-10-11 15:25:00
+rev_0169,ord_0580,5,Top!,Snelle levering en netjes verpakt. Delivery arrived earlier than expected.,2025-08-18 17:46:00,2025-08-20 03:46:00
+rev_0170,ord_0583,5,Top!,Snelle levering en netjes verpakt.,2025-06-12 00:21:00,2025-06-12 22:21:00
+rev_0171,ord_0592,5,Slecht,Product niet ontvangen. Delivery arrived earlier than expected.,2025-09-10 10:27:00,2025-09-11 10:27:00
+rev_0172,ord_0597,5,Matig,Pakket kwam beschadigd aan. Delivery arrived earlier than expected.,2025-09-23 17:12:00,2025-09-26 12:12:00

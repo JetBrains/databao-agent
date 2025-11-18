@@ -81,6 +81,7 @@ plugins = ["pydantic.mypy", "sqlalchemy.ext.mypy.plugin"]
 
 [tool.ruff]
 line-length = 120
+extend-exclude = ["*.ipynb"]
 
 [tool.ruff.lint]
 select = [

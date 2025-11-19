@@ -48,10 +48,11 @@ def sql_with_limit(sql: str, limit: int, *, dialect: str | None = "duckdb") -> s
 
 
 def execute_duckdb_sql(sql: str, con: DuckDBPyConnection, *, limit: int | None = None) -> pd.DataFrame:
-    sql_to_run = sql_strip(sql)
+    # Use duckdb's Relation API to inject a LIMIT clause
+    rel = con.sql(sql)  # A lazy Relation
     if limit is not None:
-        sql_to_run = sql_with_limit(sql_to_run, limit)
-    return con.execute(sql_to_run).df()
+        rel = rel.limit(limit)
+    return rel.df()  # Execute and return DataFrame
 
 
 def make_duckdb_tool(con: DuckDBPyConnection) -> Any:

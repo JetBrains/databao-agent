@@ -9,6 +9,7 @@ from databao.duckdb.react_tools import sql_with_limit
         ("SELECT 1", 5, "SELECT 1 LIMIT 5"),
         ("SELECT * FROM t", 10, "SELECT * FROM t LIMIT 10"),
         ("SELECT 1;", 3, "SELECT 1 LIMIT 3"),
+        ("SELECT 1; --Comment", 3, "SELECT 1 LIMIT 3"),
         ("\n  SELECT 1  \n", 2, "SELECT 1 LIMIT 2"),
         ("SELECT * FROM (select abc from foo limit 5)", 7, "SELECT * FROM (select abc from foo limit 5) LIMIT 7"),
         (
@@ -17,6 +18,19 @@ from databao.duckdb.react_tools import sql_with_limit
             'SELECT "limit" FROM (select "limit" from foo limit 5) limit 7',
         ),
         ('SELECT "limit" FROM (select "limit" from foo)', 7, 'SELECT "limit" FROM (select "limit" from foo) limit 7'),
+        (
+            "SELECT date_trunc('month', o.order_purchased_at) AS month FROM orders o",
+            10,
+            "SELECT date_trunc('month', o.order_purchased_at) AS month FROM orders as o LIMIT 10",
+        ),
+        (
+            "SELECT date_trunc('month', o.order_purchased_at) AS month FROM orders o;\n-- Comment",
+            10,
+            "SELECT date_trunc('month', o.order_purchased_at) AS month FROM orders as o LIMIT 10",
+        ),
+        ("SELECT 1 UNION SELECT 2;", 3, "SELECT 1 UNION SELECT 2 LIMIT 3"),
+        ("SELECT 1 LIMIT 1 UNION SELECT 2;", 3, "SELECT 1 LIMIT 1 UNION SELECT 2 LIMIT 3"),
+        ("SELECT 1 LIMIT 1 UNION SELECT 2 LIMIT 1;", 3, "SELECT 1 LIMIT 1 UNION SELECT 2 LIMIT 1"),
     ],
 )
 def test_sql_with_limit_appends_when_missing(sql: str, limit: int, expected: str) -> None:
@@ -36,9 +50,22 @@ def test_sql_with_limit_appends_when_missing(sql: str, limit: int, expected: str
         "SELECT 1 LIMIT :param",
         "SELECT 1 LIMIT $1",
         "SELECT 1 LIMIT @var",
+        "SELECT 1 LIMIT 1 UNION SELECT 2 LIMIT 1",
     ],
 )
 def test_sql_with_limit_does_not_duplicate_when_present(sql_with_existing_limit: str) -> None:
     out = sql_with_limit(sql_with_existing_limit, 999)
     expected = sql_with_existing_limit.strip().rstrip(";")  # No other changes
     assert out.lower() == expected.lower()
+
+
+@pytest.mark.parametrize(
+    "sql",
+    [
+        "SEL 1",
+        "SELECT and GROUP",
+        "LIMIT 1",
+    ],
+)
+def test_sql_with_limit_on_error(sql: str) -> None:
+    assert sql_with_limit(sql, limit=3) == sql

@@ -25,14 +25,25 @@ def sql_strip(query: str) -> str:
     return query.strip().rstrip(";")
 
 
-def sql_with_limit(sql: str, limit: int) -> str:
-    """Ensure the SQL has a LIMIT clause, appending one if missing."""
+def sql_with_limit(sql: str, limit: int, *, dialect: str | None = "duckdb") -> str:
+    """Ensure the SQL has a LIMIT clause, appending one if missing. The resulting SQL is"""
     # TODO Change the limit value if limit is already present in the query?
     sql_to_run = sql_strip(sql)
-    ast = sqlglot.parse_one(sql_to_run, dialect="duckdb")
+    try:
+        # Use a None dialect to prevent sqlglot from making generic conversions
+        ast = sqlglot.parse_one(sql_to_run, dialect=None)
+    except sqlglot.errors.SqlglotError:
+        if dialect is None:
+            return sql_to_run
+        try:
+            # Try again with the specific dialect
+            ast = sqlglot.parse_one(sql_to_run, dialect=dialect)
+        except sqlglot.errors.SqlglotError:
+            return sql_to_run
+
     if not ast.args.get("limit") and isinstance(ast, sqlglot.expressions.Query):
-        ast_with_limit = ast.limit(limit)  # Add outer LIMIT clause
-        sql_to_run = ast_with_limit.sql()
+        ast_with_limit = ast.limit(limit, dialect=dialect)  # Add outer LIMIT clause
+        sql_to_run = ast_with_limit.sql(dialect=dialect)
     return sql_to_run
 
 

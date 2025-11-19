@@ -92,10 +92,7 @@ class VisualisationResult(BaseModel):
 
 
 class Visualizer(ABC):
-    """Abstract interface for converting data into plots/text.
-
-    Implementations may ignore the request and choose an appropriate visualization.
-    """
+    """Abstract interface for converting data into plots using natural language."""
 
     @abstractmethod
     def visualize(self, request: str | None, data: ExecutionResult, *, stream: bool = False) -> VisualisationResult:

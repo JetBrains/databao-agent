@@ -26,7 +26,7 @@ def sql_strip(query: str) -> str:
 
 
 def sql_with_limit(sql: str, limit: int, *, dialect: str | None = "duckdb") -> str:
-    """Ensure the SQL has a LIMIT clause, appending one if missing. The resulting SQL is"""
+    """Ensure the SQL has a LIMIT clause, appending one if missing."""
     # TODO Change the limit value if limit is already present in the query?
     sql_to_run = sql_strip(sql)
     try:
@@ -50,6 +50,12 @@ def sql_with_limit(sql: str, limit: int, *, dialect: str | None = "duckdb") -> s
 def execute_duckdb_sql(sql: str, con: DuckDBPyConnection, *, limit: int | None = None) -> pd.DataFrame:
     # Use duckdb's Relation API to inject a LIMIT clause
     rel = con.sql(sql)  # A lazy Relation
+
+    # TODO Do we want to forbid non-SELECT statements?
+    # Non-Select queries (CREATE TABLE, etc.) are executed immediately and return None
+    if rel is None:
+        return pd.DataFrame()
+
     if limit is not None:
         rel = rel.limit(limit)
     return rel.df()  # Execute and return DataFrame

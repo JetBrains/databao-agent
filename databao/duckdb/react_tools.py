@@ -2,7 +2,6 @@ import json
 from typing import Any
 
 import pandas as pd
-import sqlglot
 from duckdb import DuckDBPyConnection
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.tools import tool
@@ -20,27 +19,18 @@ class AgentResponse(BaseModel):
     explanation: str
 
 
-def sql_strip(query: str) -> str:
-    """Strip whitespace and trailing semicolons from SQL query."""
-    return query.strip().rstrip(";")
-
-
-def sql_with_limit(sql: str, limit: int) -> str:
-    """Ensure the SQL has a LIMIT clause, appending one if missing."""
-    # TODO Change the limit value if limit is already present in the query?
-    sql_to_run = sql_strip(sql)
-    ast = sqlglot.parse_one(sql_to_run, dialect="duckdb")
-    if not ast.args.get("limit") and isinstance(ast, sqlglot.expressions.Query):
-        ast_with_limit = ast.limit(limit)  # Add outer LIMIT clause
-        sql_to_run = ast_with_limit.sql()
-    return sql_to_run
-
-
 def execute_duckdb_sql(sql: str, con: DuckDBPyConnection, *, limit: int | None = None) -> pd.DataFrame:
-    sql_to_run = sql_strip(sql)
+    # Use duckdb's Relation API to inject a LIMIT clause
+    rel = con.sql(sql)  # A lazy Relation
+
+    # TODO Do we want to forbid non-SELECT statements?
+    # Non-Select queries (CREATE TABLE, etc.) are executed immediately and return None
+    if rel is None:
+        return pd.DataFrame()
+
     if limit is not None:
-        sql_to_run = sql_with_limit(sql_to_run, limit)
-    return con.execute(sql_to_run).df()
+        rel = rel.limit(limit)
+    return rel.df()  # Execute and return DataFrame
 
 
 def make_duckdb_tool(con: DuckDBPyConnection) -> Any:

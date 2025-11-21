@@ -150,7 +150,7 @@ uv run pytest -v -m "not apikey"
 ```
 databao/
   api.py                 # public entry: new_agent(...)
-  core/                  # Agent, Pipe, Executor, Visualizer abstractions
+  core/                  # Agent, Thread, Executor, Visualizer abstractions
   agents/                # Lighthouse (default) and React-DuckDB agents
   duckdb/                # DuckDB integration and tools
   visualizers/           # Vega-Lite chat visualizer and utilities

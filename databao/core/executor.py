@@ -140,6 +140,10 @@ class Executor(ABC):
         pass
 
     @abstractmethod
+    def set_agent(self, agent: "Agent") -> None:
+        pass
+
+    @abstractmethod
     def register_db(self, name: str, connection: Any) -> None:
         pass
 

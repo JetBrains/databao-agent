@@ -135,6 +135,9 @@ class Executor(ABC):
     Methods:
         execute: Abstract method to execute a single OPA within an agent.
     """
+    @abstractmethod
+    def set_agent(self, agent: "Agent") -> None:
+        pass
 
     @abstractmethod
     def register_db(self, name: str, connection: Any) -> None:
@@ -147,7 +150,6 @@ class Executor(ABC):
     @abstractmethod
     def execute(
         self,
-        agent: "Agent",
         opa: "Opa",
         *,
         rows_limit: int = 100,
@@ -157,7 +159,6 @@ class Executor(ABC):
         """Execute a single OPA within an agent.
 
         Args:
-            agent: Active agent providing LLM, data connections, cache, etc.
             opa: User intent/query to process.
             rows_limit: Preferred row limit for data materialization (may be ignored by executors).
             cache_scope: Logical scope for caching per chat/thread.

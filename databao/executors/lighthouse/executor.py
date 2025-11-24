@@ -27,16 +27,16 @@ class LighthouseExecutor(GraphExecutor):
         self._graph: ExecuteSubmit = ExecuteSubmit(self._duckdb_connection)
         self._compiled_graph: CompiledStateGraph[Any] | None = None
 
-    def render_system_prompt(self, data_connection: Any, agent: Agent) -> str:
+    def render_system_prompt(self, data_connection: Any) -> str:
         """Render system prompt with database schema."""
         db_schema = describe_duckdb_schema(data_connection)
 
         context = ""
-        for db_name, db_context in agent.db_context.items():
+        for db_name, db_context in self._agent.db_context.items():
             context += f"## Context for DB {db_name}\n\n{db_context}\n\n"
-        for df_name, df_context in agent.df_context.items():
+        for df_name, df_context in self._agent.df_context.items():
             context += f"## Context for DF {df_name} (fully qualified name 'temp.main.{df_name}')\n\n{df_context}\n\n"
-        for idx, additional_ctx in enumerate(agent.additional_context, start=1):
+        for idx, additional_ctx in enumerate(self._agent.additional_context, start=1):
             additional_context = additional_ctx.strip()
             context += f"## General information {idx}\n\n{additional_context}\n\n"
         context = context.strip()
@@ -76,25 +76,24 @@ class LighthouseExecutor(GraphExecutor):
 
     def execute(
         self,
-        agent: Agent,
         opa: Opa,
         *,
         rows_limit: int = 100,
         cache_scope: str = "common_cache",
         stream: bool = True,
     ) -> ExecutionResult:
-        compiled_graph = self._get_compiled_graph(agent)
+        compiled_graph = self._get_compiled_graph(self._agent)
 
-        messages = self._process_opa(agent, opa, cache_scope)
+        messages = self._process_opa(opa, cache_scope)
 
         # Prepend system message if not present
         all_messages_with_system = messages
         if not all_messages_with_system or all_messages_with_system[0].type != "system":
             all_messages_with_system = [
-                SystemMessage(self.render_system_prompt(self._duckdb_connection, agent)),
+                SystemMessage(self.render_system_prompt(self._duckdb_connection)),
                 *all_messages_with_system,
             ]
-        cleaned_messages = clean_tool_history(all_messages_with_system, agent.llm_config.max_tokens_before_cleaning)
+        cleaned_messages = clean_tool_history(all_messages_with_system, self._agent.llm_config.max_tokens_before_cleaning)
 
         init_state = self._graph.init_state(cleaned_messages, limit_max_rows=rows_limit)
         invoke_config = RunnableConfig(recursion_limit=self._graph_recursion_limit)
@@ -109,7 +108,7 @@ class LighthouseExecutor(GraphExecutor):
             all_messages_without_system = [msg for msg in all_messages if msg.type != "system"]
             if execution_result.meta.get("messages"):
                 execution_result.meta["messages"] = all_messages
-            self._update_message_history(agent, cache_scope, all_messages_without_system)
+            self._update_message_history(cache_scope, all_messages_without_system)
 
         # Set modality hints
         execution_result.meta[OutputModalityHints.META_KEY] = self._make_output_modality_hints(execution_result)

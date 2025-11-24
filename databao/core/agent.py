@@ -47,6 +47,7 @@ class Agent:
         self.__additional_context: list[str] = []
 
         self.__executor = data_executor
+        self.__executor.set_agent(self)
         self.__visualizer = visualizer
         self.__cache = cache
 

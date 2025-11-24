@@ -27,45 +27,31 @@ class GraphExecutor(Executor, ABC):
 
     def __init__(self) -> None:
         """Initialize agent with graph caching infrastructure."""
+        self._agent = None
         self._graph_recursion_limit = 50
 
-    def _get_llm_config(self, agent: Agent) -> LLMConfig:
+    def set_agent(self, agent: Agent) -> None:
+        self._agent = agent
+
+    def _get_llm_config(self) -> LLMConfig:
         """Get LLM config from agent."""
-        return agent.llm_config
+        return self._agent.llm_config
 
-    def _get_messages(self, agent: Agent, cache_scope: str) -> list[Any]:
-        """Retrieve messages from the agent cache."""
-        try:
-            buffer = BytesIO()
-            agent.cache.scoped(cache_scope).get("messages", buffer)
-            buffer.seek(0)
-            result: list[Any] = pickle.load(buffer)
-            return result
-        except (KeyError, EOFError):
-            return []
-
-    def _set_messages(self, agent: Agent, cache_scope: str, messages: list[Any]) -> None:
-        """Store messages in the agent cache."""
-        buffer = BytesIO()
-        pickle.dump(messages, buffer)
-        buffer.seek(0)
-        agent.cache.scoped(cache_scope).put("messages", buffer)
-
-    def _process_opa(self, agent: Agent, opa: Opa, cache_scope: str) -> list[Any]:
+    def _process_opa(self, opa: Opa, cache_scope: str) -> list[Any]:
         """
         Process a single opa and convert it to a message, appending to message history.
 
         Returns:
             All messages including the new one
         """
-        messages = self._get_messages(agent, cache_scope)
+        messages = self._agent.cache.scoped(cache_scope).get("state").get("messages", [])
         messages.append(HumanMessage(content=opa.query))
         return messages
 
-    def _update_message_history(self, agent: Agent, cache_scope: str, final_messages: list[Any]) -> None:
+    def _update_message_history(self, cache_scope: str, final_messages: list[Any]) -> None:
         """Update message history in cache with final messages from graph execution."""
         if final_messages:
-            self._set_messages(agent, cache_scope, final_messages)
+            self._agent.cache.scoped(cache_scope).put("state", {"messages": final_messages})
 
     def _make_output_modality_hints(self, result: ExecutionResult) -> OutputModalityHints:
         # A separate LLM module could be used to fill out the hints

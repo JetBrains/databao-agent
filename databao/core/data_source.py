@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 import pandas as pd
-from _duckdb import DuckDBPyConnection
+from duckdb import DuckDBPyConnection
 from sqlalchemy import Connection, Engine
 
 

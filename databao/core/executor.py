@@ -8,6 +8,8 @@ from pydantic import BaseModel, ConfigDict
 
 from databao.core.data_source import DBDataSource, DFDataSource, Sources
 
+from databao.core import Cache
+
 if TYPE_CHECKING:
     from databao import LLMConfig
     from databao.core import Cache
@@ -145,6 +147,10 @@ class Executor(ABC):
 
     @abstractmethod
     def register_df(self, source: DFDataSource) -> None:
+        pass
+
+    @abstractmethod
+    def drop_last_opa(self, cache: Cache, n: int = 1) -> None:
         pass
 
     @abstractmethod

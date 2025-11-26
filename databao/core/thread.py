@@ -168,6 +168,14 @@ class Thread:
 
         return self
 
+    def drop_last_opa(self, n: int = 1) -> None:
+        """Remove N last user queries from this thread along with the answer it produced."""
+        if len(self._opas) >= n:
+            self._opas = self._opas[:-n]
+        self._agent.executor.drop_last_opa(self._agent.cache.scoped(self._cache_scope), n=n)
+
+        print(f"Dropped last {n} operation{'s' if n > 1 else ''}. Last remaining operation:\n{self._opas[-1].query}")
+
     def __str__(self) -> str:
         if self._data_result is not None:
             bundle = self._data_result._repr_mimebundle_()

@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Any
 
 import duckdb
-from langchain_core.messages import SystemMessage
+from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph.state import CompiledStateGraph
 from sqlalchemy import Connection, Engine
@@ -82,6 +82,17 @@ class LighthouseExecutor(GraphExecutor):
         self._compiled_graph = compiled_graph
 
         return compiled_graph
+
+    def drop_last_opa(self, cache: Cache, n: int = 1) -> None:
+        messages = cache.get("state", default={}).get("messages", [])
+        human_messages = [m for m in messages if isinstance(m, HumanMessage)]
+        if len(human_messages) < n:
+            raise ValueError(f"Cannot drop last {n} operations - only {len(human_messages)} operations found.")
+        c = 0
+        while c < n:
+            m = messages.pop()
+            if isinstance(m, HumanMessage):
+                c += 1
 
     def execute(
         self,

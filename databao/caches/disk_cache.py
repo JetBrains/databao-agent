@@ -26,11 +26,12 @@ class DiskCache(Cache):
         k = f"{self._prefix}{key}"
         self._cache.set(k, value=pickle.dumps(state), tag=self._prefix)
 
-    def get(self, key: str, default: dict[str, Any] = None) -> dict[str, Any]:
+    def get(self, key: str, default: dict[str, Any] | None = None) -> dict[str, Any]:
         k = f"{self._prefix}{key}"
         res_bytes = self._cache.get(k, default=None)
         if res_bytes is None:
-            return default
+            _default: dict[str, Any] = {} if default is None else default
+            return _default
         result: dict[str, Any] = pickle.loads(res_bytes)
         return result
 

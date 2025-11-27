@@ -2,7 +2,7 @@
 name = "databao"
 description = "databao: NL queries for data"
 dynamic = ["version"]  # Based on the git tag
-requires-python = ">=3.10, <3.14"
+requires-python = ">=3.10, <3.15"
 readme = "README.md"
 license = "Apache-2.0 AND LicenseRef-Additional-Terms"
 license-files = ["LICENSE.md"]
@@ -17,6 +17,7 @@ dependencies = [
     "langgraph>=0.6.8",
     "langchain>=0.3.20,<0.4",
     "langchain-openai>=0.3.8,<0.4",
+    "openai>=2.7.2",  # Workaround for Python 3.14, while stuck on langchain-openai < 1.0.0
     "langchain-anthropic>=0.3.10,<0.4",
     "langchain-ollama>=0.3.10",
     "duckdb>=1.3.0",
@@ -24,7 +25,7 @@ dependencies = [
     "tabulate>=0.9.0",
     "psycopg2-binary>=2.9.10",
     "matplotlib>=3.10.0",
-    "edaplot-vl~=0.1.2",
+    "edaplot-vl~=0.1.3",
     "diskcache>=5.6.3",
 ]
 
@@ -67,6 +68,7 @@ dev = [
     "ruff>=0.13.2",
     "types-pyyaml>=6.0.12.20250915",
     "typing-extensions>=4.15.0",
+    "vega-datasets>=0.9.0",
 ]
 
 [tool.mypy]

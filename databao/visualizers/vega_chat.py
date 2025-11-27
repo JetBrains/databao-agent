@@ -21,7 +21,6 @@ logger = logging.getLogger(__name__)
 
 
 class VegaChatResult(VisualisationResult):
-    plot: VegaVisTool | altair.TopLevelMixin | Image.Image | None = None
     spec: dict[str, Any] | None = None
     spec_df: pd.DataFrame | None = None
 

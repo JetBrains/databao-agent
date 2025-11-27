@@ -1,11 +1,9 @@
-from collections.abc import Callable
 from typing import Any
 
 import altair as alt
 import pandas as pd
 import pytest
 from PIL import Image
-from pydantic import ValidationError
 
 from databao.visualizers.vega_chat import VegaChatResult
 from databao.visualizers.vega_vis_tool import VegaVisTool
@@ -105,41 +103,3 @@ def test_image_returns_pil_image_when_png_available(sample_spec: dict[str, Any],
     result: VegaChatResult = _make_result(spec=sample_spec, spec_df=sample_df)
     img = result.image()
     assert isinstance(img, Image.Image)
-
-
-PlotType = VegaVisTool | alt.TopLevelMixin | Image.Image | None
-
-
-@pytest.mark.parametrize(
-    "plot_maker",
-    [
-        lambda df: None,
-        lambda df: alt.Chart(df).mark_point().encode(x="x", y="y"),
-        lambda df: (alt.Chart(df).mark_point().encode(x="x", y="y") + alt.Chart(df).mark_line().encode(x="x", y="y")),
-        lambda df: alt.hconcat(
-            alt.Chart(df).mark_bar().encode(x="x", y="y"),
-            alt.Chart(df).mark_point().encode(x="x", y="y"),
-        ),
-        lambda df: alt.vconcat(
-            alt.Chart(df).mark_bar().encode(x="x", y="y"),
-            alt.Chart(df).mark_point().encode(x="x", y="y"),
-        ),
-        lambda df: Image.new("RGB", (1, 1)),
-        lambda df: VegaVisTool({"mark": "point", "encoding": {"x": {"field": "x"}, "y": {"field": "y"}}}, df),
-    ],
-)
-def test_plot_field_accepts_valid_types(
-    plot_maker: Callable[[pd.DataFrame], PlotType], sample_df: pd.DataFrame
-) -> None:
-    plot_obj: PlotType = plot_maker(sample_df)
-    res: VegaChatResult = _make_result(plot=plot_obj)
-    assert res.plot is plot_obj
-
-
-@pytest.mark.parametrize(
-    "bad_plot",
-    [0, 3.14, "a simple string", [1, 2, 3], {"a": 1}, object()],
-)
-def test_plot_field_rejects_invalid_types(bad_plot: Any) -> None:
-    with pytest.raises(ValidationError):
-        _make_result(plot=bad_plot)

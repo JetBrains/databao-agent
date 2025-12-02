@@ -13,8 +13,8 @@ from databao.executors.executor_factory import get_connection_manager
 if TYPE_CHECKING:
     from databao.configs.llm import LLMConfig
     from databao.core.cache import Cache
-    from databao.core.visualizer import Visualizer
     from databao.core.connection_manager import ConnectionManager
+    from databao.core.visualizer import Visualizer
 
 
 class Agent:
@@ -41,7 +41,7 @@ class Agent:
         self.__llm = llm.new_chat_model()
         self.__llm_config = llm
 
-        self._connection_manager: "ConnectionManager" = get_connection_manager(executor_name)
+        self._connection_manager: ConnectionManager = get_connection_manager(executor_name)
 
         self.__executor_name = executor_name
         self.__threads: list[Thread] = []

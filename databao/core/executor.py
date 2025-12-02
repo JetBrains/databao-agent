@@ -6,12 +6,9 @@ from typing import TYPE_CHECKING, Any, ClassVar, Literal
 from pandas import DataFrame
 from pydantic import BaseModel, ConfigDict
 
-from databao.core.data_source import DBDataSource, DFDataSource, Sources
-
 if TYPE_CHECKING:
-    from databao import LLMConfig
-    from databao.core.cache import Cache
     from databao.core.opa import Opa
+    from databao.executors.opa_metadata import OpaMetadata
 
 
 class OutputModalityHints(BaseModel):
@@ -140,36 +137,26 @@ class Executor(ABC):
     """
 
     @abstractmethod
-    def register_db(self, source: DBDataSource) -> None:
+    def drop_last_opa(self, n: int = 1) -> None:
+        pass
+
+    @property
+    @abstractmethod
+    def result(self) -> ExecutionResult | None:
         pass
 
     @abstractmethod
-    def register_df(self, source: DFDataSource) -> None:
-        pass
-
-    @abstractmethod
-    def drop_last_opa(self, cache: "Cache", n: int = 1) -> None:
-        pass
-
-    @abstractmethod
-    def execute(
-        self,
-        opa: "Opa",
-        cache: "Cache",
-        llm_config: "LLMConfig",
-        sources: Sources,
-        *,
-        rows_limit: int = 100,
-        stream: bool = True,
-    ) -> ExecutionResult:
-        """Execute a single OPA within an agent.
+    def add_opa(self, opa: "Opa", lazy: bool, stream: bool, rows_limit: int | None) -> None:
+        """Adds new operation. If not lazy, executes immediately.
 
         Args:
             opa: User intent/query to process.
-            cache: Cache provided by Agent to persist State.
-            llm_config: Config of LLM to be used during execution.
-            sources: Data sources registered with the agent.
-            rows_limit: Preferred row limit for data materialization (may be ignored by executors).
-            stream: Stream LLM output to stdout.
+            lazy: If lazy, postpone execution until result() is called.
+            stream: If True, stream the thinking process of the operation.
         """
+        pass
+
+    @property
+    @abstractmethod
+    def opas(self) -> list["OpaMetadata"]:
         pass

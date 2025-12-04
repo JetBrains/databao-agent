@@ -52,7 +52,7 @@ def clean_tool_history(messages: list[BaseMessage], token_limit: int) -> list[Ba
     Returns: messages ready to be sent to LLM.
     """
     if count_tokens_approximately(messages) < token_limit:
-        return messages
+        return messages.copy()
 
     assert isinstance(messages[-1], HumanMessage)
 

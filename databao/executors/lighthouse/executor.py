@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Any
 
 import duckdb
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph.state import CompiledStateGraph
 from sqlalchemy import Connection, Engine
@@ -83,7 +83,8 @@ class LighthouseExecutor(GraphExecutor):
 
         return compiled_graph
 
-    def drop_last_opa(self, cache: Cache, n: int = 1) -> None:
+    def drop_last_opa_group(self, cache: Cache, n: int = 1) -> None:
+        """Drop last n groups of operations from the message history."""
         messages = cache.get("state", default={}).get("messages", [])
         human_messages = [m for m in messages if isinstance(m, HumanMessage)]
         if len(human_messages) < n:
@@ -96,7 +97,7 @@ class LighthouseExecutor(GraphExecutor):
 
     def execute(
         self,
-        opa: Opa,
+        opas: list[Opa],
         cache: Cache,
         llm_config: LLMConfig,
         sources: Sources,
@@ -105,8 +106,7 @@ class LighthouseExecutor(GraphExecutor):
         stream: bool = True,
     ) -> ExecutionResult:
         compiled_graph = self._get_compiled_graph(llm_config)
-
-        messages = self._process_opa(opa, cache)
+        messages: list[BaseMessage] = self._process_opas(opas, cache)
 
         # Prepend system message if not present
         all_messages_with_system = messages

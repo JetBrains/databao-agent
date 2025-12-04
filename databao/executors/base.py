@@ -26,7 +26,7 @@ class GraphExecutor(Executor, ABC):
         """Initialize agent with graph caching infrastructure."""
         self._graph_recursion_limit = 50
 
-    def _process_opa(self, opa: Opa, cache: Cache) -> list[Any]:
+    def _process_opas(self, opas: list[Opa], cache: Cache) -> list[Any]:
         """
         Process a single opa and convert it to a message, appending to message history.
 
@@ -34,7 +34,8 @@ class GraphExecutor(Executor, ABC):
             All messages including the new one
         """
         messages: list[Any] = cache.get("state", {}).get("messages", [])
-        messages.append(HumanMessage(content=opa.query))
+        query = "\n\n".join(opa.query for opa in opas)
+        messages.append(HumanMessage(content=query))
         return messages
 
     def _update_message_history(self, cache: Cache, final_messages: list[Any]) -> None:

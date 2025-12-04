@@ -148,13 +148,13 @@ class Executor(ABC):
         pass
 
     @abstractmethod
-    def drop_last_opa(self, cache: "Cache", n: int = 1) -> None:
+    def drop_last_opa_group(self, cache: "Cache", n: int = 1) -> None:
         pass
 
     @abstractmethod
     def execute(
         self,
-        opa: "Opa",
+        opas: list["Opa"],
         cache: "Cache",
         llm_config: "LLMConfig",
         sources: Sources,
@@ -165,7 +165,7 @@ class Executor(ABC):
         """Execute a single OPA within an agent.
 
         Args:
-            opa: User intent/query to process.
+            opas: List of user intents/queries to process.
             cache: Cache provided by Agent to persist State.
             llm_config: Config of LLM to be used during execution.
             sources: Data sources registered with the agent.

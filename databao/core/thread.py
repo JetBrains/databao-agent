@@ -53,8 +53,8 @@ class Thread:
         self._visualization_result: VisualisationResult | None = None
         self._visualization_request: str | None = None
 
-        self._opas_processed_count = 0
-        self._opas: list[Opa] = []
+        self._opas_processed_count: int = 0
+        self._opas: list[list[Opa]] = []
         self._meta: dict[str, Any] = {}
 
         # A unique cache scope so executors can store per-thread state (e.g., message history)
@@ -153,7 +153,11 @@ class Thread:
         Setting rows_limit has no effect in lazy mode.
         """
         # NB. A new Opa is created even if it's identical to the previous one.
-        self._opas.append(Opa(query=query))
+        if self._opas_processed_count < len(self._opas):
+            assert self._lazy_mode
+            self._opas[-1].append(Opa(query=query))
+        else:
+            self._opas.append([Opa(query=query)])
 
         # Invalidate old results so they are not used by repr methods
         self._data_result = None
@@ -170,11 +174,35 @@ class Thread:
 
     def drop(self, n: int = 1) -> None:
         """Remove N last user queries from this thread along with the answer it produced."""
-        if len(self._opas) >= n:
-            self._opas = self._opas[:-n]
-        self._agent.executor.drop_last_opa(self._agent.cache.scoped(self._cache_scope), n=n)
+        sum_, groups_n = 0, 0
+        for group in reversed(self._opas):
+            sum_ += len(group)
+            groups_n += 1
+            if sum_ >= n:
+                break
 
-        print(f"Dropped last {n} operation{'s' if n > 1 else ''}. Last remaining operation:\n{self._opas[-1].query}")
+        mat_group_n = groups_n - (len(self._opas) - self._opas_processed_count)
+
+        # We need to drop `n` individual opas, combined into `groups_n` groups, `mat_group_n` of which are materialized.
+        if sum_ == n:
+            # Full drop of groups
+            self._opas = self._opas[:-groups_n]
+        else:
+            full_groups = groups_n - 1
+            if full_groups > 0:
+                self._opas = self._opas[:-full_groups]
+            self._opas[-1] = self._opas[-1][: -(sum_ - n)]
+
+        self._agent.executor.drop_last_opa_group(self._agent.cache.scoped(self._cache_scope), n=mat_group_n)
+        self._opas_processed_count -= mat_group_n
+
+        if self._opas:
+            print(
+                f"Dropped last {n} operation{'s' if n > 1 else ''}. Last remaining operation:"
+                f"\n{self._opas[-1][-1].query}"
+            )
+        else:
+            print("Dropped all operations.")
 
     def __str__(self) -> str:
         if self._data_result is not None:

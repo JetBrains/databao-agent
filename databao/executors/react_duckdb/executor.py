@@ -52,7 +52,7 @@ class ReactDuckDBExecutor(GraphExecutor):
 
     def execute(
         self,
-        opa: Opa,
+        opas: list[Opa],
         cache: Cache,
         llm_config: LLMConfig,
         sources: Sources,
@@ -64,7 +64,7 @@ class ReactDuckDBExecutor(GraphExecutor):
         compiled_graph = self._compiled_graph or self._create_graph(self._duckdb_connection, llm_config)
 
         # Process the opa and get messages
-        messages = self._process_opa(opa, cache)
+        messages = self._process_opas(opas, cache)
 
         # Execute the graph
         init_state = {"messages": messages}

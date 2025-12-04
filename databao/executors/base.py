@@ -63,9 +63,9 @@ class GraphExecutor(Executor, ABC):
         if len(human_messages) < n:
             raise ValueError(f"Cannot drop last {n} operations - only {len(human_messages)} operations found.")
         opas_to_drop = self._opas[-n:]
-        messages_to_drop = set()
+        messages_to_drop = []
         for opa in opas_to_drop:
-            messages_to_drop.add(opa.message)
+            messages_to_drop.append(opa.message)
         idx = -1
         for id_, m in enumerate(self._messages):
             if m in messages_to_drop:

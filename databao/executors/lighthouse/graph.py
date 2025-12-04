@@ -15,7 +15,7 @@ from langgraph.prebuilt import InjectedState
 from typing_extensions import TypedDict
 
 from databao.configs.llm import LLMConfig
-from databao.core import ExecutionResult
+from databao.core.executor import ExecutionResult
 from databao.duckdb.react_tools import execute_duckdb_sql
 from databao.executors.frontend.text_frontend import dataframe_to_markdown
 from databao.executors.lighthouse.utils import exception_to_string
@@ -60,26 +60,36 @@ class ExecuteSubmit:
             limit_max_rows=limit_max_rows,
         )
 
-    def get_result(self, state: AgentState) -> ExecutionResult:
+    def get_result(self, messages: list[BaseMessage]) -> ExecutionResult:
         last_ai_message = None
-        for m in reversed(state["messages"]):
+        for m in reversed(messages):
             if isinstance(m, AIMessage):
                 last_ai_message = m
                 break
         if last_ai_message is None:
             raise RuntimeError("No AI message found in message log")
+
+        query_ids = {}
+        sql, df, visualization_prompt = None, None, None
+        for m in messages:
+            if isinstance(m, ToolMessage) and m.artifact is not None and "df" in m.artifact:
+                df = m.artifact["df"]
+                sql = m.artifact["sql"]
+                query_ids[m.artifact["query_id"]] = m
+            if isinstance(m, AIMessage) and m.tool_calls:
+                for tool_call in m.tool_calls:
+                    if tool_call["name"] == "submit_result":
+                        visualization_prompt = tool_call["args"].get("visualization_prompt", "")
+
         if len(last_ai_message.tool_calls) == 0:
             # Sometimes models don't call the submit_result tool, but we still want to return some dataframe.
-            sql = state.get("sql", "")
-            df = state.get("df")  # Latest df result (usually from run_sql_query)
-            visualization_prompt = state.get("visualization_prompt")
             result = ExecutionResult(
                 text=last_ai_message.text(),
                 df=df,
                 code=sql,
                 meta={
-                    "visualization_prompt": visualization_prompt,
-                    "messages": state["messages"],
+                    "visualization_prompt": visualization_prompt or "",
+                    "messages": messages,
                     "submit_called": False,
                 },
             )
@@ -90,18 +100,19 @@ class ExecuteSubmit:
                 f"Expected submit_result tool call in AI message, got {last_ai_message.tool_calls[0]['name']}"
             )
         else:
-            sql = state.get("sql", "")
-            df = state.get("df")
             tool_call = last_ai_message.tool_calls[0]
+            tool = query_ids[tool_call["args"]["query_id"]]
+            df = tool.artifact["df"]
+            sql = tool.artifact["sql"]
             text = tool_call["args"]["result_description"]
-            visualization_prompt = state.get("visualization_prompt", "")
+            visualization_prompt = tool_call["args"].get("visualization_prompt", "")
             result = ExecutionResult(
                 text=text,
                 df=df,
                 code=sql,
                 meta={
                     "visualization_prompt": visualization_prompt,
-                    "messages": state["messages"],
+                    "messages": messages,
                     "submit_called": True,
                 },
             )

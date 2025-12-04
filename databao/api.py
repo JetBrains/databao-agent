@@ -1,14 +1,17 @@
+from typing import Literal
+
 from databao.caches.in_mem_cache import InMemCache
 from databao.configs.llm import LLMConfig, LLMConfigDirectory
-from databao.core import Agent, Cache, Executor, Visualizer
-from databao.executors.lighthouse.executor import LighthouseExecutor
+from databao.core.agent import Agent
+from databao.core.cache import Cache
+from databao.core.visualizer import Visualizer
 from databao.visualizers.vega_chat import VegaChatVisualizer
 
 
 def new_agent(
     name: str | None = None,
     llm_config: LLMConfig | None = None,
-    data_executor: Executor | None = None,
+    data_executor: Literal["lighthouse", "react"] | None = None,
     visualizer: Visualizer | None = None,
     cache: Cache | None = None,
     rows_limit: int = 1000,
@@ -20,11 +23,14 @@ def new_agent(
     """This is an entry point for users to create a new agent.
     Agent can't be modified after it's created. Only new data sources can be added.
     """
+
     llm_config = llm_config if llm_config else LLMConfigDirectory.DEFAULT
+    if data_executor is None:
+        data_executor = "lighthouse"
     return Agent(
         llm_config,
         name=name or "default_agent",
-        data_executor=data_executor or LighthouseExecutor(),
+        executor_name=data_executor,
         visualizer=visualizer or VegaChatVisualizer(llm_config),
         cache=cache or InMemCache(),
         rows_limit=rows_limit,

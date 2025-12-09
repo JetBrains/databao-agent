@@ -177,27 +177,28 @@ class Thread:
 
     def drop(self, n: int = 1) -> None:
         """Remove N last user queries from this thread along with the answer it produced."""
-        sum_, groups_n = 0, 0
+        sum_, n_groups = 0, 0
         for group in reversed(self._opas):
             sum_ += len(group)
-            groups_n += 1
+            n_groups += 1
             if sum_ >= n:
                 break
 
-        mat_group_n = groups_n - (len(self._opas) - self._opas_processed_count)
+        n_materialized_group = n_groups - (len(self._opas) - self._opas_processed_count)
 
-        # We need to drop `n` individual opas, combined into `groups_n` groups, `mat_group_n` of which are materialized.
+        # We need to drop `n` individual opas, combined into `n_groups` groups,
+        # `n_materialized_group` of which are materialized.
         if sum_ == n:
             # Full drop of groups
-            self._opas = self._opas[:-groups_n]
+            self._opas = self._opas[:-n_groups]
         else:
-            full_groups = groups_n - 1
+            full_groups = n_groups - 1
             if full_groups > 0:
                 self._opas = self._opas[:-full_groups]
             self._opas[-1] = self._opas[-1][: -(sum_ - n)]
 
-        self._agent.executor.drop_last_opa_group(self._agent.cache.scoped(self._cache_scope), n=mat_group_n)
-        self._opas_processed_count -= mat_group_n
+        self._agent.executor.drop_last_opa_group(self._agent.cache.scoped(self._cache_scope), n=n_materialized_group)
+        self._opas_processed_count -= n_materialized_group
 
         if self._opas:
             print(

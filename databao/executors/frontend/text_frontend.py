@@ -43,7 +43,7 @@ class TextStreamFrontend:
             return  # Handle ToolMessage results in add_state_chunk
 
         reasoning_text = get_reasoning_content(chunk)
-        text = reasoning_text + chunk.text()
+        text = reasoning_text + chunk.text
         if self._escape_markdown:
             text = escape_markdown_text(text)
         self.write(text)
@@ -82,7 +82,7 @@ class TextStreamFrontend:
                 tool_call = get_tool_call(messages, message)
                 tool_name = tool_call["name"] if tool_call is not None else "unknown"
                 self.write(f"\n[tool_call_output: '{tool_name}']")
-                self.write(f"\n```\n{message.text().strip()}\n```\n\n")
+                self.write(f"\n```\n{message.text.strip()}\n```\n\n")
                 if message.artifact is not None and isinstance(message.artifact, dict):
                     for art_name, art_value in message.artifact.items():
                         if isinstance(art_value, pd.DataFrame):

@@ -1,0 +1,6 @@
+.appContainer {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 0 var(--space-4);
+}

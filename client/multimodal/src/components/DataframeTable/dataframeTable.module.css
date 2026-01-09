@@ -1,0 +1,29 @@
+.root {
+    & table {
+        border-collapse: collapse;
+        border-spacing: 0;
+        border: 1px solid color(display-p3 0.85 0.852 0.876);
+    }
+
+    & td,
+    & th {
+        border: 1px solid color(display-p3 0.85 0.852 0.876);
+        text-align: right;
+    }
+
+    & th:first-child {
+        min-width: 20px;
+    }
+
+    & th {
+        min-width: 150px;
+        white-space: nowrap;
+        background: color(display-p3 0.94 0.941 0.953);
+    }
+
+    & td,
+    & th,
+    & tr {
+        padding: 4px;
+    }
+}

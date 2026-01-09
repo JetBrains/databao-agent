@@ -38,7 +38,7 @@ class Thread:
         self._auto_output_modality = auto_output_modality
         """Automatically detect the appropriate modality to output based on the user's input. If False, you must
         manually call the appropriate ask/plot method.
-        
+
         This allows .ask to be used for plotting, i.e. `ask("show a bar chart")` will result in a plot being generated.
         """
 
@@ -146,6 +146,36 @@ class Thread:
         """
         self._stream_plot = stream
         return self._materialize_visualization(request, rows_limit if rows_limit else self._data_materialized_rows)
+
+    def html(self) -> str:
+        """Generate HTML and open it in the browser.
+
+        This method creates a standalone HTML file with the Vega-Lite chart, dataframe, and text
+        and opens it in the default web browser.
+
+        Returns:
+            The HTML content as a string.
+
+        Raises:
+            ValueError: If visualization generation fails.
+        """
+        from databao.visualizers.vega_chat import VegaChatResult
+
+        result = self.plot()
+
+        if not isinstance(result, VegaChatResult):
+            raise ValueError(f"html() requires VegaChatVisualizer, got {type(result).__name__}")
+
+        if result.spec is None or result.spec_df is None:
+            raise ValueError("Failed to generate visualization")
+
+        from databao.multimodal import open_html_content
+
+        df = self.df()
+        df_html = df.to_html() if df is not None else "<i>No data</i>"
+        spec_description = self.text()
+
+        return open_html_content(result.spec, result.spec_df, df_html, spec_description)
 
     def ask(self, query: str, *, rows_limit: int | None = None, stream: bool | None = None) -> Self:
         """Append a new user query to this thread.

@@ -16,4 +16,4 @@ dist/
 .ipynb_checkpoints/
 
 # Client build artifacts
-databao/multimodal/template.html
+client/out

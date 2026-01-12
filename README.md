@@ -72,7 +72,7 @@ pip install databao
 
 For PostgreSQL, MySQL, and SQLite, pass a SQLAlchemy `Engine` to `add_db()`. For DuckDB, pass `DuckDBPyConnection`.
 
-##  Quickstart
+## Quickstart
 
 ### 1. Create a database connection (SQLAlchemy)
 
@@ -126,7 +126,7 @@ plot = thread.plot("bar chart of shows by country")
 print(plot.code)  # access generated plot code if needed
 ```
 
-##  Environment variables
+## Environment variables
 
 Specify your API keys in the environment variables:
 
@@ -142,7 +142,7 @@ Optional for local/OpenAI-compatible servers:
 | `OPENAI_BASE_URL` | Custom endpoint (aka `api_base_url` in code)    |
 | `OLLAMA_HOST`     | Ollama server address (e.g., `127.0.0.1:11434`) |
 
-##  Local Models
+## Local Models
 
 Databao agent works great with local LLMs — your data never leaves your machine.
 
@@ -169,7 +169,7 @@ For an example, see `examples/configs/qwen3-8b-oai.yaml`.
 * [llama.cpp](https://github.com/ggerganov/llama.cpp): `llama-server`
 * [vLLM](https://github.com/vllm-project/vllm)
 
-##  Alternatives
+## Alternatives
 
 How does Databao agent compare to other agentic data tools?
 
@@ -180,7 +180,7 @@ How does Databao agent compare to other agentic data tools?
 | Chat2DB     | ✅           | ✅ Custom LLM, SQL only | ❌ One DB         | ✅ Dashboards       |
 | Vanna       | ✅           | ✅ Ollama               | SQL only         | ❌ One DB           | ✅ Plotly           |
 
-##  Development
+## Development
 
 ### Installation (using uv)
 
@@ -229,7 +229,7 @@ uv run pytest -v
 uv run pytest -v -m "not apikey"
 ```
 
-##  Contributing
+## Contributing
 
 We love contributions! Here’s how you can help:
 
@@ -242,7 +242,7 @@ We love contributions! Here’s how you can help:
 
 New to open source? No worries! We’re friendly and happy to help you get started.
 
-##  License
+## License
 
 Apache 2.0 — use it however you want. See the [LICENSE](LICENSE.md) file for details.
 

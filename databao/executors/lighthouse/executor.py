@@ -106,10 +106,10 @@ class LighthouseExecutor(GraphExecutor):
         stream: bool = True,
     ) -> ExecutionResult:
         compiled_graph = self._get_compiled_graph(llm_config)
-        messages: list[BaseMessage] = self._process_opas(opas, cache)
+        state: dict[str, Any] = self._process_opas(opas, cache)
 
         # Prepend system message if not present
-        all_messages_with_system = messages
+        all_messages_with_system = state["messages"]
         if not all_messages_with_system or all_messages_with_system[0].type != "system":
             all_messages_with_system = [
                 SystemMessage(self.render_system_prompt(self._duckdb_connection, sources)),
@@ -130,9 +130,15 @@ class LighthouseExecutor(GraphExecutor):
             all_messages_without_system = [msg for msg in all_messages if msg.type != "system"]
             if execution_result.meta.get("messages"):
                 execution_result.meta["messages"] = all_messages
-            self._update_message_history(cache, all_messages_without_system)
+            state["messages"] = all_messages_without_system
+            self._update_message_history(cache, state)
 
         # Set modality hints
         execution_result.meta[OutputModalityHints.META_KEY] = self._make_output_modality_hints(execution_result)
 
         return execution_result
+
+    def get_result(self, messages: list[BaseMessage]) -> ExecutionResult:
+        state = self._graph.get_state(messages)
+        result = self._graph.get_result(state)
+        return result

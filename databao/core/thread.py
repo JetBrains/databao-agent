@@ -24,16 +24,19 @@ class Thread:
         self,
         agent: "Agent",
         *,
+        name: str | None = None,
         rows_limit: int = 1000,
         stream_ask: bool = True,
         stream_plot: bool = False,
         lazy: bool = False,
         auto_output_modality: bool = True,
+        overwrite: bool = False,
     ):
         self._agent = agent
         self._default_rows_limit = rows_limit
 
         self._lazy_mode = lazy
+        self._name = name or f"thread-{uuid.uuid4()!s}"
 
         self._auto_output_modality = auto_output_modality
         """Automatically detect the appropriate modality to output based on the user's input. If False, you must
@@ -59,8 +62,24 @@ class Thread:
 
         self._meta: dict[str, Any] = {}
 
-        # A unique cache scope so executors can store per-thread state (e.g., message history)
-        self._cache_scope = f"{self._agent.name}/{uuid.uuid4()}"
+        self._cache = self._agent.cache.scoped(self._name)
+        state = self._cache.get("state", default=None)
+        if state:
+            if overwrite:
+                self._cache.put("state", {})
+                print(f"Overwrote existing state for thread {self._name}. History is empty.")
+            else:
+                print(f"Loaded existing state for thread {self._name}.\nOperations:")
+                self._opas = state.get("operations", [])
+                self._opas_processed_count = len(self._opas)
+                messages = state.get("messages", [])
+                self._meta = {"messages": messages}
+                counter = 1
+                for opa_group in self._opas:
+                    for opa in opa_group:
+                        print(f"- Op {counter}: {opa.query}")
+                        counter += 1
+                self._data_result = self._agent.executor.get_result(messages)
 
     def _materialize_data(self, rows_limit: int | None) -> "ExecutionResult":
         """Materialize the latest data state by executing pending OPAs if needed."""
@@ -71,7 +90,7 @@ class Thread:
             for opa in new_opas:
                 self._data_result = self._agent.executor.execute(
                     opa,
-                    cache=self._agent.cache.scoped(self._cache_scope),
+                    cache=self._cache,
                     llm_config=self._agent.llm_config,
                     sources=self._agent.sources,
                     rows_limit=rows_limit,
@@ -197,7 +216,7 @@ class Thread:
                 self._opas = self._opas[:-full_groups]
             self._opas[-1] = self._opas[-1][: -(sum_ - n)]
 
-        self._agent.executor.drop_last_opa_group(self._agent.cache.scoped(self._cache_scope), n=n_materialized_group)
+        self._agent.executor.drop_last_opa_group(self._cache, n=n_materialized_group)
         self._opas_processed_count -= n_materialized_group
 
         if self._opas:

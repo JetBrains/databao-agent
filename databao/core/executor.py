@@ -152,6 +152,10 @@ class Executor(ABC):
         pass
 
     @abstractmethod
+    def get_result(self, messages: list[Any]) -> ExecutionResult:
+        pass
+
+    @abstractmethod
     def execute(
         self,
         opas: list["Opa"],

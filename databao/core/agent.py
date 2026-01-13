@@ -127,16 +127,20 @@ class Agent:
     def thread(
         self,
         *,
+        name: str | None = None,
         stream_ask: bool | None = None,
         stream_plot: bool | None = None,
         lazy: bool | None = None,
         auto_output_modality: bool | None = None,
+        overwrite: bool = False,
     ) -> Thread:
-        """Start a new thread in this agent."""
+        """Start a new thread in this agent.
+        If `overwrite` is True, the thread will ignore the cache data and will create new empty thread."""
         if not self.__sources.dbs and not self.__sources.dfs:
             raise ValueError("No databases or dataframes registered in this agent.")
         return Thread(
             self,
+            name=name,
             rows_limit=self.__rows_limit,
             stream_ask=stream_ask if stream_ask is not None else self.__stream_ask,
             stream_plot=stream_plot if stream_plot is not None else self.__stream_plot,
@@ -144,6 +148,7 @@ class Agent:
             auto_output_modality=auto_output_modality
             if auto_output_modality is not None
             else self.__auto_output_modality,
+            overwrite=overwrite,
         )
 
     @property

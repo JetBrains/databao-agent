@@ -74,7 +74,7 @@ class ExecuteSubmit:
             df = state.get("df")  # Latest df result (usually from run_sql_query)
             visualization_prompt = state.get("visualization_prompt")
             result = ExecutionResult(
-                text=last_ai_message.text(),
+                text=last_ai_message.text,
                 df=df,
                 code=sql,
                 meta={
@@ -106,6 +106,48 @@ class ExecuteSubmit:
                 },
             )
         return result
+
+    def get_state(self, messages: list[BaseMessage]) -> AgentState:
+        last_ai_message = None
+        for m in reversed(messages):
+            if isinstance(m, AIMessage):
+                last_ai_message = m
+                break
+        if last_ai_message is None:
+            if len(messages) == 0:
+                return AgentState(
+                    messages=[],
+                    query_ids={},
+                    sql=None,
+                    df=None,
+                    ready_for_user=False,
+                    visualization_prompt=None,
+                    limit_max_rows=None,
+                )
+            raise RuntimeError("No AI message found in message log")
+
+        query_ids = {}
+        sql, df, visualization_prompt = None, None, None
+        for m in messages:
+            if isinstance(m, ToolMessage) and m.artifact is not None and "df" in m.artifact:
+                df = m.artifact["df"]
+                sql = m.artifact["sql"]
+                query_ids[m.artifact["query_id"]] = m
+            if isinstance(m, AIMessage) and m.tool_calls:
+                for tool_call in m.tool_calls:
+                    if tool_call["name"] == "submit_result":
+                        visualization_prompt = tool_call["args"].get("visualization_prompt", "")
+
+        state = AgentState(
+            messages=messages,
+            query_ids=query_ids,
+            sql=sql,
+            df=df,
+            visualization_prompt=visualization_prompt,
+            ready_for_user=True,
+            limit_max_rows=None,
+        )
+        return state
 
     def make_tools(self) -> list[BaseTool]:
         @tool(parse_docstring=True)

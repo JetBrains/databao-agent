@@ -7,6 +7,12 @@ import streamlit as st
 
 from streamlit_app.components.results import render_execution_result
 from streamlit_app.streaming import StreamingWriter
+from streamlit_app.suggestions import (
+    cancel_suggestions_generation,
+    check_suggestions_completion,
+    is_suggestions_loading,
+    start_suggestions_generation,
+)
 
 if TYPE_CHECKING:
     from databao.core.thread import Thread
@@ -50,6 +56,113 @@ def render_assistant_message(
                 has_visualization=message.has_visualization,
                 is_latest=is_latest,
             )
+
+
+def _truncate_question(question: str, max_len: int = 60) -> tuple[str, bool]:
+    """Truncate a question for display, returning (display_text, was_truncated)."""
+    if len(question) <= max_len:
+        return question, False
+    return question[: max_len - 3] + "...", True
+
+
+@st.fragment
+def render_welcome_component() -> None:
+    """Render the welcome component with greeting and suggested questions.
+
+    This is a fragment so it has an independent render lifecycle from the main page.
+    When the main page reruns for processing, this fragment can be cleanly removed
+    without showing stale elements.
+
+    It handles these states:
+    - not_started: starts background generation, shows loading
+    - loading: shows "Analyzing your data..." with no buttons (polls for completion)
+    - ready: shows questions with appropriate subtitle
+    """
+    # Get current state
+    status = st.session_state.get("suggestions_status", "not_started")
+
+    # Start background generation if not started
+    if status == "not_started":
+        agent = st.session_state.get("agent")
+        if agent is not None:
+            start_suggestions_generation(agent)
+            status = "loading"
+
+    # Create centered container with vertical spacing
+    st.markdown("<div style='height: 15vh'></div>", unsafe_allow_html=True)
+
+    # Greeting message (always shown)
+    st.markdown(
+        """
+        <div style='text-align: center;'>
+            <h2>Welcome to Databao!</h2>
+            <p style='color: gray; font-size: 1.1em;'>
+                Ask questions about your data and get instant insights with tables and visualizations.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    if status == "loading":
+        # Show loading UI - no buttons yet
+        st.markdown(
+            "<p style='text-align: center; color: #888; font-size: 0.9em; margin-top: 1em;'>"
+            "🔄 Analyzing your data to suggest questions..."
+            "</p>",
+            unsafe_allow_html=True,
+        )
+        return
+
+    # Ready state (or cancelled - which now falls back to showing suggestions)
+    questions: list[str] = st.session_state.get("suggested_questions", [])
+    is_llm_generated: bool = st.session_state.get("suggestions_are_llm_generated", False)
+
+    # Show appropriate subtitle
+    if questions:
+        if is_llm_generated:
+            st.markdown(
+                "<p style='text-align: center; color: #888; font-size: 0.9em; margin-top: 1em;'>"
+                "✨ These questions were generated based on your data"
+                "</p>",
+                unsafe_allow_html=True,
+            )
+        else:
+            # Fallback questions - soft message, no error indication
+            st.markdown(
+                "<p style='text-align: center; color: #888; font-size: 0.9em; margin-top: 1em;'>"
+                "Try these questions to get started"
+                "</p>",
+                unsafe_allow_html=True,
+            )
+
+        st.markdown("<div style='height: 2em'></div>", unsafe_allow_html=True)
+
+        # Question buttons with truncation and hover expansion
+        cols = st.columns(len(questions))
+        for i, (col, question) in enumerate(zip(cols, questions, strict=True)):
+            with col:
+                display_text, was_truncated = _truncate_question(question)
+
+                # Show truncated text in button, but use help tooltip for full text if truncated
+                help_text = question if was_truncated else None
+                if st.button(display_text, key=f"suggested_q_{i}", width="stretch", help=help_text):
+                    # Cancel any pending generation (shouldn't be needed but safety)
+                    cancel_suggestions_generation()
+                    # Submit the FULL question (not truncated)
+                    user_message = ChatMessage(role="user", content=question)
+                    st.session_state.messages.append(user_message)
+                    st.session_state.pending_query = question
+                    # Use scope="app" to rerun entire app, not just this fragment
+                    st.rerun(scope="app")
+    else:
+        # No questions available (edge case) - show generic message
+        st.markdown(
+            "<p style='text-align: center; color: #888; font-size: 0.9em; margin-top: 1em;'>"
+            "Type your question below to get started"
+            "</p>",
+            unsafe_allow_html=True,
+        )
 
 
 def render_chat_history(thread: "Thread") -> None:
@@ -150,24 +263,73 @@ def process_pending_query(thread: "Thread") -> None:
         st.rerun()
 
 
-def render_chat_interface(thread: "Thread") -> None:
-    """Render the complete chat interface."""
-    is_processing = st.session_state.get("pending_query") is not None
+@st.fragment(run_every=1.0)
+def _suggestions_polling_fragment() -> None:
+    """Fragment that polls for suggestions completion every second.
 
-    # Render chat history (buttons hidden if pending_query is set)
-    render_chat_history(thread)
+    This runs independently from the main app, checking if the background
+    suggestions generation has completed. When it completes, triggers a rerun
+    to show the suggestions.
 
-    # Check if there's a pending query to process
-    if is_processing:
-        process_pending_query(thread)
+    The fragment automatically stops polling when suggestions are no longer loading
+    (either completed, cancelled, or never started).
+    """
+    # Only poll if we're in loading state - this makes the fragment a no-op
+    # once suggestions are ready, effectively stopping the polling
+    if not is_suggestions_loading():
         return
 
-    # Chat input (disabled while processing to prevent double submission)
-    if user_input := st.chat_input("Ask a question about your data...", disabled=is_processing):
+    # Check if background task completed
+    if check_suggestions_completion():
+        # Suggestions are ready - rerun the full app to show them
+        st.rerun()
+
+
+def _should_show_welcome() -> bool:
+    """Determine if we should show the welcome screen.
+
+    Returns False if:
+    - There are any messages in the chat
+    - There's a pending query being processed
+    """
+    # Check directly from session_state for most up-to-date values
+    has_messages = len(st.session_state.get("messages", [])) > 0
+    has_pending = st.session_state.get("pending_query") is not None
+    return not has_messages and not has_pending
+
+
+def render_chat_interface(thread: "Thread") -> None:
+    """Render the complete chat interface."""
+    # Chat input at the bottom (always rendered, disabled while processing)
+    is_processing = st.session_state.get("pending_query") is not None
+    user_input = st.chat_input("Ask a question about your data...", disabled=is_processing)
+
+    # Handle user input FIRST, before rendering main content
+    if user_input:
+        # Cancel any pending suggestions generation
+        cancel_suggestions_generation()
+
         # Add user message immediately
         user_message = ChatMessage(role="user", content=user_input)
         st.session_state.messages.append(user_message)
 
-        # Set pending query and rerun - this hides buttons immediately
+        # Set pending query - the rerun will show the chat with user message
         st.session_state.pending_query = user_input
         st.rerun()
+
+    # Determine what to render
+    show_welcome = _should_show_welcome()
+
+    if show_welcome:
+        render_welcome_component()
+
+        # Add polling fragment for suggestions (only active while loading)
+        if is_suggestions_loading():
+            _suggestions_polling_fragment()
+    else:
+        # Render chat history (buttons hidden if pending_query is set)
+        render_chat_history(thread)
+
+        # Process pending query after showing the user message
+        if is_processing:
+            process_pending_query(thread)

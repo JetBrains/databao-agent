@@ -39,7 +39,7 @@ def render_dataframe_section(result: "ExecutionResult", has_visualization: bool)
     expanded = not has_visualization
 
     with st.expander(f"📊 Data ({len(df)} rows)", expanded=expanded):
-        st.dataframe(df, use_container_width=True)
+        st.dataframe(df, width="stretch")
 
 
 def render_visualization_section(thread: "Thread") -> None:
@@ -70,7 +70,7 @@ def render_visualization_section(thread: "Thread") -> None:
             spec_df = vis_result.spec_df
             if spec is not None and spec_df is not None:
                 try:
-                    st.vega_lite_chart(spec_df, spec, use_container_width=True)
+                    st.vega_lite_chart(spec_df, spec, width="stretch")
                     return
                 except Exception:
                     pass  # Fall through to other methods
@@ -78,7 +78,7 @@ def render_visualization_section(thread: "Thread") -> None:
         # Second: Try Altair chart directly
         if "altair" in plot_type.lower() or "Chart" in plot_type:
             try:
-                st.altair_chart(plot, use_container_width=True)
+                st.altair_chart(plot, width="stretch")
                 return
             except Exception:
                 pass  # Fall through to other methods
@@ -129,6 +129,7 @@ def render_visualization_section(thread: "Thread") -> None:
         st.warning(f"Could not render visualization: {plot_type}")
 
 
+@st.fragment
 def render_action_buttons(
     result: "ExecutionResult",
     thread: "Thread",
@@ -138,6 +139,10 @@ def render_action_buttons(
     is_latest: bool = False,
 ) -> None:
     """Render action buttons for sections that DON'T exist yet.
+
+    This is a fragment so it has an independent render lifecycle. When is_latest=False
+    (during processing), the fragment renders nothing and cleanly disappears without
+    showing stale elements.
 
     Buttons are shown only for the LATEST message and only for missing sections.
     Clicking a button will generate that section (via thread.df(), thread.code(),
@@ -182,7 +187,7 @@ def render_action_buttons(
     for i, (_key, label, action) in enumerate(buttons_to_show):
         with cols[i]:
             button_key = f"action_{action}_{message_index}"
-            clicked = st.button(label, key=button_key, use_container_width=True, disabled=is_processing)
+            clicked = st.button(label, key=button_key, width="stretch", disabled=is_processing)
             if clicked and not is_processing:
                 handle_action_button(action, thread, message_index)
 
@@ -209,8 +214,8 @@ def handle_action_button(action: str, thread: "Thread", message_index: int) -> N
                 if message_index < len(messages) and messages[message_index].result:
                     old_result = messages[message_index].result
                     messages[message_index].result = old_result.model_copy(update={"df": df})
-                # Force refresh to show the new data
-                st.rerun()
+                # Force refresh to show the new data (scope="app" since called from fragment)
+                st.rerun(scope="app")
             except Exception as e:
                 st.error(f"Failed to generate data: {e}")
 
@@ -230,8 +235,8 @@ def handle_action_button(action: str, thread: "Thread", message_index: int) -> N
                 if message_index < len(messages) and messages[message_index].result:
                     old_result = messages[message_index].result
                     messages[message_index].result = old_result.model_copy(update={"code": code})
-                # Force refresh to show the new code
-                st.rerun()
+                # Force refresh to show the new code (scope="app" since called from fragment)
+                st.rerun(scope="app")
             except Exception as e:
                 st.error(f"Failed to generate code: {e}")
 
@@ -246,8 +251,8 @@ def handle_action_button(action: str, thread: "Thread", message_index: int) -> N
                 if message_index < len(messages):
                     messages[message_index].has_visualization = True
 
-                # Force refresh
-                st.rerun()
+                # Force refresh (scope="app" since called from fragment)
+                st.rerun(scope="app")
 
             except Exception as e:
                 st.error(f"Failed to generate visualization: {e}")

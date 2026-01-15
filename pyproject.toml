@@ -39,7 +39,7 @@ examples = [
     "python-dotenv>=1.1.1",
 ]
 streamlit = [
-    "streamlit>=1.40.0",
+    "streamlit>=1.53.0",  # 1.53 fixes stale element display during blocking operations
     "click>=8.0.0",
     "pyyaml>=6.0",
     # TODO: Switch to git dependency once mssql-python supports macOS 14 (currently requires macOS 15):

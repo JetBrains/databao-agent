@@ -3,6 +3,7 @@
 import streamlit as st
 
 from databao.dce import DCEProject, DCEProjectStatus
+from streamlit_app.suggestions import reset_suggestions_state
 
 # Icons for different database types
 DB_ICONS = {
@@ -137,20 +138,24 @@ def render_actions() -> None:
     col1, col2 = st.columns(2)
 
     with col1:
-        if st.button("🔄 Reload", use_container_width=True, help="Reload DCE project"):
+        if st.button("🔄 Reload", width="stretch", help="Reload DCE project"):
             st.session_state.dce_project = None
             st.session_state.agent = None
             st.session_state.thread = None
             st.session_state.messages = []
             st.session_state.app_status = "initializing"
+            # Reset suggestions so they get regenerated with new agent
+            reset_suggestions_state()
             st.rerun()
 
     with col2:
-        if st.button("🗑️ Clear", use_container_width=True, help="Clear chat history"):
+        if st.button("🗑️ Clear", width="stretch", help="Clear chat history"):
             st.session_state.messages = []
             # Create new thread to reset conversation
             if st.session_state.agent:
                 st.session_state.thread = st.session_state.agent.thread(stream_ask=True, stream_plot=False)
+            # Reset suggestions so user sees fresh suggestions on welcome screen
+            reset_suggestions_state()
             st.rerun()
 
 

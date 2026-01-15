@@ -23,8 +23,6 @@ from streamlit_app.components.sidebar import render_sidebar
 logger = logging.getLogger(__name__)
 
 # Page config - use Databao logo as favicon
-from pathlib import Path
-
 _ASSETS_DIR = Path(__file__).parent / "assets"
 _FAVICON = _ASSETS_DIR / "bao.png"
 
@@ -52,6 +50,18 @@ def init_session_state() -> None:
         st.session_state.error_message = None
     if "executor_type" not in st.session_state:
         st.session_state.executor_type = "lighthouse"
+    if "suggested_questions" not in st.session_state:
+        st.session_state.suggested_questions = []
+    if "suggestions_are_llm_generated" not in st.session_state:
+        st.session_state.suggestions_are_llm_generated = False
+    # Status: "not_started", "loading", "ready", "cancelled"
+    if "suggestions_status" not in st.session_state:
+        st.session_state.suggestions_status = "not_started"
+    # Async suggestions generation state
+    if "suggestions_future" not in st.session_state:
+        st.session_state.suggestions_future = None
+    if "suggestions_cancel_event" not in st.session_state:
+        st.session_state.suggestions_cancel_event = None
 
 
 def get_current_project() -> DCEProject | None:
@@ -124,6 +134,7 @@ def initialize_agent(project: DCEProject) -> Agent | None:
 
         st.session_state.agent = agent
         st.session_state.app_status = "ready"
+
         return agent
 
     except Exception as e:

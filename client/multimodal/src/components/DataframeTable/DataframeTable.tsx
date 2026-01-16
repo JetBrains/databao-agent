@@ -1,10 +1,10 @@
 import styles from "./dataframeTable.module.css";
 
-interface TableProps {
+interface DataframeTableProps {
   htmlContent: string;
 }
 
-export function DataframeTable(props: TableProps) {
+export function DataframeTable(props: DataframeTableProps) {
   return (
     <div
       className={styles.root}

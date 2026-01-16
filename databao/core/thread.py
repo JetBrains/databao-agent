@@ -1,7 +1,6 @@
 import uuid
 from typing import TYPE_CHECKING, Any
 
-from edaplot.data_utils import spec_add_data
 from pandas import DataFrame
 from typing_extensions import Self
 
@@ -160,24 +159,9 @@ class Thread:
         Raises:
             ValueError: If visualization generation fails.
         """
-        from databao.visualizers.vega_chat import VegaChatResult
-
-        plot = self.plot()
-
-        if not isinstance(plot, VegaChatResult):
-            raise ValueError(f"html() requires VegaChatVisualizer, got {type(plot).__name__}")
-
-        if plot.spec is None or plot.spec_df is None:
-            raise ValueError("Failed to generate visualization")
-
         from databao.multimodal import open_html_content
 
-        df = self.df()
-        df_html = df.to_html() if df is not None else "<i>No data</i>"
-        visualizaton_text = self.text()
-        spec_with_data = spec_add_data(plot.spec.copy(), plot.spec_df)
-
-        return open_html_content(spec_with_data, df_html, visualizaton_text)
+        return open_html_content(self)
 
     def ask(self, query: str, *, rows_limit: int | None = None, stream: bool | None = None) -> Self:
         """Append a new user query to this thread.

@@ -224,7 +224,7 @@ def open_html_content(thread: "Thread") -> str:
     port = server.server_port
     url = f"http://127.0.0.1:{port}/"
 
-    def run_server_and_cleanup():
+    def run_server_and_cleanup() -> None:
         server.serve_forever()
         server.server_close()
 

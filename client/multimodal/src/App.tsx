@@ -28,10 +28,10 @@ function App() {
       console.error(e.message);
     };
 
-    const close = subscribeOnSpecGeneration(onSuccess, onError);
+    const unsubscribe = subscribeOnSpecGeneration(onSuccess, onError);
 
     return () => {
-      close();
+      unsubscribe();
     };
   }, []);
 
@@ -72,6 +72,11 @@ function App() {
 
   const tabs: TabModel[] = [
     {
+      type: "TABLE",
+      title: "Data",
+      content: () => renderTable(data?.dataframeHtmlContent),
+    },
+    {
       type: "CHART",
       title: "Chart",
       content: () => renderChart(spec),
@@ -80,11 +85,6 @@ function App() {
       type: "DESCRIPTION",
       title: "Description",
       content: () => renderDescription(data?.text),
-    },
-    {
-      type: "TABLE",
-      title: "Data",
-      content: () => renderTable(data?.dataframeHtmlContent),
     },
   ];
 

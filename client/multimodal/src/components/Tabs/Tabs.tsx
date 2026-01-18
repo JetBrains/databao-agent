@@ -20,7 +20,7 @@ export function Tabs(props: TabsProps) {
 
   return (
     <RadixTabs.Root
-      defaultValue="CHART"
+      defaultValue={props.tabs[0]?.type}
       className={styles.root}
       onValueChange={handleChangeTab}
     >

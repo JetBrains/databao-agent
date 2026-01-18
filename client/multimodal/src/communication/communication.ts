@@ -1,6 +1,6 @@
 import { EVENTS } from "./events";
 
-type Event = {
+type Message = {
   type: keyof typeof EVENTS;
   status: "loading" | "failed" | "loaded";
   error: string;
@@ -30,7 +30,7 @@ export function subscribeOnSpecGeneration(
   };
 
   eventSource.onmessage = (event: MessageEvent) => {
-    const message = JSON.parse(event.data) as Event;
+    const message = JSON.parse(event.data) as Message;
     setupTimeout();
 
     if (message.type !== EVENTS.GENERATE_SPEC) {

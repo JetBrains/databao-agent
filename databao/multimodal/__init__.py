@@ -101,13 +101,13 @@ class MultimodalHTTPRequestHandler(BaseHTTPRequestHandler):
 
         def generate_spec_worker() -> None:
             """
-            Worker that computes the visualization spec and puts the specor an Exception into result_queue.
+            Worker that computes the visualization spec and puts the spec or an Exception into result_queue.
             """
             try:
                 plot = self.thread.plot()
 
                 if not isinstance(plot, VegaChatResult):
-                    raise ValueError(f"html() requires VegaChatVisualizer, got {type(plot).__name__}")
+                    raise ValueError(f"Plot requires VegaChatVisualizer, got {type(plot).__name__}")
 
                 if plot.spec is None or plot.spec_df is None:
                     raise ValueError("Failed to generate visualization")
@@ -207,7 +207,7 @@ def open_html_content(thread: "Thread") -> str:
         )
 
     df = thread.df()
-    df_html = df.to_html() if df is not None else "<i>No data</i>"
+    df_html = df.to_html() if df is not None else "<i>No data available</i>"
 
     data_object = {"text": thread.text(), "dataframeHtmlContent": df_html}
     data_json = json.dumps(data_object)

@@ -2,10 +2,10 @@ import { Spinner, Text, Theme } from "@radix-ui/themes";
 import { useEffect, useState } from "react";
 
 import styles from "./App.module.css";
+import { subscribeOnSpecGeneration } from "./communication/communication";
 import { DataframeTable } from "./components/DataframeTable";
 import { Tabs, TabModel } from "./components/Tabs";
 import { VegaChart } from "./components/VegaChart";
-import { subscribeOnSpecGeneration } from "./communication/communication";
 
 type ConnectionStatus = "initial" | "loading" | "failed" | "loaded";
 

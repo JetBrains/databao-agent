@@ -1,7 +1,6 @@
 """Suggested questions generation for the Databao chat interface."""
 
 import logging
-import threading
 from concurrent.futures import Future, ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FuturesTimeoutError
 from typing import TYPE_CHECKING
@@ -16,7 +15,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 # Type alias for suggestion results
-SuggestionsResult = tuple[list[str], bool] | None
+SuggestionsResult = tuple[list[str], bool]
 
 
 @st.cache_resource
@@ -124,38 +123,19 @@ def generate_suggested_questions(agent: "Agent") -> tuple[list[str], bool]:
         return FALLBACK_QUESTIONS.copy(), False
 
 
-def _generate_suggestions_task(
-    agent: "Agent",
-    cancel_event: threading.Event,
-) -> SuggestionsResult:
-    """Background task that generates suggestions with cancellation support.
+def _generate_suggestions_task(agent: "Agent") -> SuggestionsResult:
+    """Background task that generates suggestions.
 
     Args:
         agent: The Databao agent.
-        cancel_event: Event to signal cancellation.
 
     Returns:
-        Tuple of (questions, is_llm_generated) or None if cancelled.
+        Tuple of (questions, is_llm_generated).
     """
-    # Check cancellation before starting expensive LLM call
-    if cancel_event.is_set():
-        logger.info("Suggestions generation cancelled before starting")
-        return None
-
     try:
-        questions, is_llm_generated = generate_suggested_questions(agent)
-
-        # Check again after LLM call (user may have asked during generation)
-        if cancel_event.is_set():
-            logger.info("Suggestions generation cancelled after LLM call")
-            return None
-
-        return questions, is_llm_generated
-
+        return generate_suggested_questions(agent)
     except Exception as e:
         logger.warning("Background suggestions generation failed: %s", e)
-        if cancel_event.is_set():
-            return None
         return FALLBACK_QUESTIONS.copy(), False
 
 
@@ -169,56 +149,25 @@ def start_suggestions_generation(agent: "Agent") -> bool:
     if status != "not_started":
         return False  # Already loading or ready
 
-    # Create cancellation event
-    cancel_event = threading.Event()
-
     # Submit task to executor
     executor = _get_suggestions_executor()
-    future: Future[SuggestionsResult] = executor.submit(
-        _generate_suggestions_task, agent, cancel_event
-    )
+    future: Future[SuggestionsResult] = executor.submit(_generate_suggestions_task, agent)
 
     # Store in session state
     st.session_state.suggestions_future = future
-    st.session_state.suggestions_cancel_event = cancel_event
     st.session_state.suggestions_status = "loading"
 
     logger.info("Started background suggestions generation")
     return True
 
 
-def cancel_suggestions_generation() -> None:
-    """Cancel any pending suggestions generation.
-
-    Call this when the user submits their own question.
-    """
-    cancel_event: threading.Event | None = st.session_state.get("suggestions_cancel_event")
-    if cancel_event is not None:
-        cancel_event.set()
-        logger.info("Cancelled suggestions generation")
-
-    # Clean up state
-    st.session_state.suggestions_future = None
-    st.session_state.suggestions_cancel_event = None
-
-    # Only mark as cancelled if was loading (don't overwrite 'ready')
-    if st.session_state.get("suggestions_status") == "loading":
-        st.session_state.suggestions_status = "cancelled"
-
-
 def reset_suggestions_state() -> None:
     """Reset suggestions state to allow regeneration.
 
-    Call this when starting a new chat or when the user wants fresh suggestions.
+    Call this when Reload button is pressed to regenerate suggestions.
     """
-    # Cancel any in-progress generation first
-    cancel_event: threading.Event | None = st.session_state.get("suggestions_cancel_event")
-    if cancel_event is not None:
-        cancel_event.set()
-
     # Reset all suggestions-related state
     st.session_state.suggestions_future = None
-    st.session_state.suggestions_cancel_event = None
     st.session_state.suggestions_status = "not_started"
     st.session_state.suggested_questions = []
     st.session_state.suggestions_are_llm_generated = False
@@ -233,7 +182,7 @@ def check_suggestions_completion() -> bool:
 
     Returns True if suggestions became ready (caller should rerun to show them).
     """
-    # Early exit if status is not loading (already completed or cancelled)
+    # Early exit if status is not loading (already completed or not started)
     status = st.session_state.get("suggestions_status")
     if status != "loading":
         return False
@@ -244,9 +193,6 @@ def check_suggestions_completion() -> bool:
         return False
 
     if not future.done():
-        # Check for timeout - if we've been waiting too long, use fallback
-        # Note: We can't easily track start time here without adding more state,
-        # so timeout is handled by letting the executor manage it naturally
         return False
 
     # Get result with a small timeout as safety (should be instant since done=True)
@@ -261,15 +207,14 @@ def check_suggestions_completion() -> bool:
 
     # Clean up future
     st.session_state.suggestions_future = None
-    st.session_state.suggestions_cancel_event = None
 
     # Handle result
     if result is None:
-        # Was cancelled or failed - use fallback instead of showing nothing
+        # Failed - use fallback instead of showing nothing
         st.session_state.suggested_questions = FALLBACK_QUESTIONS.copy()
         st.session_state.suggestions_are_llm_generated = False
         st.session_state.suggestions_status = "ready"
-        logger.info("Suggestions generation failed/cancelled, using fallback")
+        logger.info("Suggestions generation failed, using fallback")
         return True
 
     questions, is_llm_generated = result

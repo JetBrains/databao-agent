@@ -1,24 +1,11 @@
-"""Databao Streamlit Web Interface - Main Application."""
+"""Databao Streamlit Web Interface - Main Application with Multipage Navigation."""
 
 import logging
 from pathlib import Path
-from typing import cast
 
 import streamlit as st
 
-import databao
-import databao.dce
-from databao.core.agent import Agent
-from databao.core.thread import Thread
-from databao.dce import (
-    DCEProject,
-    DCEProjectStatus,
-    create_all_connections,
-    find_best_project,
-    get_all_context,
-)
-from streamlit_app.components.chat import render_chat_interface
-from streamlit_app.components.sidebar import render_sidebar
+from streamlit_app.models.chat_session import ChatSession
 
 logger = logging.getLogger(__name__)
 
@@ -36,255 +23,240 @@ st.set_page_config(
 
 def init_session_state() -> None:
     """Initialize session state variables."""
+    # Chat sessions
+    if "chats" not in st.session_state:
+        st.session_state.chats = {}  # dict[str, ChatSession]
+    if "current_chat_id" not in st.session_state:
+        st.session_state.current_chat_id = None
+
+    # DCE/Agent state
     if "dce_project" not in st.session_state:
         st.session_state.dce_project = None
+    if "dce_project_path" not in st.session_state:
+        st.session_state.dce_project_path = None  # Persists across reloads
     if "agent" not in st.session_state:
         st.session_state.agent = None
-    if "thread" not in st.session_state:
-        st.session_state.thread = None
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
     if "app_status" not in st.session_state:
         st.session_state.app_status = "initializing"
-    if "error_message" not in st.session_state:
-        st.session_state.error_message = None
+    if "status_message" not in st.session_state:
+        st.session_state.status_message = None
     if "executor_type" not in st.session_state:
         st.session_state.executor_type = "lighthouse"
+
+    # Legacy state for compatibility with existing components
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+    if "thread" not in st.session_state:
+        st.session_state.thread = None
+
+    # Suggestions state
     if "suggested_questions" not in st.session_state:
         st.session_state.suggested_questions = []
     if "suggestions_are_llm_generated" not in st.session_state:
         st.session_state.suggestions_are_llm_generated = False
-    # Status: "not_started", "loading", "ready", "cancelled"
     if "suggestions_status" not in st.session_state:
         st.session_state.suggestions_status = "not_started"
-    # Async suggestions generation state
     if "suggestions_future" not in st.session_state:
         st.session_state.suggestions_future = None
     if "suggestions_cancel_event" not in st.session_state:
         st.session_state.suggestions_cancel_event = None
 
-
-def get_current_project() -> DCEProject | None:
-    """Get the current DCE project, auto-detecting if needed."""
-    # If we already have a project, return it
-    if st.session_state.dce_project is not None:
-        return cast(DCEProject, st.session_state.dce_project)
-
-    # Use find_best_project which handles detection and selection
-    project = find_best_project()
-    if project is not None:
-        st.session_state.dce_project = project
-
-    return project
+    # Title generation state
+    if "title_futures" not in st.session_state:
+        st.session_state.title_futures = {}
 
 
-def initialize_agent(project: DCEProject) -> Agent | None:
-    """Initialize Databao agent with DCE project data."""
-    if st.session_state.agent is not None:
-        return cast(Agent, st.session_state.agent)
+def _create_new_chat() -> None:
+    """Create a new chat and navigate to it."""
+    from uuid6 import uuid6
 
-    if project.status == DCEProjectStatus.NO_BUILD:
-        st.session_state.error_message = (
-            "DCE project found but no build output. Run 'nemory build' first."
+    # Save current chat's messages before creating new one
+    prev_chat_id = st.session_state.get("current_chat_id")
+    chats: dict[str, ChatSession] = st.session_state.get("chats", {})
+    if prev_chat_id and prev_chat_id in chats:
+        prev_chat = chats[prev_chat_id]
+        prev_chat.messages = st.session_state.get("messages", [])
+        prev_chat.thread = st.session_state.get("thread")
+
+    # Create new chat
+    chat_id = str(uuid6())
+    chat = ChatSession(id=chat_id)
+
+    chats[chat_id] = chat
+    st.session_state.chats = chats
+    st.session_state.current_chat_id = chat_id
+
+    # Set up empty messages for the new chat
+    st.session_state.messages = chat.messages
+    st.session_state.thread = None
+
+    # Update last synced chat ID
+    st.session_state._last_synced_chat_id = chat_id
+
+    # Flag to navigate to this chat on next rerun
+    st.session_state._navigate_to_chat = chat_id
+
+
+def build_navigation() -> None:
+    """Build the multipage navigation structure."""
+    from streamlit_app.pages.agent_settings import render_agent_settings_page
+    from streamlit_app.pages.chat import render_chat_page
+    from streamlit_app.pages.context_settings import render_context_settings_page
+    from streamlit_app.pages.welcome import render_welcome_page
+
+    # Check if we need to navigate to a newly created chat
+    navigate_to_chat: str | None = st.session_state.get("_navigate_to_chat")
+    if navigate_to_chat:
+        # Clear the navigation flag
+        st.session_state._navigate_to_chat = None
+
+    # Settings pages - store in session state for page_link access
+    context_settings_page = st.Page(
+        render_context_settings_page,
+        title="Context Settings",
+        icon="📊",
+        url_path="context-settings",
+    )
+    agent_settings_page = st.Page(
+        render_agent_settings_page,
+        title="Agent Settings",
+        icon="⚙️",
+        url_path="agent-settings",
+    )
+    settings_pages = [context_settings_page, agent_settings_page]
+
+    # Store page objects in session state for cross-page navigation
+    st.session_state._page_context_settings = context_settings_page
+    st.session_state._page_agent_settings = agent_settings_page
+
+    # Chat pages - build dynamically from session state
+    chat_pages: list[st.Page] = []
+
+    # "New Chat" action (using a function that creates and navigates)
+    def new_chat_action():
+        _create_new_chat()
+        # The chat is created and _navigate_to_chat is set.
+        # We need to rerun so navigation picks up the new chat.
+        st.rerun()
+
+    chat_pages.append(
+        st.Page(
+            new_chat_action,
+            title="New Chat",
+            icon=":material/add:",
+            url_path="new-chat",
         )
-        return None
-
-    try:
-        # Create streaming writer for capturing thinking output
-        from streamlit_app.streaming import StreamingWriter
-
-        writer = StreamingWriter()
-        st.session_state.streaming_writer = writer
-
-        # Get executor type from session state
-        executor_type = st.session_state.get("executor_type", "lighthouse")
-
-        # Create agent with writer and executor type
-        agent = databao.new_agent(
-            writer=writer,
-            executor_type=executor_type,
-        )
-
-        # Get connections from DCE configs
-        connections = create_all_connections(project.path)
-
-        if not connections:
-            st.session_state.error_message = "No datasource connections found in DCE project."
-            return None
-
-        # Get context from DCE outputs
-        run_dir = project.latest_run_dir
-        db_contexts: list[databao.dce.DatabaseContext] = []
-        file_contexts: list[databao.dce.FileContext] = []
-        if run_dir:
-            db_contexts, file_contexts = get_all_context(run_dir)
-
-        # Build a map of database_id -> context
-        db_context_map = {ctx.database_id: ctx.context_text for ctx in db_contexts}
-
-        # Add connections to agent
-        for conn_info in connections:
-            # Try to find matching context
-            context = db_context_map.get(conn_info.name) or db_context_map.get(conn_info.db_type)
-            agent.add_db(conn_info.connection, name=conn_info.name, context=context)
-
-        # Add file contexts as general context
-        for file_ctx in file_contexts:
-            agent.add_context(file_ctx.context_text)
-
-        st.session_state.agent = agent
-        st.session_state.app_status = "ready"
-
-        return agent
-
-    except Exception as e:
-        logger.exception("Failed to initialize agent")
-        st.session_state.error_message = f"Failed to initialize agent: {e}"
-        st.session_state.app_status = "error"
-        return None
-
-
-def get_or_create_thread() -> Thread | None:
-    """Get or create a thread for the current agent."""
-    if st.session_state.thread is not None:
-        return cast(Thread, st.session_state.thread)
-
-    agent: Agent | None = st.session_state.agent
-    if agent is None:
-        return None
-
-    thread = agent.thread(stream_ask=True, stream_plot=False)
-    st.session_state.thread = thread
-    return thread
-
-
-def render_empty_state() -> None:
-    """Render the empty state when no DCE project is found."""
-    st.title("Databao")
-    st.markdown("---")
-
-    st.warning("No DCE project detected.")
-
-    st.markdown("""
-    ### Getting Started
-
-    To use Databao, you need a DCE (Databao Context Engine) project with configured datasources.
-
-    **Set up a new project:**
-    ```bash
-    nemory init
-    nemory datasource add
-    nemory build
-    ```
-
-    Then reload this page.
-
-    **Or select an existing project path below:**
-    """)
-
-    # Manual path selector
-    custom_path = st.text_input(
-        "Project path",
-        placeholder="/path/to/your/nemory-project",
-        help="Enter the path to a directory containing nemory.ini",
     )
 
-    if custom_path:
-        path = Path(custom_path).expanduser().resolve()
-        if path.is_dir():
-            from databao.dce.project import validate_project
+    # Existing chats
+    chats: dict[str, ChatSession] = st.session_state.get("chats", {})
+    target_chat_page: st.Page | None = None
 
-            project = validate_project(path)
-            if project.status != DCEProjectStatus.NOT_FOUND:
-                st.session_state.dce_project = project
-                st.session_state.dce_candidates = [project]
-                st.rerun()
-            else:
-                st.error(f"No DCE project found at {path}")
-        else:
-            st.error(f"Path does not exist: {path}")
+    if chats:
+        # Sort by creation time, newest first
+        sorted_chats = sorted(chats.values(), key=lambda c: c.created_at, reverse=True)
+
+        for chat in sorted_chats:
+            # Create a page for each chat
+            # Use a closure to capture the chat_id
+            def make_chat_page(chat_id: str):
+                def page_fn():
+                    st.session_state.current_chat_id = chat_id
+                    # Sync messages with this chat
+                    _sync_chat_messages(chat_id)
+                    render_chat_page()
+
+                return page_fn
+
+            title = chat.display_title
+
+            # Check if this is the chat we should navigate to
+            is_target = navigate_to_chat == chat.id
+
+            page = st.Page(
+                make_chat_page(chat.id),
+                title=title,
+                icon="💬",
+                url_path=f"chat-{chat.id}",  # Flat path (no nested paths allowed)
+                default=is_target,  # Make this the default if we're navigating to it
+            )
+            chat_pages.append(page)
+
+            if is_target:
+                target_chat_page = page
+
+    # Welcome page (default only if we're not navigating to a chat)
+    welcome_page = st.Page(
+        render_welcome_page,
+        title="Home",
+        icon="🏠",
+        url_path="welcome",
+        default=(navigate_to_chat is None),
+    )
+
+    # Store welcome page in session state for navigation
+    st.session_state._page_welcome = welcome_page
+
+    # Build navigation with sections
+    pages = {
+        "": [welcome_page],  # Empty string = no header
+        "Settings": settings_pages,
+        "Chats": chat_pages,
+    }
+
+    pg = st.navigation(pages)
+
+    # If we have a target chat page and navigation returned it, switch to it
+    if target_chat_page is not None:
+        st.switch_page(target_chat_page)
+
+    pg.run()
 
 
-def render_error_state() -> None:
-    """Render error state."""
-    st.title("Databao")
-    st.markdown("---")
+def _sync_chat_messages(chat_id: str) -> None:
+    """Sync session state messages when switching between chats.
 
-    st.error(st.session_state.error_message or "An error occurred")
+    This saves the current chat's messages and loads the new chat's messages.
+    Messages are stored in-memory in the ChatSession objects.
+    """
+    chats: dict[str, ChatSession] = st.session_state.get("chats", {})
+    chat = chats.get(chat_id)
 
-    if st.button("🔄 Retry"):
-        # Reset state
-        st.session_state.agent = None
-        st.session_state.thread = None
-        st.session_state.app_status = "initializing"
-        st.session_state.error_message = None
-        st.rerun()
+    if chat is None:
+        return
+
+    # Check if we're actually switching chats
+    prev_chat_id = st.session_state.get("_last_synced_chat_id")
+    if prev_chat_id == chat_id:
+        # Same chat, no switch needed
+        return
+
+    # Save current messages to previous chat before switching
+    if prev_chat_id and prev_chat_id in chats:
+        prev_chat = chats[prev_chat_id]
+        # Directly assign the list (not a copy) - the ChatSession holds the reference
+        prev_chat.messages = st.session_state.messages
+        prev_chat.thread = st.session_state.get("thread")
+
+    # Load new chat's messages (direct assignment, ChatSession holds the reference)
+    st.session_state.messages = chat.messages
+    st.session_state.thread = chat.thread
+    st.session_state._last_synced_chat_id = chat_id
 
 
-def render_no_build_state(project: DCEProject) -> None:
-    """Render state when DCE project has no build output."""
-    st.title("Databao")
-    st.markdown("---")
+def _render_global_sidebar() -> None:
+    """Render sidebar elements that appear on all pages."""
+    from streamlit_app.components.sidebar import render_sidebar_header
 
-    st.warning(f"DCE project found at `{project.path}` but no build output exists.")
-
-    st.markdown("""
-    ### Build Required
-
-    The DCE project needs to be built before Databao can use it.
-
-    Run the following command:
-    ```bash
-    nemory build
-    ```
-
-    Then reload this page.
-    """)
-
-    if st.button("🔄 Check Again"):
-        st.session_state.dce_project = None
-        st.session_state.dce_candidates = []
-        st.rerun()
+    with st.sidebar:
+        render_sidebar_header()
 
 
 def main() -> None:
     """Main application entry point."""
     init_session_state()
-
-    # Detect project
-    project = get_current_project()
-
-    # Handle different states BEFORE initializing agent
-    if project is None:
-        render_sidebar(project)
-        render_empty_state()
-        return
-
-    if project.status == DCEProjectStatus.NO_BUILD:
-        render_sidebar(project)
-        render_no_build_state(project)
-        return
-
-    # Initialize agent BEFORE rendering sidebar so sources are visible
-    agent = initialize_agent(project)
-
-    # Now render sidebar with agent populated
-    render_sidebar(project)
-
-    if st.session_state.app_status == "error" or agent is None:
-        render_error_state()
-        return
-
-    # Get or create thread
-    thread = get_or_create_thread()
-
-    if thread is None:
-        st.error("Failed to create conversation thread")
-        return
-
-    # Render main chat interface
-    st.title("Databao")
-    render_chat_interface(thread)
+    _render_global_sidebar()
+    build_navigation()
 
 
 if __name__ == "__main__":

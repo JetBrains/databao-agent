@@ -18,7 +18,6 @@ Each result file contains:
 NOTE: We pass raw DCE context to Databao without post-processing.
 DCE already produces properly formatted context that Databao can use directly.
 """
-
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any

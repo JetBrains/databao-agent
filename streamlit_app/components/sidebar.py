@@ -3,6 +3,7 @@
 import streamlit as st
 
 from databao.dce import DCEProject, DCEProjectStatus
+from streamlit_app.components.status import AppStatus, init_status_placeholder, set_status
 from streamlit_app.suggestions import reset_suggestions_state
 
 # Icons for different database types
@@ -28,11 +29,18 @@ def get_db_icon(db_type: str) -> str:
 
 
 def render_project_info(project: DCEProject | None) -> None:
-    """Render project information section."""
+    """Render project information section with Reload button."""
     st.markdown("### 📊 Project")
 
     if project is None:
         st.caption("No project selected")
+        # Show Reload button even with no project
+        if st.button("🔄 Reload", width="stretch", help="Reload DCE project"):
+            st.session_state.dce_project = None
+            st.session_state.agent = None
+            set_status(AppStatus.INITIALIZING, "Reloading...")
+            reset_suggestions_state()
+            st.rerun()
         return
 
     st.markdown(f"**{project.name}**")
@@ -47,6 +55,16 @@ def render_project_info(project: DCEProject | None) -> None:
         st.warning("Build required", icon="⚠️")
     else:
         st.error("Not found", icon="❌")
+
+    # Reload button at bottom of Project section
+    if st.button("🔄 Reload", width="stretch", help="Reload DCE project"):
+        # Clear project object but keep dce_project_path so it reloads from same location
+        st.session_state.dce_project = None
+        st.session_state.agent = None
+        set_status(AppStatus.INITIALIZING, "Reloading project...")
+        # Reset suggestions so they get regenerated with new agent
+        reset_suggestions_state()
+        st.rerun()
 
 
 def render_sources_info() -> None:
@@ -93,19 +111,6 @@ def render_sources_info() -> None:
         st.markdown(f"📊 **{name}** (DataFrame)")
 
 
-def render_status_info() -> None:
-    """Render app status section."""
-    status = st.session_state.get("app_status", "initializing")
-
-    if status == "ready":
-        pass  # Don't show anything when ready
-    elif status == "initializing":
-        st.info("Initializing...", icon="⏳")
-    elif status == "error":
-        error_msg = st.session_state.get("error_message", "Unknown error")
-        st.error(error_msg, icon="❌")
-
-
 def render_executor_selector() -> None:
     """Render executor type selector."""
     st.markdown("### ⚙️ Executor")
@@ -127,83 +132,73 @@ def render_executor_selector() -> None:
         st.session_state.agent = None
         st.session_state.thread = None
         st.session_state.messages = []
-        st.session_state.app_status = "initializing"
+        set_status(AppStatus.INITIALIZING, "Applying executor change...")
         st.rerun()
 
 
-def render_actions() -> None:
-    """Render action buttons."""
-    st.markdown("### ⚡ Actions")
+def render_sidebar_header() -> None:
+    """Render shared sidebar header (logo + status).
 
-    col1, col2 = st.columns(2)
-
-    with col1:
-        if st.button("🔄 Reload", width="stretch", help="Reload DCE project"):
-            st.session_state.dce_project = None
-            st.session_state.agent = None
-            st.session_state.thread = None
-            st.session_state.messages = []
-            st.session_state.app_status = "initializing"
-            # Reset suggestions so they get regenerated with new agent
-            reset_suggestions_state()
-            st.rerun()
-
-    with col2:
-        if st.button("🗑️ Clear", width="stretch", help="Clear chat history"):
-            st.session_state.messages = []
-            # Create new thread to reset conversation
-            if st.session_state.agent:
-                st.session_state.thread = st.session_state.agent.thread(stream_ask=True, stream_plot=False)
-            # Reset suggestions so user sees fresh suggestions on welcome screen
-            reset_suggestions_state()
-            st.rerun()
-
-
-def render_sidebar(project: DCEProject | None) -> None:
-    """Render the complete sidebar."""
+    This is called on ALL pages from app.py to show consistent branding and status.
+    Must be called within st.sidebar context.
+    """
     import base64
     from pathlib import Path
 
+    # Header with logo - use HTML for proper vertical alignment
+    logo_path = Path(__file__).parent.parent / "assets" / "bao.png"
+    if logo_path.exists():
+        with open(logo_path, "rb") as f:
+            logo_b64 = base64.b64encode(f.read()).decode()
+        st.markdown(
+            f"""
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <img src="data:image/png;base64,{logo_b64}" width="32" height="32" style="vertical-align: middle;">
+                <span style="font-size: 1.4rem; font-weight: 600; line-height: 32px;">Databao</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown("## Databao")
+
+    st.markdown("")  # Vertical spacing
+
+    # Status (right after header) - uses st.empty() for real-time updates
+    init_status_placeholder()
+
+
+def render_sidebar_chat_content(project: DCEProject | None) -> None:
+    """Render chat-specific sidebar content.
+
+    This is called only on chat pages to show project info, sources, and executor.
+    Must be called within st.sidebar context.
+    """
+    # Project info (includes Reload button)
+    render_project_info(project)
+
+    st.markdown("---")
+
+    # Sources
+    render_sources_info()
+
+    st.markdown("---")
+
+    # Executor selector
+    render_executor_selector()
+
+    # Footer
+    st.markdown("---")
+    st.caption("Databao v0.1")
+
+
+def render_sidebar(project: DCEProject | None) -> None:
+    """Render the complete sidebar for chat pages.
+
+    This is a convenience function that combines header and chat content.
+    For other pages, only render_sidebar_header() is called from app.py.
+    """
     with st.sidebar:
-        # Header with logo - use HTML for proper vertical alignment
-        logo_path = Path(__file__).parent.parent / "assets" / "bao.png"
-        if logo_path.exists():
-            with open(logo_path, "rb") as f:
-                logo_b64 = base64.b64encode(f.read()).decode()
-            st.markdown(
-                f"""
-                <div style="display: flex; align-items: center; gap: 6px;">
-                    <img src="data:image/png;base64,{logo_b64}" width="32" height="32" style="vertical-align: middle;">
-                    <span style="font-size: 1.4rem; font-weight: 600; line-height: 32px;">Databao</span>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-        else:
-            st.markdown("## Databao")
+        render_sidebar_header()
         st.markdown("---")
-
-        # Project info
-        render_project_info(project)
-
-        st.markdown("---")
-
-        # Sources
-        render_sources_info()
-
-        st.markdown("---")
-
-        # Executor selector
-        render_executor_selector()
-
-        st.markdown("---")
-
-        # Status
-        render_status_info()
-
-        # Actions
-        render_actions()
-
-        # Footer
-        st.markdown("---")
-        st.caption("Databao v0.1")
+        render_sidebar_chat_content(project)

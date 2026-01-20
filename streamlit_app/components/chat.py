@@ -1,6 +1,7 @@
 """Chat interface component with streaming support."""
 
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
 import streamlit as st
@@ -8,7 +9,6 @@ import streamlit as st
 from streamlit_app.components.results import render_execution_result
 from streamlit_app.streaming import StreamingWriter
 from streamlit_app.suggestions import (
-    cancel_suggestions_generation,
     check_suggestions_completion,
     is_suggestions_loading,
     start_suggestions_generation,
@@ -29,6 +29,7 @@ class ChatMessage:
     has_visualization: bool = False
     message_id: str = ""
     metadata: dict[str, Any] = field(default_factory=dict)
+    timestamp: datetime = field(default_factory=datetime.now)
 
 
 def render_user_message(message: ChatMessage) -> None:
@@ -147,9 +148,8 @@ def render_welcome_component() -> None:
                 # Show truncated text in button, but use help tooltip for full text if truncated
                 help_text = question if was_truncated else None
                 if st.button(display_text, key=f"suggested_q_{i}", width="stretch", help=help_text):
-                    # Cancel any pending generation (shouldn't be needed but safety)
-                    cancel_suggestions_generation()
                     # Submit the FULL question (not truncated)
+                    # Appending directly updates ChatSession.messages (via reference)
                     user_message = ChatMessage(role="user", content=question)
                     st.session_state.messages.append(user_message)
                     st.session_state.pending_query = question
@@ -221,7 +221,7 @@ def process_pending_query(thread: "Thread") -> None:
 
                 except Exception as e:
                     st.error(f"Error: {e}")
-                    # Add error message
+                    # Add error message (appending directly updates ChatSession.messages)
                     error_message = ChatMessage(
                         role="assistant",
                         content=f"Error processing request: {e}",
@@ -249,6 +249,7 @@ def process_pending_query(thread: "Thread") -> None:
             has_visualization = True
 
         # Create the final message and add to session state
+        # Appending directly updates ChatSession.messages (via reference)
         assistant_message = ChatMessage(
             role="assistant",
             content=result.text if result else "",
@@ -306,10 +307,8 @@ def render_chat_interface(thread: "Thread") -> None:
 
     # Handle user input FIRST, before rendering main content
     if user_input:
-        # Cancel any pending suggestions generation
-        cancel_suggestions_generation()
-
         # Add user message immediately
+        # Appending directly updates ChatSession.messages (via reference)
         user_message = ChatMessage(role="user", content=user_input)
         st.session_state.messages.append(user_message)
 

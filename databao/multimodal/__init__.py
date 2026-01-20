@@ -194,9 +194,11 @@ def _dataframe_to_html(df: "Any") -> str:
         separator_df = pd.DataFrame([separator_data], index=["..."])
 
         truncated_df = pd.concat([first_10, separator_df, last_10])
-        return truncated_df.to_html()
+        html_result = truncated_df.to_html()
     else:
-        return df.to_html()
+        html_result = df.to_html()
+
+    return html_result if html_result is not None else ""
 
 
 def open_html_content(thread: "Thread") -> str:

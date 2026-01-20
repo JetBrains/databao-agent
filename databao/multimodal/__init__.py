@@ -183,6 +183,22 @@ class MultimodalHTTPRequestHandler(BaseHTTPRequestHandler):
         return
 
 
+def _dataframe_to_html(df: "Any") -> str:
+    import pandas as pd
+
+    if len(df) > 20:
+        first_10 = df.head(10)
+        last_10 = df.tail(10)
+
+        separator_data = {col: "..." for col in df.columns}
+        separator_df = pd.DataFrame([separator_data], index=["..."])
+
+        truncated_df = pd.concat([first_10, separator_df, last_10])
+        return truncated_df.to_html()
+    else:
+        return df.to_html()
+
+
 def open_html_content(thread: "Thread") -> str:
     """Create an HTML file with the embedded Vega spec and open it in the browser.
 
@@ -207,7 +223,7 @@ def open_html_content(thread: "Thread") -> str:
         )
 
     df = thread.df()
-    df_html = df.to_html() if df is not None else "<i>No data available</i>"
+    df_html = _dataframe_to_html(df) if df is not None else "<i>No data available</i>"
 
     data_object = {"text": thread.text(), "dataframeHtmlContent": df_html}
     data_json = json.dumps(data_object)

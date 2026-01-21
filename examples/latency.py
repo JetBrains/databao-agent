@@ -5,7 +5,6 @@ import pandas as pd
 from pathlib import Path
 import duckdb
 from sqlalchemy import create_engine
-from tqdm import tqdm
 
 import databao
 
@@ -13,7 +12,7 @@ import databao
 file_path = Path(__file__).parent
 
 
-def run_scenario():
+def run_scenario() -> None:
     DB_PATH = file_path / "web_shop_orders/data/web_shop.duckdb"
     conn = duckdb.connect(DB_PATH, read_only=True)
 
@@ -44,9 +43,9 @@ def run_scenario():
     return df is not None
 
 
-def main():
+def main() -> None:
     time_measures = []
-    for _ in tqdm(range(10)):
+    for _ in range(10):
         start_time = time.time()
         success = run_scenario()
         if success:

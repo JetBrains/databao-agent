@@ -12,7 +12,6 @@ import databao
 
 file_path = Path(__file__).parent
 
-start_time = time.time()
 
 def run_scenario():
     DB_PATH = file_path / "web_shop_orders/data/web_shop.duckdb"

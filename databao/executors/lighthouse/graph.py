@@ -74,7 +74,7 @@ class ExecuteSubmit:
             df = state.get("df")  # Latest df result (usually from run_sql_query)
             visualization_prompt = state.get("visualization_prompt")
             result = ExecutionResult(
-                text=last_ai_message.text(),
+                text=last_ai_message.text,
                 df=df,
                 code=sql,
                 meta={

@@ -12,7 +12,7 @@ import databao
 file_path = Path(__file__).parent
 
 
-def run_scenario() -> None:
+def run_scenario() -> bool:
     DB_PATH = file_path / "web_shop_orders/data/web_shop.duckdb"
     conn = duckdb.connect(DB_PATH, read_only=True)
 

@@ -1,4 +1,4 @@
-[![official project](https://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
+[![official project](https://jb.gg/badges/official.svg)](https://github.com/JetBrains#jetbrains-on-github)
 [![PyPI version](https://img.shields.io/pypi/v/databao.svg)](https://pypi.org/project/databao)
 [![Python versions](https://img.shields.io/pypi/pyversions/databao.svg)](https://pypi.org/project/databao/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/JetBrains/databao/blob/main/LICENSE)
@@ -17,12 +17,6 @@
  <a href="#local-models">Local models</a> •
  <a href="#contributing">Contributing</a> •
  <a href="https://discord.gg/hEUqCcWdVh">Discord</a>
-</p>
-
----
-
-<p align="center">
- 🏆 <b>Ranked #1</b> in the DBT track of the <a href="https://spider2-sql.github.io/">Spider 2.0 Text2SQL benchmark</a>
 </p>
 
 ---

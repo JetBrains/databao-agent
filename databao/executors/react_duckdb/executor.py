@@ -68,7 +68,7 @@ class ReactDuckDBExecutor(GraphExecutor):
 
         # Execute the graph
         init_state = {"messages": messages}
-        invoke_config = RunnableConfig(recursion_limit=self._graph_recursion_limit)
+        invoke_config = RunnableConfig(recursion_limit=llm_config.agent_recursion_limit)
         last_state = self._invoke_graph_sync(compiled_graph, init_state, config=invoke_config, stream=stream)
         answer: AgentResponse = last_state["structured_response"]
         logger.info("Generated query: %s", answer.sql)

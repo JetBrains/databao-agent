@@ -32,6 +32,7 @@ class LighthouseExecutor(GraphExecutor):
         self,
         data_connection: Any,
         sources: Sources,
+        recursion_limit: int = 50,
     ) -> str:
         """Render system prompt with database schema."""
         db_schema = describe_duckdb_schema(data_connection)
@@ -50,7 +51,7 @@ class LighthouseExecutor(GraphExecutor):
         context = context.strip()
 
         prompt = self._prompt_template.render(
-            date=get_today_date_str(), db_schema=db_schema, context=context, tool_limit=self._graph_recursion_limit // 2
+            date=get_today_date_str(), db_schema=db_schema, context=context, tool_limit=recursion_limit // 2
         )
 
         return prompt.strip()
@@ -112,13 +113,13 @@ class LighthouseExecutor(GraphExecutor):
         all_messages_with_system = messages
         if not all_messages_with_system or all_messages_with_system[0].type != "system":
             all_messages_with_system = [
-                SystemMessage(self.render_system_prompt(self._duckdb_connection, sources)),
+                SystemMessage(self.render_system_prompt(self._duckdb_connection, sources, llm_config.agent_recursion_limit)),
                 *all_messages_with_system,
             ]
         cleaned_messages = clean_tool_history(all_messages_with_system, llm_config.max_tokens_before_cleaning)
 
         init_state = self._graph.init_state(cleaned_messages, limit_max_rows=rows_limit)
-        invoke_config = RunnableConfig(recursion_limit=self._graph_recursion_limit)
+        invoke_config = RunnableConfig(recursion_limit=llm_config.agent_recursion_limit)
         last_state = self._invoke_graph_sync(compiled_graph, init_state, config=invoke_config, stream=stream)
         execution_result = self._graph.get_result(last_state)
 

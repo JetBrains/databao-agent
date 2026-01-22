@@ -49,6 +49,9 @@ class LLMConfig(BaseModel):
     model_kwargs: dict[str, Any] = Field(default_factory=dict)
     """Additional kwargs for the model constructor."""
 
+    agent_recursion_limit: int = 50
+    """Maximum recursion depth for LLM agent execution."""
+
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     def _resolve_timeout(self) -> float | None:

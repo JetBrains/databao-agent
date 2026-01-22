@@ -22,10 +22,6 @@ class GraphExecutor(Executor, ABC):
     Provides common functionality for graph caching, message handling, and OPA processing.
     """
 
-    def __init__(self) -> None:
-        """Initialize agent with graph caching infrastructure."""
-        self._graph_recursion_limit = 50
-
     def _process_opas(self, opas: list[Opa], cache: Cache) -> list[Any]:
         """
         Process a single opa and convert it to a message, appending to message history.

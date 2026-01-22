@@ -1,13 +1,10 @@
-import logging
 import time
-
-import pandas as pd
 from pathlib import Path
+
 import duckdb
-from sqlalchemy import create_engine
+import pandas as pd
 
 import databao
-
 
 file_path = Path(__file__).parent
 
@@ -51,7 +48,9 @@ def main() -> None:
         if success:
             time_measures.append(time.time() - start_time)
 
-    print(f"Mean time: {sum(time_measures) / len(time_measures):.2f} seconds, Std: {pd.Series(time_measures).std():.2f}")
+    print(
+        f"Mean time: {sum(time_measures) / len(time_measures):.2f} seconds, Std: {pd.Series(time_measures).std():.2f}"
+    )
 
 
 if __name__ == "__main__":

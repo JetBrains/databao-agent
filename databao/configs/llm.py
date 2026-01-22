@@ -179,7 +179,7 @@ class LLMConfigDirectory:
     def list_all(cls) -> list[LLMConfig]:
         return [config for name, config in vars(cls).items() if name.isupper()]
 
-    DEFAULT = LLMConfig(name="gpt-4o-mini")
+    DEFAULT = LLMConfig(name="claude-sonnet-4-5")
 
     # https://huggingface.co/Qwen/Qwen3-8B-GGUF#best-practices
     QWEN3_8B_OAI = LLMConfig(

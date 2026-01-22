@@ -113,7 +113,9 @@ class LighthouseExecutor(GraphExecutor):
         all_messages_with_system = messages
         if not all_messages_with_system or all_messages_with_system[0].type != "system":
             all_messages_with_system = [
-                SystemMessage(self.render_system_prompt(self._duckdb_connection, sources, llm_config.agent_recursion_limit)),
+                SystemMessage(
+                    self.render_system_prompt(self._duckdb_connection, sources, llm_config.agent_recursion_limit)
+                ),
                 *all_messages_with_system,
             ]
         cleaned_messages = clean_tool_history(all_messages_with_system, llm_config.max_tokens_before_cleaning)

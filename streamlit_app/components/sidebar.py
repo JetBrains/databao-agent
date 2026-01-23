@@ -255,15 +255,3 @@ def render_sidebar_chat_content(project: DCEProject | None) -> None:
     # Footer
     st.markdown("---")
     st.caption("Databao v0.1")
-
-
-def render_sidebar(project: DCEProject | None) -> None:
-    """Render the complete sidebar for chat pages.
-
-    This is a convenience function that combines header and chat content.
-    For other pages, only render_sidebar_header() is called from app.py.
-    """
-    with st.sidebar:
-        render_sidebar_header()
-        st.markdown("---")
-        render_sidebar_chat_content(project)

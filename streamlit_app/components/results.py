@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING, Any
 
 import streamlit as st
 
+from streamlit_app.services.chat_persistence import save_current_chat
+
 if TYPE_CHECKING:
     from databao.core.executor import ExecutionResult
     from databao.core.thread import Thread
@@ -29,16 +31,6 @@ def _extract_visualization_data(thread: "Thread") -> dict[str, Any] | None:
         data["spec_df"] = vis_result.spec_df  # DataFrame, will be pickled separately
 
     return data
-
-
-def _save_current_chat() -> None:
-    """Save the current chat to disk."""
-    from streamlit_app.services.chat_persistence import save_chat
-
-    current_chat_id = st.session_state.get("current_chat_id")
-    chats = st.session_state.get("chats", {})
-    if current_chat_id and current_chat_id in chats:
-        save_chat(chats[current_chat_id])
 
 
 def render_response_section(text: str, has_visualization: bool) -> None:
@@ -309,7 +301,7 @@ def handle_action_button(action: str, thread: "Thread", message_index: int) -> N
                     messages[message_index].visualization_data = _extract_visualization_data(thread)
 
                     # Save chat to disk
-                    _save_current_chat()
+                    save_current_chat()
 
                 # Force refresh (scope="app" since called from fragment)
                 st.rerun(scope="app")

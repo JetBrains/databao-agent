@@ -52,6 +52,9 @@ class LLMConfig(BaseModel):
     agent_recursion_limit: int = 50
     """Maximum recursion depth for LLM agent execution."""
 
+    parallel_tool_calls: bool = True
+    """Whether agent is allowed to call several tools in one response."""
+
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     def _resolve_timeout(self) -> float | None:

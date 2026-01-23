@@ -156,7 +156,9 @@ class ExecuteSubmit:
         tools = self.make_tools()
         llm_model = model_config.new_chat_model()
 
-        model_with_tools = self._model_bind_tools(llm_model, tools)
+        model_with_tools = self._model_bind_tools(
+            llm_model, tools, parallel_tool_calls=model_config.parallel_tool_calls
+        )
 
         def llm_node(state: AgentState) -> dict[str, Any]:
             messages = state["messages"]

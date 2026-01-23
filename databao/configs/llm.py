@@ -105,6 +105,12 @@ class LLMConfig(BaseModel):
         elif provider == "anthropic":
             from langchain_anthropic import ChatAnthropic
 
+            if "ANTHROPIC_API_KEY" not in os.environ:
+                if "api_key" in self.model_kwargs:
+                    os.environ["ANTHROPIC_API_KEY"] = self.model_kwargs["api_key"]
+                else:
+                    raise ValueError("ANTHROPIC_API_KEY environment variable not set.")
+
             return ChatAnthropic(
                 model_name=name,
                 timeout=self._resolve_timeout(),

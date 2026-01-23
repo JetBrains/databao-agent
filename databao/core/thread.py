@@ -29,6 +29,7 @@ class Thread:
         stream_plot: bool = False,
         lazy: bool = False,
         auto_output_modality: bool = True,
+        cache_scope: str | None = None,
     ):
         self._agent = agent
         self._default_rows_limit = rows_limit
@@ -60,7 +61,8 @@ class Thread:
         self._meta: dict[str, Any] = {}
 
         # A unique cache scope so executors can store per-thread state (e.g., message history)
-        self._cache_scope = f"{self._agent.name}/{uuid.uuid4()}"
+        # If cache_scope is provided, use it to restore a previous session
+        self._cache_scope = cache_scope if cache_scope else f"{self._agent.name}/{uuid.uuid4()}"
 
     def _materialize_data(self, rows_limit: int | None) -> "ExecutionResult":
         """Materialize the latest data state by executing pending OPAs if needed."""

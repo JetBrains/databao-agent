@@ -3,8 +3,41 @@
 import streamlit as st
 
 from databao.dce import DCEProject, DCEProjectStatus
-from streamlit_app.components.status import AppStatus, init_status_placeholder, set_status
+from streamlit_app.components.status import AppStatus, render_status_fragment, set_status
 from streamlit_app.suggestions import reset_suggestions_state
+
+
+@st.dialog("Delete Chat")
+def _confirm_delete_chat(chat_id: str, chat_title: str) -> None:
+    """Dialog to confirm deleting the current chat."""
+    from streamlit_app.services.chat_persistence import delete_chat
+
+    st.warning(f"⚠️ Delete chat: **{chat_title}**?")
+    st.markdown("This will permanently remove the chat and its history.")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Cancel", use_container_width=True):
+            st.rerun()
+    with col2:
+        if st.button("🗑️ Delete", type="primary", use_container_width=True):
+            # Delete chat from disk and memory
+            delete_chat(chat_id)
+
+            # Remove from session state
+            chats = st.session_state.get("chats", {})
+            if chat_id in chats:
+                del chats[chat_id]
+                st.session_state.chats = chats
+
+            # Clear current chat state
+            st.session_state.current_chat_id = None
+            st.session_state.messages = []
+            st.session_state.thread = None
+
+            # Navigate to home
+            st.session_state._navigate_to_chat = None
+            st.rerun()
 
 # Icons for different database types
 DB_ICONS = {
@@ -165,7 +198,7 @@ def render_sidebar_header() -> None:
     st.markdown("")  # Vertical spacing
 
     # Status (right after header) - uses st.empty() for real-time updates
-    init_status_placeholder()
+    render_status_fragment()
 
 
 def render_sidebar_chat_content(project: DCEProject | None) -> None:
@@ -174,6 +207,8 @@ def render_sidebar_chat_content(project: DCEProject | None) -> None:
     This is called only on chat pages to show project info, sources, and executor.
     Must be called within st.sidebar context.
     """
+    from streamlit_app.models.chat_session import ChatSession
+
     # Project info (includes Reload button)
     render_project_info(project)
 
@@ -186,6 +221,34 @@ def render_sidebar_chat_content(project: DCEProject | None) -> None:
 
     # Executor selector
     render_executor_selector()
+
+    st.markdown("---")
+
+    # Remove chat button (only show if there's a current chat)
+    current_chat_id = st.session_state.get("current_chat_id")
+    chats: dict[str, ChatSession] = st.session_state.get("chats", {})
+
+    if current_chat_id and current_chat_id in chats:
+        chat = chats[current_chat_id]
+        # Use custom CSS to make button red
+        st.markdown(
+            """
+            <style>
+            div[data-testid="stButton"] button[kind="secondary"]:has(p:contains("Remove")) {
+                background-color: #ff4b4b;
+                color: white;
+                border-color: #ff4b4b;
+            }
+            div[data-testid="stButton"] button[kind="secondary"]:has(p:contains("Remove")):hover {
+                background-color: #ff3333;
+                border-color: #ff3333;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+        if st.button("🗑️ Remove Chat", use_container_width=True, type="secondary"):
+            _confirm_delete_chat(current_chat_id, chat.display_title)
 
     # Footer
     st.markdown("---")

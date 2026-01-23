@@ -14,6 +14,19 @@ from streamlit_app.suggestions import (
     start_suggestions_generation,
 )
 
+
+def _save_current_chat() -> None:
+    """Save the current chat to disk."""
+    from streamlit_app.models.chat_session import ChatSession
+    from streamlit_app.services.chat_persistence import save_chat
+
+    current_chat_id = st.session_state.get("current_chat_id")
+    chats: dict[str, ChatSession] = st.session_state.get("chats", {})
+
+    if current_chat_id and current_chat_id in chats:
+        chat = chats[current_chat_id]
+        save_chat(chat)
+
 if TYPE_CHECKING:
     from databao.core.thread import Thread
 
@@ -27,6 +40,7 @@ class ChatMessage:
     thinking: str | None = None
     result: Any | None = None  # ExecutionResult
     has_visualization: bool = False
+    visualization_data: dict[str, Any] | None = None  # Serializable visualization data
     message_id: str = ""
     metadata: dict[str, Any] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=datetime.now)
@@ -56,6 +70,7 @@ def render_assistant_message(
                 message_index=message_index,
                 has_visualization=message.has_visualization,
                 is_latest=is_latest,
+                visualization_data=message.visualization_data,
             )
 
 
@@ -153,6 +168,8 @@ def render_welcome_component() -> None:
                     user_message = ChatMessage(role="user", content=question)
                     st.session_state.messages.append(user_message)
                     st.session_state.pending_query = question
+                    # Save chat after adding message
+                    _save_current_chat()
                     # Use scope="app" to rerun entire app, not just this fragment
                     st.rerun(scope="app")
     else:
@@ -228,6 +245,8 @@ def process_pending_query(thread: "Thread") -> None:
                     )
                     st.session_state.messages.append(error_message)
                     st.session_state.pending_query = None
+                    # Save chat after error
+                    _save_current_chat()
                     st.rerun()
                     return
 
@@ -258,6 +277,9 @@ def process_pending_query(thread: "Thread") -> None:
             has_visualization=has_visualization,
         )
         st.session_state.messages.append(assistant_message)
+
+        # Save chat after adding assistant message
+        _save_current_chat()
 
         # Clear pending query and rerun to show final state
         st.session_state.pending_query = None
@@ -314,6 +336,8 @@ def render_chat_interface(thread: "Thread") -> None:
 
         # Set pending query - the rerun will show the chat with user message
         st.session_state.pending_query = user_input
+        # Save chat after adding user message
+        _save_current_chat()
         st.rerun()
 
     # Determine what to render

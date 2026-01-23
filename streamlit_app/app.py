@@ -21,6 +21,59 @@ st.set_page_config(
 )
 
 
+def _load_persisted_state() -> None:
+    """Load settings and chats from disk on startup."""
+    from streamlit_app.services.chat_persistence import load_all_chats
+    from streamlit_app.services.settings_persistence import get_or_create_settings
+
+    # Load or create settings
+    if "app_settings" not in st.session_state:
+        settings = get_or_create_settings()
+        st.session_state.app_settings = settings
+
+        # Apply loaded settings to session state
+        st.session_state.executor_type = settings.agent.executor_type
+        if settings.project.dce_project_path:
+            st.session_state.dce_project_path = settings.project.dce_project_path
+
+        logger.info(f"Settings loaded from {settings.storage.base_path}")
+
+    # Load chats from disk (only once on startup)
+    if "_chats_loaded" not in st.session_state:
+        chats = load_all_chats()
+        if chats:
+            st.session_state.chats = chats
+            logger.info(f"Loaded {len(chats)} chats from disk")
+        st.session_state._chats_loaded = True
+
+
+def _save_settings_if_changed() -> None:
+    """Save settings to disk if they've changed."""
+    from streamlit_app.models.settings import Settings
+    from streamlit_app.services.settings_persistence import save_settings
+
+    settings: Settings | None = st.session_state.get("app_settings")
+    if settings is None:
+        return
+
+    # Check for changes and update settings object
+    changed = False
+
+    current_executor = st.session_state.get("executor_type", "lighthouse")
+    if settings.agent.executor_type != current_executor:
+        settings.agent.executor_type = current_executor
+        changed = True
+
+    current_project_path = st.session_state.get("dce_project_path")
+    if settings.project.dce_project_path != current_project_path:
+        settings.project.dce_project_path = current_project_path
+        changed = True
+
+    if changed:
+        save_settings(settings)
+        logger.debug("Settings saved")
+
+
 def init_session_state() -> None:
     """Initialize session state variables."""
     # Chat sessions
@@ -65,10 +118,15 @@ def init_session_state() -> None:
     if "title_futures" not in st.session_state:
         st.session_state.title_futures = {}
 
+    # Load persisted state (settings + chats)
+    _load_persisted_state()
+
 
 def _create_new_chat() -> None:
     """Create a new chat and navigate to it."""
     from uuid6 import uuid6
+
+    from streamlit_app.services.chat_persistence import save_chat
 
     # Save current chat's messages before creating new one
     prev_chat_id = st.session_state.get("current_chat_id")
@@ -77,6 +135,8 @@ def _create_new_chat() -> None:
         prev_chat = chats[prev_chat_id]
         prev_chat.messages = st.session_state.get("messages", [])
         prev_chat.thread = st.session_state.get("thread")
+        # Persist previous chat to disk
+        save_chat(prev_chat)
 
     # Create new chat
     chat_id = str(uuid6())
@@ -96,12 +156,16 @@ def _create_new_chat() -> None:
     # Flag to navigate to this chat on next rerun
     st.session_state._navigate_to_chat = chat_id
 
+    # Save new chat to disk
+    save_chat(chat)
+
 
 def build_navigation() -> None:
     """Build the multipage navigation structure."""
     from streamlit_app.pages.agent_settings import render_agent_settings_page
     from streamlit_app.pages.chat import render_chat_page
     from streamlit_app.pages.context_settings import render_context_settings_page
+    from streamlit_app.pages.general_settings import render_general_settings_page
     from streamlit_app.pages.welcome import render_welcome_page
 
     # Check if we need to navigate to a newly created chat
@@ -110,7 +174,13 @@ def build_navigation() -> None:
         # Clear the navigation flag
         st.session_state._navigate_to_chat = None
 
-    # Settings pages - store in session state for page_link access
+    # Settings pages - store in session state for navigation access
+    general_settings_page = st.Page(
+        render_general_settings_page,
+        title="General",
+        icon="🛠️",
+        url_path="general-settings",
+    )
     context_settings_page = st.Page(
         render_context_settings_page,
         title="Context Settings",
@@ -123,9 +193,10 @@ def build_navigation() -> None:
         icon="⚙️",
         url_path="agent-settings",
     )
-    settings_pages = [context_settings_page, agent_settings_page]
+    settings_pages = [general_settings_page, context_settings_page, agent_settings_page]
 
     # Store page objects in session state for cross-page navigation
+    st.session_state._page_general_settings = general_settings_page
     st.session_state._page_context_settings = context_settings_page
     st.session_state._page_agent_settings = agent_settings_page
 
@@ -217,8 +288,10 @@ def _sync_chat_messages(chat_id: str) -> None:
     """Sync session state messages when switching between chats.
 
     This saves the current chat's messages and loads the new chat's messages.
-    Messages are stored in-memory in the ChatSession objects.
+    Messages are stored in-memory in the ChatSession objects and persisted to disk.
     """
+    from streamlit_app.services.chat_persistence import save_chat
+
     chats: dict[str, ChatSession] = st.session_state.get("chats", {})
     chat = chats.get(chat_id)
 
@@ -237,6 +310,8 @@ def _sync_chat_messages(chat_id: str) -> None:
         # Directly assign the list (not a copy) - the ChatSession holds the reference
         prev_chat.messages = st.session_state.messages
         prev_chat.thread = st.session_state.get("thread")
+        # Persist to disk
+        save_chat(prev_chat)
 
     # Load new chat's messages (direct assignment, ChatSession holds the reference)
     st.session_state.messages = chat.messages
@@ -244,12 +319,60 @@ def _sync_chat_messages(chat_id: str) -> None:
     st.session_state._last_synced_chat_id = chat_id
 
 
+def _get_current_project():
+    """Get the current DCE project, auto-detecting if needed.
+
+    This is called at app level to determine project status for all pages.
+    """
+    from databao.dce import DCEProjectStatus, find_best_project
+    from databao.dce.project import validate_project
+
+    # 1. Return existing project if available
+    if st.session_state.get("dce_project") is not None:
+        return st.session_state.dce_project
+
+    # 2. Try to load from stored path (persists across reloads)
+    stored_path = st.session_state.get("dce_project_path")
+    if stored_path:
+        path = Path(stored_path)
+        if path.is_dir():
+            project = validate_project(path)
+            if project.status != DCEProjectStatus.NOT_FOUND:
+                st.session_state.dce_project = project
+                return project
+
+    # 3. Fall back to auto-detection
+    project = find_best_project()
+    if project is not None:
+        st.session_state.dce_project = project
+        st.session_state.dce_project_path = str(project.path)  # Store for persistence
+
+    return project
+
+
 def _render_global_sidebar() -> None:
-    """Render sidebar elements that appear on all pages."""
+    """Render sidebar elements that appear on all pages.
+
+    Also handles app-wide status based on project state.
+    """
+    from databao.dce import DCEProjectStatus
+
     from streamlit_app.components.sidebar import render_sidebar_header
+    from streamlit_app.components.status import AppStatus, set_status
 
     with st.sidebar:
         render_sidebar_header()
+
+    # Set app-wide status based on project state
+    project = _get_current_project()
+
+    if project is None:
+        set_status(AppStatus.INITIALIZING, "Set up DCE project to continue")
+    elif project.status == DCEProjectStatus.NO_BUILD:
+        set_status(AppStatus.INITIALIZING, "Project needs build")
+    else:
+        # Project is valid - set status to ready
+        set_status(AppStatus.READY)
 
 
 def main() -> None:
@@ -257,6 +380,9 @@ def main() -> None:
     init_session_state()
     _render_global_sidebar()
     build_navigation()
+
+    # Save settings if changed (at end of main loop)
+    _save_settings_if_changed()
 
 
 if __name__ == "__main__":

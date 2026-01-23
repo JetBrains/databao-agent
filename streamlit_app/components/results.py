@@ -1,12 +1,44 @@
 """Result display component with foldable sections and action buttons."""
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import streamlit as st
 
 if TYPE_CHECKING:
     from databao.core.executor import ExecutionResult
     from databao.core.thread import Thread
+
+
+def _extract_visualization_data(thread: "Thread") -> dict[str, Any] | None:
+    """Extract serializable visualization data from thread._visualization_result.
+
+    For VegaChatResult, this extracts the Vega-Lite spec (JSON) and spec_df (DataFrame).
+    """
+    vis_result = thread._visualization_result
+    if vis_result is None:
+        return None
+
+    data: dict[str, Any] = {
+        "text": vis_result.text,
+        "code": vis_result.code,
+    }
+
+    # Check if it's a VegaChatResult with spec and spec_df
+    if hasattr(vis_result, "spec") and hasattr(vis_result, "spec_df"):
+        data["spec"] = vis_result.spec  # dict, JSON-serializable
+        data["spec_df"] = vis_result.spec_df  # DataFrame, will be pickled separately
+
+    return data
+
+
+def _save_current_chat() -> None:
+    """Save the current chat to disk."""
+    from streamlit_app.services.chat_persistence import save_chat
+
+    current_chat_id = st.session_state.get("current_chat_id")
+    chats = st.session_state.get("chats", {})
+    if current_chat_id and current_chat_id in chats:
+        save_chat(chats[current_chat_id])
 
 
 def render_response_section(text: str, has_visualization: bool) -> None:
@@ -42,15 +74,36 @@ def render_dataframe_section(result: "ExecutionResult", has_visualization: bool)
         st.dataframe(df, width="stretch")
 
 
-def render_visualization_section(thread: "Thread") -> None:
+def render_visualization_section(
+    thread: "Thread", visualization_data: dict[str, Any] | None = None
+) -> None:
     """Render the visualization section.
 
     Follows the same rendering logic as Jupyter notebooks:
     1. Vega-Lite/Altair charts: use st.vega_lite_chart for proper rendering
     2. HTML-capable objects: embed HTML
     3. PIL Images: render as images
+
+    Args:
+        thread: The Thread object (may have _visualization_result)
+        visualization_data: Optional persisted visualization data (used if thread result is None)
     """
     vis_result = thread._visualization_result
+
+    # If we have persisted visualization_data with spec/spec_df, render directly
+    if vis_result is None and visualization_data is not None:
+        spec = visualization_data.get("spec")
+        spec_df = visualization_data.get("spec_df")
+        if spec is not None and spec_df is not None:
+            with st.expander("📈 Visualization", expanded=True):
+                try:
+                    st.vega_lite_chart(spec_df, spec, width="stretch")
+                    return
+                except Exception as e:
+                    st.warning(f"Failed to render persisted visualization: {e}")
+                    return
+        return
+
     if vis_result is None:
         return
 
@@ -175,7 +228,9 @@ def render_action_buttons(
     # So we don't show this button - code section appears automatically when code exists
 
     # Plot button: only show if we have data to plot (plot requires dataframe)
-    if has_data and not has_visualization:
+    # Also check thread._data_result exists - it may be None if we failed to restore
+    # the thread state from a persisted chat
+    if has_data and not has_visualization and thread._data_result is not None:
         buttons_to_show.append(("plot", "📈 Generate Plot", "generate_plot"))
 
     if not buttons_to_show:
@@ -250,6 +305,11 @@ def handle_action_button(action: str, thread: "Thread", message_index: int) -> N
                 messages = st.session_state.messages
                 if message_index < len(messages):
                     messages[message_index].has_visualization = True
+                    # Save visualization data for persistence
+                    messages[message_index].visualization_data = _extract_visualization_data(thread)
+
+                    # Save chat to disk
+                    _save_current_chat()
 
                 # Force refresh (scope="app" since called from fragment)
                 st.rerun(scope="app")
@@ -265,6 +325,7 @@ def render_execution_result(
     has_visualization: bool,
     *,
     is_latest: bool = False,
+    visualization_data: dict[str, Any] | None = None,
 ) -> None:
     """Render the complete execution result with all sections."""
     # Response section (always present)
@@ -279,9 +340,9 @@ def render_execution_result(
     if result.df is not None:
         render_dataframe_section(result, has_visualization)
 
-    # Visualization section (if visualization exists)
-    if has_visualization or thread._visualization_result is not None:
-        render_visualization_section(thread)
+    # Visualization section (if visualization exists or we have persisted data)
+    if has_visualization or thread._visualization_result is not None or visualization_data is not None:
+        render_visualization_section(thread, visualization_data)
 
     # Action buttons (only for latest message)
     render_action_buttons(result, thread, message_index, has_visualization, is_latest=is_latest)

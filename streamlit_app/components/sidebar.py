@@ -3,6 +3,7 @@
 import streamlit as st
 
 from databao.dce import DCEProject, DCEProjectStatus
+from streamlit_app.app import _clear_all_chat_threads
 from streamlit_app.components.status import AppStatus, render_status_fragment, set_status
 from streamlit_app.suggestions import reset_suggestions_state
 
@@ -71,6 +72,7 @@ def render_project_info(project: DCEProject | None) -> None:
         if st.button("🔄 Reload", width="stretch", help="Reload DCE project"):
             st.session_state.dce_project = None
             st.session_state.agent = None
+            _clear_all_chat_threads()
             set_status(AppStatus.INITIALIZING, "Reloading...")
             reset_suggestions_state()
             st.rerun()
@@ -94,6 +96,7 @@ def render_project_info(project: DCEProject | None) -> None:
         # Clear project object but keep dce_project_path so it reloads from same location
         st.session_state.dce_project = None
         st.session_state.agent = None
+        _clear_all_chat_threads()
         set_status(AppStatus.INITIALIZING, "Reloading project...")
         # Reset suggestions so they get regenerated with new agent
         reset_suggestions_state()
@@ -163,8 +166,7 @@ def render_executor_selector() -> None:
         st.session_state.executor_type = selected
         # Reset agent when executor changes
         st.session_state.agent = None
-        st.session_state.thread = None
-        st.session_state.messages = []
+        _clear_all_chat_threads()
         set_status(AppStatus.INITIALIZING, "Applying executor change...")
         st.rerun()
 

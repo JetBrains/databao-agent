@@ -2,10 +2,23 @@
 
 import logging
 from pathlib import Path
+from typing import cast
 
 import streamlit as st
 
+import databao
+import databao.dce
+from databao.caches.disk_cache import DiskCache, DiskCacheConfig
+from databao.core.agent import Agent
+from databao.dce import (
+    DCEProject,
+    DCEProjectStatus,
+    create_all_connections,
+    get_all_context,
+)
+from streamlit_app.components.status import AppStatus, set_status, status_context
 from streamlit_app.models.chat_session import ChatSession
+from streamlit_app.services.storage import get_cache_dir
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +85,114 @@ def _save_settings_if_changed() -> None:
     if changed:
         save_settings(settings)
         logger.debug("Settings saved")
+
+
+def _get_or_create_disk_cache() -> DiskCache:
+    """Get or create the DiskCache instance for the agent."""
+    if "disk_cache" not in st.session_state:
+        cache_dir = get_cache_dir()
+        config = DiskCacheConfig(db_dir=cache_dir / "diskcache")
+        st.session_state.disk_cache = DiskCache(config=config)
+    return st.session_state.disk_cache
+
+
+def _initialize_agent(project: DCEProject) -> Agent | None:
+    """Initialize or return existing Databao agent.
+
+    This is called at app level to ensure one agent is shared across all chats.
+    """
+    if st.session_state.get("agent") is not None:
+        return cast(Agent, st.session_state.agent)
+
+    if project.status == DCEProjectStatus.NO_BUILD:
+        set_status(
+            AppStatus.INITIALIZING,
+            "DCE project found but no build output. Run 'nemory build' first.",
+        )
+        return None
+
+    try:
+        from streamlit_app.streaming import StreamingWriter
+
+        writer = StreamingWriter()
+        st.session_state.streaming_writer = writer
+
+        executor_type = st.session_state.get("executor_type", "lighthouse")
+
+        # Use DiskCache for persistence
+        cache = _get_or_create_disk_cache()
+
+        agent = databao.new_agent(
+            writer=writer,
+            executor_type=executor_type,
+            cache=cache,
+        )
+
+        with status_context(AppStatus.INITIALIZING, "Connecting to databases..."):
+            connections = create_all_connections(project.path)
+
+        if not connections:
+            set_status(AppStatus.ERROR, "No datasource connections found in DCE project.")
+            return None
+
+        run_dir = project.latest_run_dir
+        db_contexts: list[databao.dce.DatabaseContext] = []
+        file_contexts: list[databao.dce.FileContext] = []
+        if run_dir:
+            with status_context(AppStatus.INITIALIZING, "Loading context..."):
+                db_contexts, file_contexts = get_all_context(run_dir)
+
+        db_context_map = {ctx.database_id: ctx.context_text for ctx in db_contexts}
+
+        for conn_info in connections:
+            context = db_context_map.get(conn_info.name) or db_context_map.get(conn_info.db_type)
+            agent.add_db(conn_info.connection, name=conn_info.name, context=context)
+
+        for file_ctx in file_contexts:
+            agent.add_context(file_ctx.context_text)
+
+        st.session_state.agent = agent
+        set_status(AppStatus.READY)  # Clear message on success
+
+        return agent
+
+    except Exception as e:
+        logger.exception("Failed to initialize agent")
+        set_status(AppStatus.ERROR, f"Failed to initialize agent: {e}")
+        return None
+
+
+def _clear_all_chat_threads() -> None:
+    """Clear thread references from all chats.
+
+    Called when agent is reset. Threads will be recreated from
+    persistence (cache_scope) when chats are next accessed.
+    """
+    chats: dict[str, ChatSession] = st.session_state.get("chats", {})
+    for chat in chats.values():
+        chat.thread = None
+    st.session_state.thread = None
+
+
+def _initialize_app() -> None:
+    """Initialize app-level resources: project and agent.
+
+    This is called on every rerun but returns early if already initialized.
+    """
+    project = _get_current_project()
+
+    if project is None:
+        set_status(AppStatus.INITIALIZING, "Set up DCE project to continue")
+        return
+
+    if project.status == DCEProjectStatus.NO_BUILD:
+        set_status(AppStatus.INITIALIZING, "Project needs build")
+        return
+
+    # Initialize agent if not already done
+    if st.session_state.get("agent") is None:
+        set_status(AppStatus.INITIALIZING, "Initializing agent...")
+    _initialize_agent(project)
 
 
 def init_session_state() -> None:
@@ -353,32 +474,19 @@ def _get_current_project():
 def _render_global_sidebar() -> None:
     """Render sidebar elements that appear on all pages.
 
-    Also handles app-wide status based on project state.
+    This is purely for UI rendering - initialization is handled by _initialize_app().
     """
-    from databao.dce import DCEProjectStatus
-
     from streamlit_app.components.sidebar import render_sidebar_header
-    from streamlit_app.components.status import AppStatus, set_status
 
     with st.sidebar:
         render_sidebar_header()
-
-    # Set app-wide status based on project state
-    project = _get_current_project()
-
-    if project is None:
-        set_status(AppStatus.INITIALIZING, "Set up DCE project to continue")
-    elif project.status == DCEProjectStatus.NO_BUILD:
-        set_status(AppStatus.INITIALIZING, "Project needs build")
-    else:
-        # Project is valid - set status to ready
-        set_status(AppStatus.READY)
 
 
 def main() -> None:
     """Main application entry point."""
     init_session_state()
-    _render_global_sidebar()
+    _initialize_app()  # Project + agent initialization
+    _render_global_sidebar()  # UI only
     build_navigation()
 
     # Save settings if changed (at end of main loop)

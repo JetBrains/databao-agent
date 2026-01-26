@@ -112,18 +112,13 @@ def _initialize_agent(project: DCEProject) -> Agent | None:
         return None
 
     try:
-        from streamlit_app.streaming import StreamingWriter
-
-        writer = StreamingWriter()
-        st.session_state.streaming_writer = writer
-
         executor_type = st.session_state.get("executor_type", "lighthouse")
 
         # Use DiskCache for persistence
         cache = _get_or_create_disk_cache()
 
+        # Note: No global writer - each thread gets its own writer for per-chat streaming
         agent = databao.new_agent(
-            writer=writer,
             executor_type=executor_type,
             cache=cache,
         )
@@ -171,7 +166,6 @@ def _clear_all_chat_threads() -> None:
     chats: dict[str, ChatSession] = st.session_state.get("chats", {})
     for chat in chats.values():
         chat.thread = None
-    st.session_state.thread = None
 
 
 def _initialize_app() -> None:
@@ -217,12 +211,6 @@ def init_session_state() -> None:
     if "executor_type" not in st.session_state:
         st.session_state.executor_type = "lighthouse"
 
-    # Legacy state for compatibility with existing components
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
-    if "thread" not in st.session_state:
-        st.session_state.thread = None
-
     # Suggestions state
     if "suggested_questions" not in st.session_state:
         st.session_state.suggested_questions = []
@@ -249,14 +237,12 @@ def _create_new_chat() -> None:
 
     from streamlit_app.services.chat_persistence import save_chat
 
-    # Save current chat's messages before creating new one
+    # Save current chat before creating new one
     prev_chat_id = st.session_state.get("current_chat_id")
     chats: dict[str, ChatSession] = st.session_state.get("chats", {})
     if prev_chat_id and prev_chat_id in chats:
         prev_chat = chats[prev_chat_id]
-        prev_chat.messages = st.session_state.get("messages", [])
-        prev_chat.thread = st.session_state.get("thread")
-        # Persist previous chat to disk
+        # Persist previous chat to disk (messages and thread are already in chat object)
         save_chat(prev_chat)
 
     # Create new chat
@@ -266,13 +252,6 @@ def _create_new_chat() -> None:
     chats[chat_id] = chat
     st.session_state.chats = chats
     st.session_state.current_chat_id = chat_id
-
-    # Set up empty messages for the new chat
-    st.session_state.messages = chat.messages
-    st.session_state.thread = None
-
-    # Update last synced chat ID
-    st.session_state._last_synced_chat_id = chat_id
 
     # Flag to navigate to this chat on next rerun
     st.session_state._navigate_to_chat = chat_id
@@ -354,8 +333,6 @@ def build_navigation() -> None:
             def make_chat_page(chat_id: str):
                 def page_fn():
                     st.session_state.current_chat_id = chat_id
-                    # Sync messages with this chat
-                    _sync_chat_messages(chat_id)
                     render_chat_page()
 
                 return page_fn
@@ -403,41 +380,6 @@ def build_navigation() -> None:
         st.switch_page(target_chat_page)
 
     pg.run()
-
-
-def _sync_chat_messages(chat_id: str) -> None:
-    """Sync session state messages when switching between chats.
-
-    This saves the current chat's messages and loads the new chat's messages.
-    Messages are stored in-memory in the ChatSession objects and persisted to disk.
-    """
-    from streamlit_app.services.chat_persistence import save_chat
-
-    chats: dict[str, ChatSession] = st.session_state.get("chats", {})
-    chat = chats.get(chat_id)
-
-    if chat is None:
-        return
-
-    # Check if we're actually switching chats
-    prev_chat_id = st.session_state.get("_last_synced_chat_id")
-    if prev_chat_id == chat_id:
-        # Same chat, no switch needed
-        return
-
-    # Save current messages to previous chat before switching
-    if prev_chat_id and prev_chat_id in chats:
-        prev_chat = chats[prev_chat_id]
-        # Directly assign the list (not a copy) - the ChatSession holds the reference
-        prev_chat.messages = st.session_state.messages
-        prev_chat.thread = st.session_state.get("thread")
-        # Persist to disk
-        save_chat(prev_chat)
-
-    # Load new chat's messages (direct assignment, ChatSession holds the reference)
-    st.session_state.messages = chat.messages
-    st.session_state.thread = chat.thread
-    st.session_state._last_synced_chat_id = chat_id
 
 
 def _get_current_project():

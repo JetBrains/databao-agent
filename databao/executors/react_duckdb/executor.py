@@ -1,5 +1,5 @@
 import logging
-from typing import Any
+from typing import Any, TextIO
 
 import duckdb
 from langchain_core.runnables import RunnableConfig
@@ -59,6 +59,7 @@ class ReactDuckDBExecutor(GraphExecutor):
         *,
         rows_limit: int = 100,
         stream: bool = True,
+        writer: TextIO | None = None,
     ) -> ExecutionResult:
         # Get or create graph (cached after first use)
         compiled_graph = self._compiled_graph or self._create_graph(self._duckdb_connection, llm_config)
@@ -70,7 +71,7 @@ class ReactDuckDBExecutor(GraphExecutor):
         init_state = {"messages": messages}
         invoke_config = RunnableConfig(recursion_limit=self._graph_recursion_limit)
         last_state = self._invoke_graph_sync(
-            compiled_graph, init_state, config=invoke_config, stream=stream, writer=self._writer
+            compiled_graph, init_state, config=invoke_config, stream=stream, writer=writer or self._writer
         )
         answer: AgentResponse = last_state["structured_response"]
         logger.info("Generated query: %s", answer.sql)

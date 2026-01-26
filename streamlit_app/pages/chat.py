@@ -67,9 +67,7 @@ def render_chat_page() -> None:
         return
 
     # Get or create thread for this chat
-    thread = _get_or_create_thread_for_chat(chat, agent)
-
-    if thread is None:
+    if not _get_or_create_thread_for_chat(chat, agent):
         _render_chat_sidebar(project)
         st.error("Failed to create conversation thread")
         return
@@ -90,8 +88,8 @@ def render_chat_page() -> None:
     title = chat.display_title
     st.title(f"💬 {title}")
 
-    # Render chat interface
-    render_chat_interface(thread)
+    # Render chat interface (chat.thread is guaranteed to be set at this point)
+    render_chat_interface(chat)
 
     # After first response, trigger title generation if needed
     if chat.has_first_response and chat.title_status == "pending":
@@ -147,13 +145,20 @@ def _get_current_project() -> DCEProject | None:
     return cast(DCEProject, project) if project is not None else None
 
 
-def _get_or_create_thread_for_chat(chat: ChatSession, agent: Agent) -> Thread | None:
-    """Get or create a thread for the specific chat session."""
+def _get_or_create_thread_for_chat(chat: ChatSession, agent: Agent) -> bool:
+    """Get or create a thread for the specific chat session.
+
+    Returns True if thread is available, False on error.
+    """
+    from streamlit_app.streaming import StreamingWriter
+
+    # Ensure writer exists (it's not persisted, so may be None on reload)
+    if chat.writer is None:
+        chat.writer = StreamingWriter()
+
     # Each chat has its own thread
     if chat.thread is not None:
-        # Sync with session_state so _sync_chat_messages can properly save it
-        st.session_state.thread = chat.thread
-        return chat.thread
+        return True
 
     try:
         # If chat has a saved cache_scope, use it to restore the conversation history
@@ -162,12 +167,11 @@ def _get_or_create_thread_for_chat(chat: ChatSession, agent: Agent) -> Thread | 
             stream_ask=True,
             stream_plot=False,
             cache_scope=chat.cache_scope,  # May be None for new chats
+            writer=chat.writer,  # Per-chat writer for streaming
         )
         chat.thread = thread
         # Store the cache scope for persistence (in case it was newly generated)
         chat.cache_scope = thread._cache_scope
-        # Sync with session_state so _sync_chat_messages can properly save it
-        st.session_state.thread = thread
 
         # Restore thread's internal state from persisted messages
         # This is needed for "Generate Plot" to work on restored chats
@@ -181,10 +185,10 @@ def _get_or_create_thread_for_chat(chat: ChatSession, agent: Agent) -> Thread | 
         # Save to disk with cache_scope
         save_chat(chat)
 
-        return thread
+        return True
     except Exception:
         logger.exception("Failed to create thread")
-        return None
+        return False
 
 
 def _restore_thread_state_from_messages(thread: Thread, chat: ChatSession) -> None:

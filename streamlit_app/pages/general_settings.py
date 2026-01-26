@@ -20,13 +20,15 @@ def _confirm_clear_chats() -> None:
             st.rerun()
     with col2:
         if st.button("🗑️ Delete All", type="primary", use_container_width=True):
-            # Delete all chats
+            # Delete all chats (also deletes diskcache directory)
             deleted = delete_all_chats()
             # Clear session state
             st.session_state.chats = {}
             st.session_state.current_chat_id = None
-            st.session_state.messages = []
-            st.session_state.thread = None
+            # Reset agent AND disk_cache since cache directory was deleted
+            st.session_state.agent = None
+            st.session_state.disk_cache = None  # Critical: also reset the cache!
+            _clear_all_chat_threads()
             st.success(f"Deleted {deleted} chats")
             st.rerun()
 

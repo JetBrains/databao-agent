@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TextIO
 
 from duckdb import DuckDBPyConnection
 from langchain_core.language_models.chat_models import BaseChatModel
@@ -132,6 +132,7 @@ class Agent:
         lazy: bool | None = None,
         auto_output_modality: bool | None = None,
         cache_scope: str | None = None,
+        writer: TextIO | None = None,
     ) -> Thread:
         """Start a new thread in this agent.
 
@@ -141,6 +142,7 @@ class Agent:
             lazy: Whether to use lazy mode.
             auto_output_modality: Whether to auto-detect output modality.
             cache_scope: Optional existing cache scope to restore a previous session.
+            writer: Optional TextIO for streaming output. If provided, overrides agent's default writer.
         """
         if not self.__sources.dbs and not self.__sources.dfs:
             raise ValueError("No databases or dataframes registered in this agent.")
@@ -154,6 +156,7 @@ class Agent:
             if auto_output_modality is not None
             else self.__auto_output_modality,
             cache_scope=cache_scope,
+            writer=writer,
         )
 
     @property

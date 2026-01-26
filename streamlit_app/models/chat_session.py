@@ -1,5 +1,6 @@
 """Chat session model for managing multiple chat conversations."""
 
+import threading
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
@@ -9,6 +10,8 @@ from streamlit_app.components.chat import ChatMessage
 
 if TYPE_CHECKING:
     from databao.core.thread import Thread
+
+    from streamlit_app.streaming import StreamingWriter
 
 # Re-export ChatMessage for consumers of this module
 __all__ = ["ChatMessage", "ChatSession"]
@@ -37,6 +40,13 @@ class ChatSession:
     messages: list[ChatMessage] = field(default_factory=list)
     thread: "Thread | None" = None
     cache_scope: str | None = None  # Links to DiskCache scope for agent state
+
+    # Query execution state (per-chat, not persisted)
+    query_thread: threading.Thread | None = None  # Background query thread
+    query_status: str = "idle"  # "idle", "running", "completed", "error"
+
+    # Per-chat writer for streaming output (not persisted)
+    writer: "StreamingWriter | None" = None
 
     @property
     def display_title(self) -> str:

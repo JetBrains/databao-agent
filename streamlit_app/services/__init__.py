@@ -12,6 +12,13 @@ from streamlit_app.services.chat_title import (
     check_title_completion,
     trigger_title_generation,
 )
+from streamlit_app.services.query_executor import (
+    QueryResult,
+    cancel_query,
+    check_query_completion,
+    is_query_running,
+    start_query_execution,
+)
 from streamlit_app.services.settings_persistence import (
     delete_settings,
     get_or_create_settings,
@@ -30,6 +37,12 @@ __all__ = [
     # Chat title
     "trigger_title_generation",
     "check_title_completion",
+    # Query execution
+    "QueryResult",
+    "start_query_execution",
+    "check_query_completion",
+    "is_query_running",
+    "cancel_query",
     # Chat persistence
     "save_chat",
     "save_current_chat",

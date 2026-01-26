@@ -7,8 +7,12 @@ from typing import TYPE_CHECKING, Any
 import streamlit as st
 
 from streamlit_app.components.results import render_execution_result
-from streamlit_app.services.chat_persistence import save_current_chat
-from streamlit_app.streaming import StreamingWriter
+from streamlit_app.services import (
+    check_query_completion,
+    is_query_running,
+    save_current_chat,
+    start_query_execution,
+)
 from streamlit_app.suggestions import (
     check_suggestions_completion,
     is_suggestions_loading,
@@ -16,7 +20,7 @@ from streamlit_app.suggestions import (
 )
 
 if TYPE_CHECKING:
-    from databao.core.thread import Thread
+    from streamlit_app.models.chat_session import ChatSession
 
 
 @dataclass
@@ -41,20 +45,20 @@ def render_user_message(message: ChatMessage) -> None:
 
 
 def render_assistant_message(
-    message: ChatMessage, thread: "Thread", message_index: int, *, is_latest: bool = False
+    message: ChatMessage, chat: "ChatSession", message_index: int, *, is_latest: bool = False
 ) -> None:
     """Render an assistant message with results."""
     with st.chat_message("assistant"):
         # Render thinking section (collapsed)
         if message.thinking:
             with st.expander("💭 Thinking", expanded=False):
-                st.code(message.thinking, language=None)
+                st.markdown(message.thinking)
 
         # Render execution result
-        if message.result:
+        if message.result and chat.thread is not None:
             render_execution_result(
                 result=message.result,
-                thread=thread,
+                chat=chat,
                 message_index=message_index,
                 has_visualization=message.has_visualization,
                 is_latest=is_latest,
@@ -70,7 +74,7 @@ def _truncate_question(question: str, max_len: int = 60) -> tuple[str, bool]:
 
 
 @st.fragment
-def render_welcome_component() -> None:
+def render_welcome_component(chat: "ChatSession") -> None:
     """Render the welcome component with greeting and suggested questions.
 
     This is a fragment so it has an independent render lifecycle from the main page.
@@ -151,13 +155,14 @@ def render_welcome_component() -> None:
                 # Show truncated text in button, but use help tooltip for full text if truncated
                 help_text = question if was_truncated else None
                 if st.button(display_text, key=f"suggested_q_{i}", width="stretch", help=help_text):
-                    # Submit the FULL question (not truncated)
-                    # Appending directly updates ChatSession.messages (via reference)
-                    user_message = ChatMessage(role="user", content=question)
-                    st.session_state.messages.append(user_message)
-                    st.session_state.pending_query = question
-                    # Save chat after adding message
-                    save_current_chat()
+                    if chat.thread is not None:
+                        # Submit the FULL question (not truncated)
+                        user_message = ChatMessage(role="user", content=question)
+                        chat.messages.append(user_message)
+                        # Save chat after adding message
+                        save_current_chat()
+                        # Start background query execution
+                        start_background_query(chat, question)
                     # Use scope="app" to rerun entire app, not just this fragment
                     st.rerun(scope="app")
     else:
@@ -170,12 +175,21 @@ def render_welcome_component() -> None:
         )
 
 
-def render_chat_history(thread: "Thread") -> None:
+def _get_current_chat() -> "ChatSession | None":
+    """Get the current chat session from session state."""
+    current_chat_id = st.session_state.get("current_chat_id")
+    chats = st.session_state.get("chats", {})
+    if current_chat_id and current_chat_id in chats:
+        return chats[current_chat_id]
+    return None
+
+
+def render_chat_history(chat: "ChatSession") -> None:
     """Render all messages in chat history."""
-    messages: list[ChatMessage] = st.session_state.messages
+    messages: list[ChatMessage] = chat.messages
 
     # Check if we're currently processing a query - if so, hide all buttons
-    is_processing = st.session_state.get("pending_query") is not None
+    is_processing = is_query_running(chat)
 
     # Find the index of the last assistant message
     last_assistant_idx = -1
@@ -189,98 +203,93 @@ def render_chat_history(thread: "Thread") -> None:
         else:
             # Only show buttons on latest message AND when not processing
             is_latest = (i == last_assistant_idx) and not is_processing
-            render_assistant_message(message, thread, i, is_latest=is_latest)
+            render_assistant_message(message, chat, i, is_latest=is_latest)
 
 
-def process_pending_query(thread: "Thread") -> None:
-    """Process the pending query from session state."""
-    # CRITICAL: Guard against re-entry. Streamlit may rerun multiple times while
-    # thread.ask() is executing. Without this guard, each rerun would start another
-    # concurrent execution of the same query.
-    if st.session_state.get("_query_in_progress"):
+def start_background_query(chat: "ChatSession", query: str) -> None:
+    """Start a background query execution for the chat.
+
+    Args:
+        chat: The ChatSession to execute the query for (must have thread set).
+        query: The user's question.
+    """
+    if is_query_running(chat):
         return
-    
-    st.session_state._query_in_progress = True
-    user_input = st.session_state.pending_query
 
-    # Generate assistant response
-    with st.chat_message("assistant"):
-        # Get the streaming writer from session state
-        writer: StreamingWriter | None = st.session_state.get("streaming_writer")
-        if writer:
-            writer.clear()  # Clear any previous content
+    if chat.thread is None:
+        return
 
-        # Show thinking expander while streaming
-        thinking_placeholder = st.empty()
+    # Start background execution
+    start_query_execution(chat, chat.thread, query)
 
-        with thinking_placeholder.container():
-            thinking_expander = st.expander("💭 Thinking...", expanded=True)
 
-            with thinking_expander:
-                thinking_display = st.empty()
+def handle_query_completion(chat: "ChatSession") -> bool:
+    """Check if query completed and create assistant message if so.
 
-                # Execute with streaming
-                try:
-                    # Set up real-time update callback if writer exists
-                    if writer:
-                        writer._on_write = lambda text: thinking_display.code(text, language=None)
+    Args:
+        chat: The ChatSession to check.
 
-                    # Execute the query - output goes to writer automatically
-                    thread.ask(user_input, stream=True)
+    Returns:
+        True if query completed and message was created, False otherwise.
+    """
+    result = check_query_completion(chat)
+    if result is None:
+        return False
 
-                    # Get the result
-                    result = thread._data_result
+    # Clear the writer's callback and buffer now that query is complete
+    if chat.writer:
+        chat.writer._on_write = None
+        chat.writer.clear()
 
-                except Exception as e:
-                    st.error(f"Error: {e}")
-                    # Add error message (appending directly updates ChatSession.messages)
-                    error_message = ChatMessage(
-                        role="assistant",
-                        content=f"Error processing request: {e}",
-                    )
-                    st.session_state.messages.append(error_message)
-                    st.session_state.pending_query = None
-                    st.session_state._query_in_progress = False
-                    # Save chat after error
-                    save_current_chat()
-                    st.rerun()
-                    return
-
-        # Clear the thinking placeholder
-        thinking_placeholder.empty()
-
-        # Get captured thinking text
-        thinking_text = writer.getvalue() if writer else ""
-
-        # Check if visualization was generated
-        has_visualization = False
-        if result and result.meta:
-            hints = result.meta.get("output_modality_hints")
-            if hints:
-                has_visualization = getattr(hints, "should_visualize", False)
-
-        # Also check if visualization_result exists
-        if thread._visualization_result is not None:
-            has_visualization = True
-
-        # Create the final message and add to session state
-        # Appending directly updates ChatSession.messages (via reference)
+    # Create assistant message from result
+    if result.error:
+        # Error occurred
         assistant_message = ChatMessage(
             role="assistant",
-            content=result.text if result else "",
-            thinking=thinking_text,
-            result=result,
-            has_visualization=has_visualization,
+            content=f"Error processing request: {result.error}",
         )
-        st.session_state.messages.append(assistant_message)
+    else:
+        assistant_message = ChatMessage(
+            role="assistant",
+            content=result.text,
+            thinking=result.thinking,
+            result=result.result,
+            has_visualization=result.has_visualization,
+        )
 
-        # Save chat after adding assistant message
-        save_current_chat()
+    # Add message to chat
+    chat.messages.append(assistant_message)
 
-        # Clear pending query and guard flag, then rerun to show final state
-        st.session_state.pending_query = None
-        st.session_state._query_in_progress = False
-        st.rerun()
+    # Save chat after adding assistant message
+    save_current_chat()
+
+    return True
+
+
+def render_thinking_section(chat: "ChatSession") -> None:
+    """Render the thinking section wrapper that contains the streaming fragment."""
+    with st.chat_message("assistant"):
+        with st.expander("💭 Thinking...", expanded=True):
+            # Use a fragment for streaming updates - this is the Streamlit-recommended
+            # pattern for showing progress from background tasks
+            _thinking_stream_fragment(chat)
+
+
+@st.fragment(run_every=0.1)
+def _thinking_stream_fragment(chat: "ChatSession") -> None:
+    """Fragment that streams thinking updates at 100ms intervals.
+    
+    This is the Streamlit-recommended pattern for streaming updates from
+    background tasks. The fragment polls the writer's buffer rapidly.
+    """
+    # Get current thinking text from writer
+    current_text = chat.writer.getvalue() if chat.writer else ""
+    
+    # Display current state
+    if current_text:
+        st.markdown(current_text)
+    else:
+        st.caption("Processing...")
 
 
 @st.fragment(run_every=1.0)
@@ -305,51 +314,87 @@ def _suggestions_polling_fragment() -> None:
         st.rerun()
 
 
-def _should_show_welcome() -> bool:
+@st.fragment(run_every=1.0)
+def _query_polling_fragment() -> None:
+    """Fragment that polls for query completion every second.
+
+    This runs independently from the main app, checking if the background
+    query execution has completed. When it completes, triggers a rerun
+    to show the result.
+
+    Note: Live streaming updates are handled by the _on_write callback on
+    the writer, not by this polling fragment.
+    """
+    chat = _get_current_chat()
+    if chat is None:
+        return
+
+    # Only poll if we have a running query
+    if not is_query_running(chat):
+        return
+
+    # Check if background task completed
+    if handle_query_completion(chat):
+        # Query completed - rerun to show the result
+        st.rerun()
+
+
+def _should_show_welcome(chat: "ChatSession") -> bool:
     """Determine if we should show the welcome screen.
 
     Returns False if:
     - There are any messages in the chat
-    - There's a pending query being processed
+    - There's a query being processed for this chat
     """
-    # Check directly from session_state for most up-to-date values
-    has_messages = len(st.session_state.get("messages", [])) > 0
-    has_pending = st.session_state.get("pending_query") is not None
-    return not has_messages and not has_pending
+    has_messages = len(chat.messages) > 0
+
+    # Check per-chat query status
+    query_running = is_query_running(chat)
+
+    return not has_messages and not query_running
 
 
-def render_chat_interface(thread: "Thread") -> None:
+def render_chat_interface(chat: "ChatSession") -> None:
     """Render the complete chat interface."""
-    # Chat input at the bottom (always rendered, disabled while processing)
-    is_processing = st.session_state.get("pending_query") is not None
-    user_input = st.chat_input("Ask a question about your data...", disabled=is_processing)
+    # Check if a query is running for this chat
+    query_running = is_query_running(chat)
+
+    # Chat input at the bottom (disabled while processing)
+    user_input = st.chat_input("Ask a question about your data...", disabled=query_running)
 
     # Handle user input FIRST, before rendering main content
     if user_input:
         # Add user message immediately
-        # Appending directly updates ChatSession.messages (via reference)
         user_message = ChatMessage(role="user", content=user_input)
-        st.session_state.messages.append(user_message)
+        chat.messages.append(user_message)
 
-        # Set pending query - the rerun will show the chat with user message
-        st.session_state.pending_query = user_input
         # Save chat after adding user message
         save_current_chat()
+
+        # Start background query execution
+        start_background_query(chat, user_input)
+
+        st.rerun()
+
+    # Check for completed queries and create assistant messages
+    if handle_query_completion(chat):
         st.rerun()
 
     # Determine what to render
-    show_welcome = _should_show_welcome()
+    show_welcome = _should_show_welcome(chat)
 
     if show_welcome:
-        render_welcome_component()
+        render_welcome_component(chat)
 
         # Add polling fragment for suggestions (only active while loading)
         if is_suggestions_loading():
             _suggestions_polling_fragment()
     else:
-        # Render chat history (buttons hidden if pending_query is set)
-        render_chat_history(thread)
+        # Render chat history
+        render_chat_history(chat)
 
-        # Process pending query after showing the user message
-        if is_processing:
-            process_pending_query(thread)
+        # Show thinking section if query is running
+        if query_running:
+            render_thinking_section(chat)
+            # Add polling fragment for query completion
+            _query_polling_fragment()

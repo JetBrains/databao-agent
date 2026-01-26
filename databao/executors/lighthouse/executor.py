@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any
+from typing import Any, TextIO
 
 import duckdb
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
@@ -104,6 +104,7 @@ class LighthouseExecutor(GraphExecutor):
         *,
         rows_limit: int = 100,
         stream: bool = True,
+        writer: TextIO | None = None,
     ) -> ExecutionResult:
         compiled_graph = self._get_compiled_graph(llm_config)
         messages: list[BaseMessage] = self._process_opas(opas, cache)
@@ -120,7 +121,7 @@ class LighthouseExecutor(GraphExecutor):
         init_state = self._graph.init_state(cleaned_messages, limit_max_rows=rows_limit)
         invoke_config = RunnableConfig(recursion_limit=self._graph_recursion_limit)
         last_state = self._invoke_graph_sync(
-            compiled_graph, init_state, config=invoke_config, stream=stream, writer=self._writer
+            compiled_graph, init_state, config=invoke_config, stream=stream, writer=writer or self._writer
         )
         execution_result = self._graph.get_result(last_state)
 

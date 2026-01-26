@@ -1,5 +1,5 @@
 import uuid
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, TextIO
 
 from pandas import DataFrame
 from typing_extensions import Self
@@ -30,6 +30,7 @@ class Thread:
         lazy: bool = False,
         auto_output_modality: bool = True,
         cache_scope: str | None = None,
+        writer: TextIO | None = None,
     ):
         self._agent = agent
         self._default_rows_limit = rows_limit
@@ -64,6 +65,9 @@ class Thread:
         # If cache_scope is provided, use it to restore a previous session
         self._cache_scope = cache_scope if cache_scope else f"{self._agent.name}/{uuid.uuid4()}"
 
+        # Optional per-thread writer for streaming output
+        self._writer = writer
+
     def _materialize_data(self, rows_limit: int | None) -> "ExecutionResult":
         """Materialize the latest data state by executing pending OPAs if needed."""
         new_opas = self._opas[self._opas_processed_count :]
@@ -78,6 +82,7 @@ class Thread:
                     sources=self._agent.sources,
                     rows_limit=rows_limit,
                     stream=stream,
+                    writer=self._writer,
                 )
                 self._meta.update(self._data_result.meta)
             self._opas_processed_count += len(new_opas)

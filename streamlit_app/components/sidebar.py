@@ -33,8 +33,6 @@ def _confirm_delete_chat(chat_id: str, chat_title: str) -> None:
 
             # Clear current chat state
             st.session_state.current_chat_id = None
-            st.session_state.messages = []
-            st.session_state.thread = None
 
             # Navigate to home
             st.session_state._navigate_to_chat = None

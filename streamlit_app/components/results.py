@@ -10,6 +10,8 @@ if TYPE_CHECKING:
     from databao.core.executor import ExecutionResult
     from databao.core.thread import Thread
 
+    from streamlit_app.models.chat_session import ChatSession
+
 
 def _extract_visualization_data(thread: "Thread") -> dict[str, Any] | None:
     """Extract serializable visualization data from thread._visualization_result.
@@ -174,10 +176,19 @@ def render_visualization_section(
         st.warning(f"Could not render visualization: {plot_type}")
 
 
+def _get_current_chat() -> "ChatSession | None":
+    """Get the current chat session from session state."""
+    current_chat_id = st.session_state.get("current_chat_id")
+    chats = st.session_state.get("chats", {})
+    if current_chat_id and current_chat_id in chats:
+        return chats[current_chat_id]
+    return None
+
+
 @st.fragment
 def render_visualization_and_actions(
     result: "ExecutionResult",
-    thread: "Thread",
+    chat: "ChatSession",
     message_index: int,
     *,
     is_latest: bool = False,
@@ -187,11 +198,20 @@ def render_visualization_and_actions(
     This is a fragment so that when action buttons trigger updates (e.g., Generate Plot),
     only this fragment reruns, showing the new visualization without a full app rerun.
 
-    The fragment reads has_visualization and visualization_data directly from session_state
+    The fragment reads has_visualization and visualization_data from chat.messages
     so it can see updates made by button click handlers on fragment rerun.
     """
-    # Read current state from session_state (may be updated by button clicks within this fragment)
-    messages = st.session_state.get("messages", [])
+    # Get fresh chat reference in case it was updated
+    current_chat = _get_current_chat()
+    if current_chat is None:
+        return
+
+    thread = current_chat.thread
+    if thread is None:
+        return
+
+    # Read current state from chat messages (may be updated by button clicks within this fragment)
+    messages = current_chat.messages
     if message_index < len(messages):
         msg = messages[message_index]
         has_visualization = msg.has_visualization
@@ -206,12 +226,12 @@ def render_visualization_and_actions(
 
     # Action buttons (only for latest message)
     if is_latest:
-        _render_and_handle_action_buttons(result, thread, message_index, has_visualization)
+        _render_and_handle_action_buttons(result, current_chat, message_index, has_visualization)
 
 
 def _render_and_handle_action_buttons(
     result: "ExecutionResult",
-    thread: "Thread",
+    chat: "ChatSession",
     message_index: int,
     has_visualization: bool,
 ) -> None:
@@ -219,8 +239,14 @@ def _render_and_handle_action_buttons(
 
     Called from within the fragment, so button clicks can trigger fragment-scoped reruns.
     """
+    from streamlit_app.services import is_query_running
+
+    thread = chat.thread
+    if thread is None:
+        return
+
     # Check if we're processing a query - buttons will be disabled
-    is_processing = st.session_state.get("pending_query") is not None
+    is_processing = is_query_running(chat)
 
     buttons_to_show: list[tuple[str, str, str]] = []  # (key, label, action)
 
@@ -249,14 +275,18 @@ def _render_and_handle_action_buttons(
             button_key = f"action_{action}_{message_index}"
             clicked = st.button(label, key=button_key, width="stretch", disabled=is_processing)
             if clicked and not is_processing:
-                _handle_action_button(action, thread, message_index)
+                _handle_action_button(action, chat, message_index)
 
 
-def _handle_action_button(action: str, thread: "Thread", message_index: int) -> None:
+def _handle_action_button(action: str, chat: "ChatSession", message_index: int) -> None:
     """Handle action button click by generating the missing section.
 
     Called from within a fragment, so st.rerun() will only rerun the fragment.
     """
+    thread = chat.thread
+    if thread is None:
+        return
+
     if action == "generate_data":
         with st.spinner("Generating data..."):
             try:
@@ -264,7 +294,7 @@ def _handle_action_button(action: str, thread: "Thread", message_index: int) -> 
                 if df is None:
                     return
 
-                messages = st.session_state.messages
+                messages = chat.messages
                 if message_index < len(messages) and messages[message_index].result:
                     old_result = messages[message_index].result
                     messages[message_index].result = old_result.model_copy(update={"df": df})
@@ -280,7 +310,7 @@ def _handle_action_button(action: str, thread: "Thread", message_index: int) -> 
                 if code is None:
                     return
 
-                messages = st.session_state.messages
+                messages = chat.messages
                 if message_index < len(messages) and messages[message_index].result:
                     old_result = messages[message_index].result
                     messages[message_index].result = old_result.model_copy(update={"code": code})
@@ -294,7 +324,7 @@ def _handle_action_button(action: str, thread: "Thread", message_index: int) -> 
             try:
                 thread.plot()
 
-                messages = st.session_state.messages
+                messages = chat.messages
                 if message_index < len(messages):
                     messages[message_index].has_visualization = True
                     messages[message_index].visualization_data = _extract_visualization_data(thread)
@@ -308,7 +338,7 @@ def _handle_action_button(action: str, thread: "Thread", message_index: int) -> 
 
 def render_execution_result(
     result: "ExecutionResult",
-    thread: "Thread",
+    chat: "ChatSession",
     message_index: int,
     has_visualization: bool,
     *,
@@ -330,4 +360,4 @@ def render_execution_result(
 
     # Visualization and action buttons are rendered together in a fragment
     # This allows "Generate Plot" to update the visualization with a fragment-scoped rerun
-    render_visualization_and_actions(result, thread, message_index, is_latest=is_latest)
+    render_visualization_and_actions(result, chat, message_index, is_latest=is_latest)

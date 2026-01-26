@@ -175,49 +175,62 @@ def render_visualization_section(
 
 
 @st.fragment
-def render_action_buttons(
+def render_visualization_and_actions(
+    result: "ExecutionResult",
+    thread: "Thread",
+    message_index: int,
+    *,
+    is_latest: bool = False,
+) -> None:
+    """Fragment that renders visualization and action buttons together.
+
+    This is a fragment so that when action buttons trigger updates (e.g., Generate Plot),
+    only this fragment reruns, showing the new visualization without a full app rerun.
+
+    The fragment reads has_visualization and visualization_data directly from session_state
+    so it can see updates made by button click handlers on fragment rerun.
+    """
+    # Read current state from session_state (may be updated by button clicks within this fragment)
+    messages = st.session_state.get("messages", [])
+    if message_index < len(messages):
+        msg = messages[message_index]
+        has_visualization = msg.has_visualization
+        visualization_data = msg.visualization_data
+    else:
+        has_visualization = False
+        visualization_data = None
+
+    # Visualization section (if visualization exists or we have persisted data)
+    if has_visualization or thread._visualization_result is not None or visualization_data is not None:
+        render_visualization_section(thread, visualization_data)
+
+    # Action buttons (only for latest message)
+    if is_latest:
+        _render_and_handle_action_buttons(result, thread, message_index, has_visualization)
+
+
+def _render_and_handle_action_buttons(
     result: "ExecutionResult",
     thread: "Thread",
     message_index: int,
     has_visualization: bool,
-    *,
-    is_latest: bool = False,
 ) -> None:
-    """Render action buttons for sections that DON'T exist yet.
+    """Render action buttons and handle clicks inline.
 
-    This is a fragment so it has an independent render lifecycle. When is_latest=False
-    (during processing), the fragment renders nothing and cleanly disappears without
-    showing stale elements.
-
-    Buttons are shown only for the LATEST message and only for missing sections.
-    Clicking a button will generate that section (via thread.df(), thread.code(),
-    thread.plot()) and extend the message with the result. After clicking, the
-    button disappears because the section now exists.
-
-    Buttons are hidden for older messages because the thread object only maintains
-    state for the most recent query.
+    Called from within the fragment, so button clicks can trigger fragment-scoped reruns.
     """
-    # Only show buttons for the latest message
-    if not is_latest:
-        return
-
     # Check if we're processing a query - buttons will be disabled
     is_processing = st.session_state.get("pending_query") is not None
 
     buttons_to_show: list[tuple[str, str, str]] = []  # (key, label, action)
 
     # If no code was generated, there's nothing to show (no SQL = no data = no plot)
-    # Don't show any buttons in this case
     has_code = result.code is not None
     has_data = result.df is not None
 
     # Show Data button only if code exists (SQL was generated) but df not yet fetched
     if has_code and not has_data:
         buttons_to_show.append(("data", "📊 Data", "generate_data"))
-
-    # Code button: only show if there's code to display but it's not in result yet
-    # (In practice, if code was generated it should already be in result.code)
-    # So we don't show this button - code section appears automatically when code exists
 
     # Plot button: only show if we have data to plot (plot requires dataframe)
     # Also check thread._data_result exists - it may be None if we failed to restore
@@ -236,76 +249,59 @@ def render_action_buttons(
             button_key = f"action_{action}_{message_index}"
             clicked = st.button(label, key=button_key, width="stretch", disabled=is_processing)
             if clicked and not is_processing:
-                handle_action_button(action, thread, message_index)
+                _handle_action_button(action, thread, message_index)
 
 
-def handle_action_button(action: str, thread: "Thread", message_index: int) -> None:
-    """Handle action button click by generating the missing section."""
-    # Guard: don't process button clicks while a query is being processed
-    if st.session_state.get("pending_query") is not None:
-        return
+def _handle_action_button(action: str, thread: "Thread", message_index: int) -> None:
+    """Handle action button click by generating the missing section.
 
+    Called from within a fragment, so st.rerun() will only rerun the fragment.
+    """
     if action == "generate_data":
-        # Generate dataframe - calls thread.df() which may trigger execution
         with st.spinner("Generating data..."):
             try:
                 df = thread.df()
-
-                # If df is still None, nothing to update (shouldn't happen with new button logic)
                 if df is None:
                     return
 
-                # Update the message in session state with a new result containing the dataframe
-                # ExecutionResult is frozen, so we create a new instance
                 messages = st.session_state.messages
                 if message_index < len(messages) and messages[message_index].result:
                     old_result = messages[message_index].result
                     messages[message_index].result = old_result.model_copy(update={"df": df})
-                # Force refresh to show the new data (scope="app" since called from fragment)
-                st.rerun(scope="app")
+                # Fragment-scoped rerun to show new data
+                st.rerun()
             except Exception as e:
                 st.error(f"Failed to generate data: {e}")
 
     elif action == "generate_code":
-        # Generate code - calls thread.code() which may trigger execution
         with st.spinner("Generating code..."):
             try:
                 code = thread.code()
-
-                # If code is still None, nothing to update (shouldn't happen with new button logic)
                 if code is None:
                     return
 
-                # Update the message in session state with a new result containing the code
-                # ExecutionResult is frozen, so we create a new instance
                 messages = st.session_state.messages
                 if message_index < len(messages) and messages[message_index].result:
                     old_result = messages[message_index].result
                     messages[message_index].result = old_result.model_copy(update={"code": code})
-                # Force refresh to show the new code (scope="app" since called from fragment)
-                st.rerun(scope="app")
+                # Fragment-scoped rerun to show new code
+                st.rerun()
             except Exception as e:
                 st.error(f"Failed to generate code: {e}")
 
     elif action == "generate_plot":
-        # Generate visualization - this will trigger an LLM call
         with st.spinner("Generating visualization..."):
             try:
                 thread.plot()
 
-                # Update the message in session state
                 messages = st.session_state.messages
                 if message_index < len(messages):
                     messages[message_index].has_visualization = True
-                    # Save visualization data for persistence
                     messages[message_index].visualization_data = _extract_visualization_data(thread)
-
-                    # Save chat to disk
                     save_current_chat()
 
-                # Force refresh (scope="app" since called from fragment)
-                st.rerun(scope="app")
-
+                # Fragment-scoped rerun to show new visualization
+                st.rerun()
             except Exception as e:
                 st.error(f"Failed to generate visualization: {e}")
 
@@ -332,9 +328,6 @@ def render_execution_result(
     if result.df is not None:
         render_dataframe_section(result, has_visualization)
 
-    # Visualization section (if visualization exists or we have persisted data)
-    if has_visualization or thread._visualization_result is not None or visualization_data is not None:
-        render_visualization_section(thread, visualization_data)
-
-    # Action buttons (only for latest message)
-    render_action_buttons(result, thread, message_index, has_visualization, is_latest=is_latest)
+    # Visualization and action buttons are rendered together in a fragment
+    # This allows "Generate Plot" to update the visualization with a fragment-scoped rerun
+    render_visualization_and_actions(result, thread, message_index, is_latest=is_latest)

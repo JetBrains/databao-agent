@@ -26,22 +26,25 @@ class GraphExecutor(Executor, ABC):
         """Initialize agent with graph caching infrastructure."""
         self._graph_recursion_limit = 50
 
-    def _process_opas(self, opas: list[Opa], cache: Cache) -> list[Any]:
+    def _process_opas(self, opas: list[Opa], cache: Cache) -> dict[str, Any]:
         """
-        Process a single opa and convert it to a message, appending to message history.
+        Process a single opas group and convert it to a message, appending to message history.
 
         Returns:
-            All messages including the new one
+            A dict with all messages and operations including the new one
         """
-        messages: list[Any] = cache.get("state", {}).get("messages", [])
+        state = cache.get("state", {})
+        messages: list[Any] = state.get("messages", [])
         query = "\n\n".join(opa.query for opa in opas)
         messages.append(HumanMessage(content=query))
-        return messages
+        operations = [*state.get("operations", []), opas]
+        state["operations"] = operations
+        state["messages"] = messages
+        return state
 
-    def _update_message_history(self, cache: Cache, final_messages: list[Any]) -> None:
-        """Update message history in cache with final messages from graph execution."""
-        if final_messages:
-            cache.put("state", {"messages": final_messages})
+    def _update_message_history(self, cache: Cache, state: dict[str, Any]) -> None:
+        """Update state in cache with new state."""
+        cache.put("state", state)
 
     def _make_output_modality_hints(self, result: ExecutionResult) -> OutputModalityHints:
         # A separate LLM module could be used to fill out the hints

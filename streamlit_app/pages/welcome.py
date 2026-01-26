@@ -123,6 +123,6 @@ def render_welcome_page() -> None:
                 with col_action:
                     if st.button("Open", key=f"open_{chat.id}"):
                         st.session_state.current_chat_id = chat.id
-                        # Navigate to the chat by setting current_chat_id and rerunning
-                        st.session_state.current_chat_id = chat.id
+                        # Flag for navigation system to switch to this chat
+                        st.session_state._navigate_to_chat = chat.id
                         st.rerun()

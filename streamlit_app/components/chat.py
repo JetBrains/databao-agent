@@ -194,6 +194,13 @@ def render_chat_history(thread: "Thread") -> None:
 
 def process_pending_query(thread: "Thread") -> None:
     """Process the pending query from session state."""
+    # CRITICAL: Guard against re-entry. Streamlit may rerun multiple times while
+    # thread.ask() is executing. Without this guard, each rerun would start another
+    # concurrent execution of the same query.
+    if st.session_state.get("_query_in_progress"):
+        return
+    
+    st.session_state._query_in_progress = True
     user_input = st.session_state.pending_query
 
     # Generate assistant response
@@ -233,6 +240,7 @@ def process_pending_query(thread: "Thread") -> None:
                     )
                     st.session_state.messages.append(error_message)
                     st.session_state.pending_query = None
+                    st.session_state._query_in_progress = False
                     # Save chat after error
                     save_current_chat()
                     st.rerun()
@@ -269,8 +277,9 @@ def process_pending_query(thread: "Thread") -> None:
         # Save chat after adding assistant message
         save_current_chat()
 
-        # Clear pending query and rerun to show final state
+        # Clear pending query and guard flag, then rerun to show final state
         st.session_state.pending_query = None
+        st.session_state._query_in_progress = False
         st.rerun()
 
 

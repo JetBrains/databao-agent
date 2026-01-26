@@ -10,8 +10,8 @@ file_path = Path(__file__).parent
 
 
 def run_scenario() -> bool:
-    DB_PATH = file_path / "web_shop_orders/data/web_shop.duckdb"
-    conn = duckdb.connect(DB_PATH, read_only=True)
+    db_path = file_path / "web_shop_orders/data/web_shop.duckdb"
+    conn = duckdb.connect(db_path, read_only=True)
 
     llm_config = databao.LLMConfig.from_yaml(file_path / "configs/gpt-oss-20b-ollama.yaml")
     # llm_config = databao.LLMConfig(name="claude-sonnet-4-5")
@@ -48,8 +48,10 @@ def main() -> None:
         if success:
             time_measures.append(time.time() - start_time)
 
+    measures = pd.Series(time_measures)
+
     print(
-        f"Mean time: {sum(time_measures) / len(time_measures):.2f} seconds, Std: {pd.Series(time_measures).std():.2f}"
+        f"Mean time: {measures.mean():.2f} seconds, Std: {measures.std():.2f}"
     )
 
 

@@ -50,9 +50,7 @@ def main() -> None:
 
     measures = pd.Series(time_measures)
 
-    print(
-        f"Mean time: {measures.mean():.2f} seconds, Std: {measures.std():.2f}"
-    )
+    print(f"Mean time: {measures.mean():.2f} seconds, Std: {measures.std():.2f}")
 
 
 if __name__ == "__main__":

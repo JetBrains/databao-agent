@@ -1,6 +1,6 @@
 """Connection factory using DCE's datasource discovery and plugin system.
 
-This module reuses DCE (nemory) for:
+This module reuses DCE (databao-context-engine) for:
 - Discovering datasources via `discover_datasources()`
 - Preparing configs via `prepare_source()`
 - Loading plugins via `load_plugins()`
@@ -145,10 +145,10 @@ def create_all_connections(project_path: Path) -> list[ConnectionInfo]:
 
     try:
         # Import DCE modules
-        from nemory.pluginlib.plugin_utils import _validate_datasource_config_file
-        from nemory.plugins.plugin_loader import load_plugins
-        from nemory.project.datasource_discovery import discover_datasources, prepare_source
-        from nemory.project.types import PreparedConfig
+        from databao_context_engine.pluginlib.plugin_utils import _validate_datasource_config_file
+        from databao_context_engine.plugins.plugin_loader import load_plugins
+        from databao_context_engine.project.datasource_discovery import discover_datasources, prepare_source
+        from databao_context_engine.project.types import PreparedConfig
 
         # Discover all datasources using DCE
         datasources = discover_datasources(project_path)
@@ -181,7 +181,7 @@ def create_all_connections(project_path: Path) -> list[ConnectionInfo]:
 
                 if db_type == "duckdb":
                     # DuckDB: create connection directly with read_only=True to avoid file lock conflicts
-                    # (nemory's introspector uses read_write mode which can conflict with other processes)
+                    # (DCE's introspector uses read_write mode which can conflict with other processes)
                     import duckdb
 
                     db_path = str(parsed_config.connection.database)
@@ -209,7 +209,7 @@ def create_all_connections(project_path: Path) -> list[ConnectionInfo]:
                 continue
 
     except ImportError:
-        logger.warning("nemory (DCE) not available - no connections created")
+        logger.warning("databao-context-engine (DCE) not available - no connections created")
     except ValueError as e:
         # No src directory or invalid project
         logger.warning(f"DCE project issue: {e}")

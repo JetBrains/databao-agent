@@ -39,13 +39,11 @@ examples = [
     "python-dotenv>=1.1.1",
 ]
 streamlit = [
-    "streamlit>=1.53.0",  # 1.53 fixes stale element display during blocking operations
+    "streamlit>=1.53.0",
     "click>=8.0.0",
     "pyyaml>=6.0",
-    "uuid6>=2024.7.10",  # Time-ordered UUIDs (UUID6/UUID7)
-    # TODO: Switch to git dependency once mssql-python supports macOS 14 (currently requires macOS 15):
-    # "nemory @ git+ssh://git@github.com/JetBrains/databao-context-engine.git@main",
-    "nemory @ file:///Users/Yury.Khudyakov/work/toolformers/databao-context-engine/main",
+    "uuid6>=2024.7.10",
+    "databao-context-engine @ git+ssh://git@github.com/JetBrains/databao-context-engine.git@main",
 ]
 
 [project.scripts]
@@ -128,12 +126,7 @@ select = [
 ban-relative-imports = "all"
 
 [tool.uv]
-# https://github.com/ninoseki/uv-dynamic-versioning/blob/main/docs/tips.md#build-caching-and-editable-installs
 cache-keys = [{ file = "pyproject.toml" }, { git = { commit = true, tags = true }}]
-
-# mssql-python requires macOS 15+ which breaks on macOS 14. Override to skip it on macOS.
-# This means MSSQL support won't work on macOS <15, but other databases will work fine.
-override-dependencies = ["mssql-python ; sys_platform != 'darwin'"]
 
 [tool.pytest.ini_options]
 addopts = ["--strict-markers"]

@@ -1,0 +1,26 @@
+{
+  "name": "@databao/multimodal-mcp-ui",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "nx build:pckg @databao/multimodal-mcp-ui",
+    "build:pckg": "tsc && vite build"
+  },
+  "dependencies": {
+    "@databao/multimodal-tabs": "workspace:*",
+    "@radix-ui/themes": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vite-plugin-singlefile": "2.0.2"
+  }
+}

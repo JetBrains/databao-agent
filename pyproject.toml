@@ -28,11 +28,16 @@ dependencies = [
     "diskcache>=5.6.3",
     "sqlalchemy>=2.0.45",
     "anywidget>=0.9.0",
+    "mcp>=0.9.0",
+    "mcp-ui-server>=0.1.0",
 ]
 
 [project.urls]
 Homepage = "https://databao.app/"
 Source = "https://github.com/JetBrains/databao"
+
+[project.scripts]
+databao-mcp-server = "databao.mcp.server:main"
 
 [project.optional-dependencies]
 examples = [

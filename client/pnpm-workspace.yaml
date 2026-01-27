@@ -1,6 +1,7 @@
 packages:
   - multimodal-html
   - multimodal-jupiter
+  - multimodal-mcp-ui
   - packages/*
 
 catalog:
@@ -13,6 +14,7 @@ catalog:
 
   "@vitejs/plugin-react": 4.3.4
   vite: 6.0.5
+  typescript: 5.8.3
 
   "vite-plugin-checker": "0.12.0"
   "vite-plugin-dts": "4.5.4"

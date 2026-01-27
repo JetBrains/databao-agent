@@ -190,6 +190,15 @@ class LLMConfigDirectory:
 
     DEFAULT = LLMConfig(name="claude-sonnet-4-5")
 
+    GPT_OSS_20B = LLMConfig(
+        name="ollama:gpt-oss:20b",
+        temperature=0.8,
+        use_responses_api=False,
+        timeout=600,
+    )
+
+    DEFAULT_LOCAL = GPT_OSS_20B
+
     # https://huggingface.co/Qwen/Qwen3-8B-GGUF#best-practices
     QWEN3_8B_OAI = LLMConfig(
         name="qwen/qwen3-8b",

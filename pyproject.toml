@@ -2,7 +2,7 @@
 name = "databao"
 description = "databao: NL queries for data"
 dynamic = ["version"]  # Based on the git tag
-requires-python = ">=3.10, <3.15"
+requires-python = ">=3.12, <3.15"
 readme = "README.md"
 license = "Apache-2.0 AND LicenseRef-Additional-Terms"
 license-files = ["LICENSE.md"]
@@ -27,6 +27,8 @@ dependencies = [
     "edaplot-vl~=0.1.4",
     "diskcache>=5.6.3",
     "sqlalchemy>=2.0.45",
+    "databao-context-engine>=0.1.2",
+    "pandas-stubs~=2.3.3",
 ]
 
 [project.urls]

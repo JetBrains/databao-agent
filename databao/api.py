@@ -1,3 +1,4 @@
+from databao import AgentV1
 from databao.caches.in_mem_cache import InMemCache
 from databao.configs.llm import LLMConfig, LLMConfigDirectory
 from databao.core import Agent, Cache, Executor, Visualizer
@@ -16,12 +17,12 @@ def new_agent(
     stream_plot: bool = False,
     lazy_threads: bool = False,
     auto_output_modality: bool = True,
-) -> Agent:
+) -> AgentV1:
     """This is an entry point for users to create a new agent.
     Agent can't be modified after it's created. Only new data sources can be added.
     """
     llm_config = llm_config if llm_config else LLMConfigDirectory.DEFAULT
-    return Agent(
+    return AgentV1(
         llm_config,
         name=name or "default_agent",
         data_executor=data_executor or LighthouseExecutor(),

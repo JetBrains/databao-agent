@@ -55,6 +55,7 @@ class LighthouseExecutor(GraphExecutor):
 
         return prompt.strip()
 
+    # TODO (dce): implement (support source.db_connection - DBConnectionConfig)
     def register_db(self, source: DBDataSource) -> None:
         """Register DB in the DuckDB connection."""
         connection = source.db_connection

@@ -21,7 +21,7 @@ def duckdb_conn() -> duckdb.DuckDBPyConnection:
     return duckdb.connect("./examples/web_shop_orders/data/web_shop.duckdb")
 
 
-def _new_agent() -> databao.Agent:
+def _new_agent() -> databao.AgentV1:
     llm_config = LLMConfigDirectory.DEFAULT.model_copy(update={"model_kwargs": {"api_key": "test"}})
     return databao.new_agent(llm_config=llm_config)
 

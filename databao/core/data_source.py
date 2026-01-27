@@ -9,7 +9,6 @@ from sqlalchemy import Connection, Engine
 
 @dataclass
 class DBConnectionConfig:
-    # TODO (dce): is it fine to have dependency on DCE type here?
     type: DatasourceType
     content: dict[str, Any]
 

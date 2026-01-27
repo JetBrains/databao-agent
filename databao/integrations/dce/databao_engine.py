@@ -8,7 +8,7 @@ class DatabaoContextEngineApi:
         self._delegate = delegate
 
     def search_context(self, retrieve_text: str) -> list[ContextSearchResult]:
-        return self._delegate.search_context(retrieve_text, None, None, False)
+        return self._delegate.search_context(retrieve_text)
 
     @property
     def project_dir(self) -> Path:

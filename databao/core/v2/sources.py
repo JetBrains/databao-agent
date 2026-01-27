@@ -1,5 +1,7 @@
 from pathlib import Path
+from typing import Any
 
+from databao_context_engine.datasources.types import PreparedDatasource, PreparedConfig
 from pandas import DataFrame
 
 from databao.core.data_source import Sources, DBConnectionConfig, DBDataSource, DFDataSource
@@ -7,11 +9,23 @@ from databao.core.data_source import Sources, DBConnectionConfig, DBDataSource, 
 
 class SourcesManager:
 
-    def __init__(self):
+    def __init__(self, prepared_data_sources: list[PreparedDatasource] | None = None):
         self.__sources: Sources = Sources(dfs={}, dbs={}, additional_context=[])
+        self._add_prepared_ds(prepared_data_sources)
 
-    def add_db(
-        self,
+    def _add_prepared_ds(self, prepared_data_sources: list[PreparedDatasource] | None):
+        if prepared_data_sources is None:
+            return
+        for ds in prepared_data_sources:
+            if isinstance(ds, PreparedConfig):
+                type = ds.datasource_type
+                content = self._get_config_content(ds)
+                name = ds.datasource_name
+                self.add_db(DBConnectionConfig(type, content), name=name)
+            else:
+                ValueError("Only PreparedConfig is supported")
+
+    def add_db(self,
         config: DBConnectionConfig,
         *,
         name: str | None = None,
@@ -44,6 +58,10 @@ class SourcesManager:
         if text is None:
             raise ValueError("Invalid context provided.")
         self.__sources.additional_context.append(text)
+
+    @staticmethod
+    def _get_config_content(ds: PreparedConfig) -> dict[str, Any]:
+        return {str(k): v for k, v in ds.config.items()}
 
     @staticmethod
     def _parse_context_arg(context: str | Path | None) -> str | None:

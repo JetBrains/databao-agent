@@ -1,6 +1,7 @@
 from pathlib import Path
 
-from databao_context_engine import init_dce_project, DatabaoContextEngine
+from databao_context_engine import init_dce_project, DatabaoContextEngine, DatabaoContextProjectManager
+from databao_context_engine.project.layout import is_project_dir_valid
 
 from databao.integrations.dce.databao_context_project_manager import DatabaoContextProjectManagerApi
 from databao.integrations.dce.databao_engine import DatabaoContextEngineApi
@@ -12,7 +13,14 @@ class DatabaoApi:
         manager = init_dce_project(project_dir)
         return DatabaoContextProjectManagerApi(manager)
 
-    # TODO (dce): implement (check - do we have a context for DCE?)
+    @staticmethod
+    def get_dce_project(project_dir: Path) -> DatabaoContextProjectManagerApi:
+        if not is_project_dir_valid(project_dir):
+            ValueError(f"No project exists in the directory '{project_dir}'")
+        manager = DatabaoContextProjectManager(project_dir)
+        return DatabaoContextProjectManagerApi(manager)
+
+    # TODO (dce): should be implemented on the DCE side (check - do we have a context for DCE?)
     @staticmethod
     def get_dce(project_dir: Path) -> DatabaoContextEngineApi:
         engine = DatabaoContextEngine(project_dir)

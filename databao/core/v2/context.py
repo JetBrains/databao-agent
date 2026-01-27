@@ -30,10 +30,11 @@ class Context:
 
     @staticmethod
     def load(project_dir: Path) -> Context:
-        # TODO (dce): implement (we need to read sources from disk - request to DCE)
-        # dce = DatabaoApi.get_dce(project_dir)
-        # return Context(_dce=dce, _sources=Sources(dfs={}, dbs={}, additional_context=[]))
-        raise NotImplementedError("load(project_dir: Path) is not implemented yet")
+        dce_project = DatabaoApi.get_dce_project(project_dir)
+        dce = DatabaoApi.get_dce(project_dir)
+        prepared_data_sources = dce_project.get_prepared_datasource_list()
+        sources_manager = SourcesManager(prepared_data_sources)
+        return Context(_dce=dce, _sources=sources_manager.sources)
 
 
 class ContextBuilder:

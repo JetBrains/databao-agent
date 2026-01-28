@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import embed from "vega-embed";
+import { expressionInterpreter } from "vega-interpreter";
 
 interface VegaChartProps {
   spec: object;
@@ -21,6 +22,8 @@ export function VegaChart({ spec }: VegaChartProps) {
             editor: false,
           },
           renderer: "svg",
+          ast: true,
+          expr: expressionInterpreter,
         });
       } catch (error) {
         console.error("Failed to render Vega chart:", error);
@@ -29,12 +32,16 @@ export function VegaChart({ spec }: VegaChartProps) {
 
     embedChart();
 
+    const container = containerRef.current;
+
     return () => {
-      if (containerRef.current) {
-        containerRef.current.innerHTML = "";
+      if (container) {
+        container.innerHTML = "";
       }
     };
   }, [spec]);
 
-  return <div ref={containerRef} />;
+  return (
+    <div ref={containerRef} style={{ width: "100%", minHeight: "300px" }} />
+  );
 }

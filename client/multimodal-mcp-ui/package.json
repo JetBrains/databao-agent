@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@databao/multimodal-tabs": "workspace:*",
+    "@modelcontextprotocol/ext-apps": "1.0.1",
     "@radix-ui/themes": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:"

@@ -1,15 +1,64 @@
 import {
   DataframeTable,
   TabModel,
-  VegaChart,
   Tabs,
+  VegaChart,
 } from "@databao/multimodal-tabs";
+import { App } from "@modelcontextprotocol/ext-apps";
 import { Text, Theme } from "@radix-ui/themes";
+import { useEffect, useState } from "react";
 
 import styles from "./App.module.css";
 
-function App() {
-  const data = window.__DATABAO_MCP_DATA__ || null;
+interface DatabaoMCPData {
+  text?: string;
+  dataframeHtmlContent?: string;
+  spec?: object;
+}
+
+interface MCPContent {
+  type: string;
+  text?: string;
+  [key: string]: unknown;
+}
+
+interface MCPToolResult {
+  content?: MCPContent[];
+  [key: string]: unknown;
+}
+
+function DatabaoApp() {
+  const [data, setData] = useState<DatabaoMCPData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const initApp = async () => {
+      try {
+        const app = new App({
+          name: "Databao Visualizer",
+          version: "1.0.0",
+        });
+
+        app.ontoolresult = (result: MCPToolResult) => {
+          const content = result.content?.find((c) => c.type === "text");
+          if (content?.text) {
+            try {
+              const vizData = JSON.parse(content.text) as DatabaoMCPData;
+              setData(vizData);
+            } catch (err) {
+              setError("Failed to parse visualization data: " + err);
+            }
+          }
+        };
+
+        await app.connect();
+      } catch (err) {
+        setError("Failed to initialize MCP App: " + String(err));
+      }
+    };
+
+    initApp();
+  }, []);
 
   const renderChart = (spec: object | null) => {
     if (!spec) {
@@ -35,8 +84,18 @@ function App() {
   if (!data) {
     return (
       <Theme>
-        <div className={styles.loader}>
-          <Text color="gray">No data available</Text>
+        <div className={styles.appContainer}>
+          <div style={{ padding: "40px", textAlign: "center" }}>
+            {error ? (
+              <Text color="red" size="3">
+                {error}
+              </Text>
+            ) : (
+              <Text color="gray" size="3">
+                Waiting for data...
+              </Text>
+            )}
+          </div>
         </div>
       </Theme>
     );
@@ -44,7 +103,7 @@ function App() {
 
   const tabs: TabModel[] = [];
 
-  if (data?.dataframeHtmlContent) {
+  if (data.dataframeHtmlContent) {
     tabs.push({
       type: "DATAFRAME",
       title: "Data",
@@ -52,7 +111,7 @@ function App() {
     });
   }
 
-  if (data?.spec) {
+  if (data.spec) {
     tabs.push({
       type: "CHART",
       title: "Chart",
@@ -60,7 +119,7 @@ function App() {
     });
   }
 
-  if (data?.text) {
+  if (data.text) {
     tabs.push({
       type: "DESCRIPTION",
       title: "Description",
@@ -77,4 +136,4 @@ function App() {
   );
 }
 
-export default App;
+export default DatabaoApp;

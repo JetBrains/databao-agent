@@ -3,13 +3,27 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Databao MCP-UI</title>
+    <meta name="color-scheme" content="light dark" />
+    <title>Databao MCP App</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 600px;
+        max-height: 600px;
+        overflow: hidden;
+      }
+      #root {
+        height: 600px;
+        max-height: 600px;
+        display: flex;
+        flex-direction: column;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
-    <script>
-      window.__DATABAO_MCP_DATA__ = null;
-    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

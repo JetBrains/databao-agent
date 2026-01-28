@@ -14,3 +14,6 @@ dist/
 
 .idea/
 .ipynb_checkpoints/
+
+# Client build artifacts
+client/out
